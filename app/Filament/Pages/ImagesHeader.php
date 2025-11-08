@@ -31,6 +31,7 @@ class ImagesHeader extends Page
 
         $this->form->fill([
             'blog_header_image' => $settings->blog_header_image,
+            'gallery_parallax_bg' => $settings->gallery_parallax_bg,
         ]);
     }
 
@@ -57,24 +58,22 @@ class ImagesHeader extends Page
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('Gallery Header Image')
-                    ->description('Gambar header untuk halaman gallery (Coming Soon)')
+                Section::make('Gallery Parallax Background')
+                    ->description('Upload gambar background dengan efek parallax untuk halaman Gallery')
                     ->schema([
-                        FileUpload::make('gallery_header_image')
-                            ->label('Gambar Header Gallery')
+                        FileUpload::make('gallery_parallax_bg')
+                            ->label('Background Parallax Gallery')
                             ->disk('public')
-                            ->directory('gallery/header')
+                            ->directory('backgrounds')
                             ->image()
                             ->imageEditor()
                             ->imageEditorAspectRatios([
                                 '16:9',
                                 '21:9',
-                                '3:1',
                             ])
-                            ->maxSize(2048)
-                            ->helperText('Upload gambar untuk header halaman gallery. Rekomendasi: 1920x600px. Max: 2MB')
-                            ->columnSpanFull()
-                            ->disabled(),
+                            ->maxSize(3072)
+                            ->helperText('Gambar background untuk efek parallax di halaman gallery. Rekomendasi: 1920x1080px atau lebih besar. Max: 3MB')
+                            ->columnSpanFull(),
                     ]),
 
                 Section::make('Petshop Header Image')

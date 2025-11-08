@@ -42,7 +42,6 @@ class FooterSettings extends Page
             'whatsapp_number' => $settings->whatsapp_number,
             'logo' => $settings->logo,
             'logo_dark' => $settings->logo_dark,
-            'gallery_parallax_bg' => $settings->gallery_parallax_bg,
         ]);
     }
 
@@ -71,24 +70,6 @@ class FooterSettings extends Page
                             ->helperText('Logo yang akan ditampilkan di mode gelap. Format: PNG, JPG, SVG. Max: 1MB'),
                     ])
                     ->columns(2),
-
-                Section::make('Gallery Parallax Background')
-                    ->description('Upload gambar background dengan efek parallax untuk halaman Gallery')
-                    ->schema([
-                        FileUpload::make('gallery_parallax_bg')
-                            ->label('Background Parallax')
-                            ->disk('public')
-                            ->directory('backgrounds')
-                            ->image()
-                            ->imageEditor()
-                            ->imageEditorAspectRatios([
-                                '16:9',
-                                '21:9',
-                            ])
-                            ->maxSize(3072)
-                            ->helperText('Gambar background untuk efek parallax di halaman gallery. Rekomendasi: 1920x1080px atau lebih besar. Max: 3MB')
-                            ->columnSpanFull(),
-                    ]),
 
                 Section::make('About')
                     ->description('Informasi tentang klinik hewan')
