@@ -39,7 +39,6 @@ class FooterSettings extends Page
             'facebook_url' => $settings->facebook_url,
             'tiktok_url' => $settings->tiktok_url,
             'youtube_url' => $settings->youtube_url,
-            'blog_header_image' => $settings->blog_header_image,
             'whatsapp_number' => $settings->whatsapp_number,
             'logo' => $settings->logo,
             'logo_dark' => $settings->logo_dark,
@@ -158,19 +157,6 @@ class FooterSettings extends Page
                             ->helperText('Link lengkap ke channel YouTube'),
                     ])
                     ->columns(2),
-
-                Section::make('Blog Header Image')
-                    ->description('Gambar header untuk halaman blog')
-                    ->schema([
-                        FileUpload::make('blog_header_image')
-                            ->label('Gambar Header Blog')
-                            ->disk('public')
-                            ->directory('blog/header')
-                            ->image()
-                            ->maxSize(2048)
-                            ->helperText('Upload gambar untuk header halaman blog. Rekomendasi: 1920x600px. Max: 2MB')
-                            ->columnSpanFull(),
-                    ]),
 
                 Section::make('WhatsApp Floating Button')
                     ->description('Nomor WhatsApp untuk floating button')
