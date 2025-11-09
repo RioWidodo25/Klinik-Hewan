@@ -105,7 +105,7 @@ onUnmounted(() => {
 
     <PublicLayout>
         <!-- Hero Section with Image Slider -->
-        <div class="relative overflow-hidden bg-gray-900">
+        <div class="relative overflow-hidden bg-gray-900 min-h-[600px] sm:min-h-[650px]">
             <!-- Slider Background -->
             <div class="absolute inset-0">
                 <div
@@ -132,7 +132,7 @@ onUnmounted(() => {
             </div>
 
             <!-- Content -->
-            <div class="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 sm:py-32 lg:px-8">
+            <div class="relative mx-auto max-w-7xl px-4 py-32 sm:px-6 sm:py-40 lg:px-8 lg:py-48">
                 <div class="text-center">
                     <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl min-h-[4rem]">
                         <span>{{ typedText }}</span>
@@ -164,8 +164,8 @@ onUnmounted(() => {
 
             <!-- Curved Bottom Border -->
             <div class="absolute bottom-0 left-0 right-0 z-10">
-                <svg viewBox="0 0 1440 80" class="w-full" preserveAspectRatio="none" style="height: 60px;">
-                    <path d="M0,0 C480,80 960,80 1440,0 L1440,80 L0,80 Z" fill="rgb(249, 250, 251)" class="dark:fill-gray-900"></path>
+                <svg viewBox="0 0 1440 100" class="w-full" preserveAspectRatio="none" style="height: 80px;">
+                    <path d="M0,0 C480,100 960,100 1440,0 L1440,100 L0,100 Z" fill="rgb(249, 250, 251)" class="dark:fill-gray-900"></path>
                 </svg>
             </div>
         </div>

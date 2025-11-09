@@ -19,7 +19,7 @@ const props = defineProps({
 
     <PublicLayout>
         <!-- Header Section with Gradient Overlay -->
-        <div class="relative h-96 overflow-hidden bg-gray-800">
+        <div class="relative min-h-[500px] overflow-hidden bg-gray-800">
             <!-- Background Image (if uploaded) -->
             <img
                 v-if="headerImage"
@@ -47,8 +47,8 @@ const props = defineProps({
 
             <!-- Curved Bottom Border -->
             <div class="absolute bottom-0 left-0 right-0">
-                <svg viewBox="0 0 1440 80" class="w-full" preserveAspectRatio="none" style="height: 60px;">
-                    <path d="M0,0 C480,80 960,80 1440,0 L1440,80 L0,80 Z" fill="rgb(249, 250, 251)" class="dark:fill-gray-900"></path>
+                <svg viewBox="0 0 1440 100" class="w-full" preserveAspectRatio="none" style="height: 80px;">
+                    <path d="M0,0 C480,100 960,100 1440,0 L1440,100 L0,100 Z" fill="rgb(249, 250, 251)" class="dark:fill-gray-900"></path>
                 </svg>
             </div>
         </div>
