@@ -1,6 +1,7 @@
 <script setup>
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
+import { ref, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
     posts: {
@@ -12,6 +13,21 @@ const props = defineProps({
         default: null,
     },
 });
+
+// Parallax effect
+const parallaxOffset = ref(0);
+
+const handleScroll = () => {
+    parallaxOffset.value = window.pageYOffset * 0.5; // Parallax speed (0.5 = half speed)
+};
+
+onMounted(() => {
+    window.addEventListener('scroll', handleScroll);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('scroll', handleScroll);
+});
 </script>
 
 <template>
@@ -20,13 +36,17 @@ const props = defineProps({
     <PublicLayout>
         <!-- Header Section with Gradient Overlay -->
         <div class="relative min-h-[500px] overflow-hidden bg-gray-800">
-            <!-- Background Image (if uploaded) -->
-            <img
+            <!-- Parallax Background Image (if uploaded) -->
+            <div
                 v-if="headerImage"
-                :src="headerImage"
-                alt="Blog Header"
-                class="absolute inset-0 h-full w-full object-cover"
-            />
+                class="absolute inset-0"
+                :style="{ transform: `translateY(${parallaxOffset}px)` }"
+            >
+                <div
+                    class="absolute inset-0 h-[120%] w-full bg-cover bg-center bg-no-repeat"
+                    :style="{ backgroundImage: `url(${headerImage})` }"
+                ></div>
+            </div>
 
             <!-- Gradient Overlay -->
             <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent"></div>
