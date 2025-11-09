@@ -32,7 +32,7 @@ const props = defineProps({
             <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent"></div>
 
             <!-- Content -->
-            <div class="relative z-10 flex h-full items-center">
+            <div class="relative z-10 flex h-full items-center py-20 sm:py-24">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div class="text-center">
                         <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl" data-aos="fade-up">
