@@ -160,4 +160,10 @@ Route::middleware([
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
+    
+    // Profile Routes
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/addresses', [\App\Http\Controllers\Profile\AddressController::class, 'index'])->name('addresses');
+        Route::get('/favorites', [\App\Http\Controllers\Profile\FavoriteController::class, 'index'])->name('favorites');
+    });
 });
