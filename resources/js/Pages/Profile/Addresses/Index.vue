@@ -315,7 +315,7 @@ const deleteAddress = (addressId) => {
                                 <!-- Search Input -->
                                 <div class="mb-4">
                                     <div class="relative">
-                                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                                             <svg class="size-5 text-blue-500 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
@@ -325,7 +325,7 @@ const deleteAddress = (addressId) => {
                                             v-model="searchQuery"
                                             type="text"
                                             placeholder="Cari lokasi/gedung/nama jalan"
-                                            class="block w-full rounded-lg border border-gray-300 bg-white py-3 pl-11 pr-4 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                                            class="block w-full rounded-lg border border-gray-300 bg-white py-3 pl-12 pr-4 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
                                             @keyup.enter="searchLocation"
                                         >
                                     </div>
