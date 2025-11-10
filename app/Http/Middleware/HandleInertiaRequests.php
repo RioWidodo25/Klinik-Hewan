@@ -64,6 +64,15 @@ class HandleInertiaRequests extends Middleware
                 'whatsapp_number' => $footerSettings->whatsapp_number ?? null,
             ],
             'cartSummary' => $cartSummary,
+            'flash' => [
+                'success' => $request->session()->get('success'),
+                'error' => $request->session()->get('error'),
+                'warning' => $request->session()->get('warning'),
+                'info' => $request->session()->get('info'),
+                'snap_token' => $request->session()->get('snap_token'),
+                'order_id' => $request->session()->get('order_id'),
+                'order_number' => $request->session()->get('order_number'),
+            ],
         ];
     }
 }

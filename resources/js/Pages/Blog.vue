@@ -64,13 +64,6 @@ onUnmounted(() => {
                     </div>
                 </div>
             </div>
-
-            <!-- Curved Bottom Border -->
-            <div class="absolute bottom-0 left-0 right-0">
-                <svg viewBox="0 0 1440 100" class="w-full" preserveAspectRatio="none" style="height: 80px;">
-                    <path d="M0,0 C480,100 960,100 1440,0 L1440,100 L0,100 Z" fill="rgb(249, 250, 251)" class="dark:fill-gray-900"></path>
-                </svg>
-            </div>
         </div>
 
         <!-- Blog Posts Grid -->

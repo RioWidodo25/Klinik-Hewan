@@ -128,6 +128,14 @@ class ProductController extends Controller
             ->selectRaw('COALESCE(MIN(price), 0) as min_price, COALESCE(MAX(price), 0) as max_price')
             ->first();
 
+        $settings = \App\Models\FooterSetting::first();
+        $petshopHeaderImages = $settings?->petshop_header_images ?? [];
+        
+        // Convert paths to full URLs
+        $headerImagesUrls = collect($petshopHeaderImages)->map(function ($image) {
+            return asset('storage/' . $image);
+        })->toArray();
+
         return Inertia::render('Petshop/Products/Index', [
             'products' => $products,
             'categories' => $categories,
@@ -143,6 +151,7 @@ class ProductController extends Controller
                 ['value' => 'popular', 'label' => 'Terlaris'],
                 ['value' => 'rating', 'label' => 'Rating Tertinggi'],
             ],
+            'headerImages' => $headerImagesUrls,
         ]);
     }
 

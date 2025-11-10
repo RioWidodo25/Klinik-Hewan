@@ -6,19 +6,17 @@ use App\Http\Controllers\Petshop\ProductController as PetshopProductController;
 use App\Models\Doctor;
 use App\Models\Service;
 use App\Models\BlogPost;
-use App\Models\SliderImage;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Public Routes
 Route::get('/', function () {
-    $sliders = SliderImage::active()->ordered()->get()->map(function ($slider) {
-        return [
-            'id' => $slider->id,
-            'title' => $slider->title,
-            'image_url' => $slider->image_path ? asset('storage/' . $slider->image_path) : null,
-        ];
-    });
+    $settings = \App\Models\FooterSetting::first();
+    $homeSliderImages = $settings?->home_slider_images ?? [];
+    
+    $sliders = collect($homeSliderImages)->map(function ($image) {
+        return asset('storage/' . $image);
+    })->toArray();
 
     $doctors = Doctor::active()->ordered()->get()->map(function ($doctor) {
         return [
@@ -146,6 +144,12 @@ Route::prefix('petshop')->name('petshop.')->group(function () {
 
     Route::get('/checkout', [PetshopCheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [PetshopCheckoutController::class, 'store'])->name('checkout.store');
+    
+    // Payment callback routes
+    Route::get('/payment/finish', [\App\Http\Controllers\Petshop\MidtransController::class, 'finish'])->name('payment.finish');
+    Route::get('/payment/unfinish', [\App\Http\Controllers\Petshop\MidtransController::class, 'unfinish'])->name('payment.unfinish');
+    Route::get('/payment/error', [\App\Http\Controllers\Petshop\MidtransController::class, 'error'])->name('payment.error');
+    Route::get('/payment/status', [PetshopCheckoutController::class, 'paymentStatus'])->name('payment.status');
 });
 
 Route::middleware([

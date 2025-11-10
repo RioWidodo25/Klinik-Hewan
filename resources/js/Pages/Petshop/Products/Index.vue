@@ -4,7 +4,7 @@ import ProductCard from '@/Components/Petshop/ProductCard.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { computed, reactive } from 'vue';
+import { computed, reactive, ref, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
     products: {
@@ -24,6 +24,10 @@ const props = defineProps({
         default: () => ({ min: 0, max: 0 }),
     },
     sortOptions: {
+        type: Array,
+        default: () => [],
+    },
+    headerImages: {
         type: Array,
         default: () => [],
     },
@@ -87,13 +91,93 @@ const formatCurrency = (value) => {
         minimumFractionDigits: 0,
     }).format(value);
 };
+
+// Slider effect
+const currentSlide = ref(0);
+let sliderInterval = null;
+
+const nextSlide = () => {
+    if (props.headerImages.length > 0) {
+        currentSlide.value = (currentSlide.value + 1) % props.headerImages.length;
+    }
+};
+
+const goToSlide = (index) => {
+    currentSlide.value = index;
+};
+
+onMounted(() => {
+    // Auto-slide setiap 5 detik jika ada lebih dari 1 gambar
+    if (props.headerImages.length > 1) {
+        sliderInterval = setInterval(nextSlide, 5000);
+    }
+});
+
+onUnmounted(() => {
+    if (sliderInterval) {
+        clearInterval(sliderInterval);
+    }
+});
 </script>
 
 <template>
     <Head title="Petshop" />
 
     <PublicLayout>
-        <section class="bg-gray-50 py-12 dark:bg-gray-900">
+        <!-- Header dengan Image Slider -->
+        <div v-if="headerImages.length > 0" class="relative min-h-[400px] overflow-hidden bg-gray-900">
+            <!-- Slider Background -->
+            <div class="absolute inset-0">
+                <div
+                    v-for="(image, index) in headerImages"
+                    :key="index"
+                    class="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+                    :class="currentSlide === index ? 'opacity-100' : 'opacity-0'"
+                >
+                    <div
+                        class="h-full w-full bg-cover bg-center bg-no-repeat"
+                        :style="{ backgroundImage: `url(${image})` }"
+                    ></div>
+                </div>
+                <!-- Overlay -->
+                <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60"></div>
+            </div>
+
+            <!-- Header Content -->
+            <div class="relative z-10 flex h-full items-center py-20 sm:py-24">
+                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
+                    <div class="text-center">
+                        <p class="text-sm font-semibold uppercase tracking-wide text-amber-400 drop-shadow-lg">
+                            Petshop Klinik Hewan
+                        </p>
+                        <h1 class="mt-2 text-3xl font-bold text-white drop-shadow-lg sm:text-4xl md:text-5xl" data-aos="fade-up">
+                            Produk &amp; Perlengkapan Hewan Kesayangan
+                        </h1>
+                        <p class="mx-auto mt-3 max-w-2xl text-base text-white/90 drop-shadow-md sm:text-lg" data-aos="fade-up" data-aos-delay="100">
+                            Temukan makanan, vitamin, dan perlengkapan terbaik untuk hewan kesayangan Anda. Semua produk dipilih oleh dokter hewan kami.
+                        </p>
+                        <div class="mt-6 inline-block rounded-2xl border border-amber-400/50 bg-amber-500/20 px-5 py-3 text-sm font-medium text-amber-100 shadow-lg backdrop-blur-sm" data-aos="fade-up" data-aos-delay="200">
+                            {{ productCountText }}
+                        </div>
+
+                        <!-- Slider Indicators (hanya tampil jika lebih dari 1 gambar) -->
+                        <div v-if="headerImages.length > 1" class="mt-8 flex justify-center space-x-3">
+                            <button
+                                v-for="(image, index) in headerImages"
+                                :key="'indicator-' + index"
+                                @click="goToSlide(index)"
+                                class="h-3 w-3 rounded-full transition-all duration-300"
+                                :class="currentSlide === index ? 'bg-amber-400 w-8' : 'bg-white bg-opacity-50 hover:bg-opacity-75'"
+                                :aria-label="'Go to slide ' + (index + 1)"
+                            ></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fallback Header (tanpa image) -->
+        <section v-else class="bg-gray-50 py-12 dark:bg-gray-900">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                     <div>
@@ -111,8 +195,13 @@ const formatCurrency = (value) => {
                         {{ productCountText }}
                     </div>
                 </div>
+            </div>
+        </section>
 
-                <div class="mt-10 grid gap-10 lg:grid-cols-[280px,1fr]">
+        <!-- Filters & Products Section -->
+        <section class="bg-gray-50 py-12 dark:bg-gray-900">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="grid gap-10 lg:grid-cols-[280px,1fr]">
                     <!-- Filters -->
                     <aside class="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                         <form @submit.prevent="applyFilters" class="space-y-6">
@@ -215,14 +304,17 @@ const formatCurrency = (value) => {
                             {{ flash.error }}
                         </div>
 
-                        <div v-if="products.data && products.data.length > 0" class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                            <ProductCard
-                                v-for="product in products.data"
-                                :key="product.id"
-                                :product="product"
-                                :show-add-button="!product.has_variants"
-                                @add-to-cart="handleAddToCart"
-                            />
+                        <!-- Card Frame Transparan untuk Grid Produk -->
+                        <div v-if="products.data && products.data.length > 0" class="rounded-2xl bg-white/50 p-6 backdrop-blur-sm dark:bg-gray-800/50" data-aos="fade-up">
+                            <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                                <ProductCard
+                                    v-for="product in products.data"
+                                    :key="product.id"
+                                    :product="product"
+                                    :show-add-button="!product.has_variants"
+                                    @add-to-cart="handleAddToCart"
+                                />
+                            </div>
                         </div>
 
                         <div v-else class="rounded-2xl border border-dashed border-gray-200 bg-white p-10 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">

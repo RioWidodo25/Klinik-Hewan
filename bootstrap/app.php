@@ -17,7 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        //
+        // Trust ngrok proxy
+        $middleware->web(prepend: [
+            \App\Http\Middleware\TrustNgrokProxy::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

@@ -21,6 +21,13 @@ class FooterSetting extends Model
         'logo',
         'logo_dark',
         'gallery_parallax_bg',
+        'petshop_header_images',
+        'home_slider_images',
+    ];
+
+    protected $casts = [
+        'petshop_header_images' => 'array',
+        'home_slider_images' => 'array',
     ];
 
     // Helper method untuk mendapatkan settings

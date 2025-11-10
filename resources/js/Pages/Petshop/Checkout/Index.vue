@@ -4,7 +4,7 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, watch, onMounted, ref } from 'vue';
 
 const props = defineProps({
     cart: {
@@ -19,14 +19,15 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
-    paymentChannels: {
-        type: Array,
-        default: () => [],
-    },
 });
 
 const page = usePage();
 const flash = computed(() => page.props.flash || {});
+
+// Log flash data for debugging
+watch(() => page.props.flash, (newFlash) => {
+    console.log('Flash data updated:', newFlash);
+}, { immediate: true, deep: true });
 
 const form = useForm({
     customer_name: props.customer.name || '',
@@ -37,7 +38,6 @@ const form = useForm({
     shipping_province: '',
     shipping_postal_code: '',
     shipping_method: props.shippingMethods[0]?.code || '',
-    payment_channel: props.paymentChannels[0]?.code || '',
     notes: '',
 });
 
@@ -59,9 +59,127 @@ const formatCurrency = (value) => {
     }).format(value ?? 0);
 };
 
+// Load Midtrans Snap script
+const snapLoaded = ref(false);
+
+onMounted(() => {
+    console.log('Mounting checkout page...');
+    console.log('Client Key:', import.meta.env.VITE_MIDTRANS_CLIENT_KEY);
+    console.log('Is Production:', import.meta.env.VITE_MIDTRANS_IS_PRODUCTION);
+    
+    const script = document.createElement('script');
+    script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+    script.setAttribute('data-client-key', 'Mid-client-38gsJLbWKKi6LH3s');
+    script.onload = () => {
+        snapLoaded.value = true;
+        console.log('✅ Midtrans Snap script loaded successfully');
+        console.log('window.snap available:', !!window.snap);
+        // Check if there's a snap token on mount
+        checkAndOpenSnap();
+    };
+    script.onerror = () => {
+        console.error('❌ Failed to load Midtrans Snap script');
+    };
+    document.head.appendChild(script);
+});
+
+// Function to check and open Snap
+const checkAndOpenSnap = () => {
+    const snapToken = flash.value.snap_token;
+    const orderNumber = flash.value.order_number;
+    
+    if (snapToken && window.snap && snapLoaded.value) {
+        console.log('Opening Snap with token:', snapToken);
+        
+        window.snap.pay(snapToken, {
+            onSuccess: function(result) {
+                console.log('Payment success:', result);
+                window.location.href = route('petshop.payment.finish', { order_id: orderNumber });
+            },
+            onPending: function(result) {
+                console.log('Payment pending:', result);
+                window.location.href = route('petshop.payment.finish', { order_id: orderNumber });
+            },
+            onError: function(result) {
+                console.log('Payment error:', result);
+                window.location.href = route('petshop.payment.error', { order_id: orderNumber });
+            },
+            onClose: function() {
+                console.log('Payment popup closed');
+                window.location.href = route('petshop.payment.unfinish', { order_id: orderNumber });
+            }
+        });
+    }
+};
+
+// Watch for snap_token in flash messages
+watch(() => flash.value.snap_token, (snapToken) => {
+    if (snapToken) {
+        console.log('Snap token detected:', snapToken);
+        // Wait a bit for Snap to be ready
+        setTimeout(() => {
+            checkAndOpenSnap();
+        }, 500);
+    }
+});
+
 const submitCheckout = () => {
     form.post(route('petshop.checkout.store'), {
-        preserveScroll: true,
+        preserveScroll: false,
+        onSuccess: (page) => {
+            console.log('Checkout submitted successfully');
+            console.log('Page props:', page.props);
+            
+            // Get snap token from response
+            const snapToken = page.props.flash?.snap_token;
+            const orderNumber = page.props.flash?.order_number;
+            
+            console.log('Snap Token from response:', snapToken);
+            console.log('Order Number:', orderNumber);
+            
+            if (snapToken) {
+                // Wait for Snap to be ready
+                const checkSnap = setInterval(() => {
+                    if (window.snap) {
+                        clearInterval(checkSnap);
+                        console.log('Opening Snap popup...');
+                        
+                        window.snap.pay(snapToken, {
+                            onSuccess: function(result) {
+                                console.log('Payment success:', result);
+                                window.location.href = route('petshop.payment.finish', { order_id: orderNumber });
+                            },
+                            onPending: function(result) {
+                                console.log('Payment pending:', result);
+                                window.location.href = route('petshop.payment.finish', { order_id: orderNumber });
+                            },
+                            onError: function(result) {
+                                console.log('Payment error:', result);
+                                window.location.href = route('petshop.payment.error', { order_id: orderNumber });
+                            },
+                            onClose: function() {
+                                console.log('Payment popup closed');
+                                window.location.href = route('petshop.payment.unfinish', { order_id: orderNumber });
+                            }
+                        });
+                    }
+                }, 100);
+                
+                // Timeout after 5 seconds
+                setTimeout(() => {
+                    clearInterval(checkSnap);
+                    if (!window.snap) {
+                        console.error('Snap not loaded after 5 seconds');
+                        alert('Gagal memuat pembayaran. Silakan refresh halaman.');
+                    }
+                }, 5000);
+            } else {
+                console.error('No snap token in response');
+            }
+        },
+        onError: (errors) => {
+            console.error('Checkout errors:', errors);
+        }
     });
 };
 </script>
@@ -81,7 +199,7 @@ const submitCheckout = () => {
                             Informasi Checkout
                         </h1>
                         <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">
-                            Isi data pengiriman dan pilih metode pembayaran Tripay. Pastikan informasi sudah benar sebelum konfirmasi.
+                            Isi data pengiriman dengan lengkap. Pastikan informasi sudah benar sebelum konfirmasi.
                         </p>
                     </div>
                     <Link
@@ -236,35 +354,6 @@ const submitCheckout = () => {
                             </div>
                         </div>
 
-                        <div class="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                                Metode Pembayaran Tripay
-                            </h2>
-                            <div class="mt-4 space-y-3">
-                                <label
-                                    v-for="channel in paymentChannels"
-                                    :key="channel.code"
-                                    class="flex cursor-pointer items-start justify-between gap-4 rounded-2xl border border-gray-200 px-4 py-3 text-sm transition hover:border-amber-300 hover:bg-amber-50 dark:border-gray-700 dark:hover:border-amber-500/60 dark:hover:bg-amber-900/20"
-                                >
-                                    <div class="flex items-start gap-3">
-                                        <input
-                                            type="radio"
-                                            v-model="form.payment_channel"
-                                            :value="channel.code"
-                                            class="mt-1 size-4 border-gray-300 text-amber-500 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-900"
-                                        >
-                                        <div>
-                                            <p class="font-semibold text-gray-900 dark:text-gray-100">
-                                                {{ channel.label }}
-                                            </p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ channel.description }}</p>
-                                        </div>
-                                    </div>
-                                </label>
-                                <InputError :message="form.errors.payment_channel" class="mt-2" />
-                            </div>
-                        </div>
-
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <SecondaryButton type="button" @click="form.reset()">
                                 Reset Form
@@ -279,7 +368,7 @@ const submitCheckout = () => {
                         </div>
 
                         <p class="text-xs text-gray-500 dark:text-gray-400">
-                            Setelah konfirmasi, Anda akan diarahkan ke instruksi pembayaran Tripay. Mohon selesaikan pembayaran sebelum batas waktu yang ditentukan.
+                            Setelah konfirmasi, Anda akan diarahkan ke halaman pembayaran Midtrans. Silakan pilih metode pembayaran dan selesaikan transaksi sebelum batas waktu yang ditentukan.
                         </p>
                     </form>
 
@@ -337,7 +426,7 @@ const submitCheckout = () => {
                         </div>
 
                         <p class="text-xs text-gray-500 dark:text-gray-400">
-                            Biaya layanan Tripay akan otomatis dihitung berdasarkan metode pembayaran yang dipilih.
+                            Anda dapat memilih berbagai metode pembayaran yang tersedia di Midtrans (Virtual Account, E-Wallet, Credit Card, dll).
                         </p>
                     </aside>
                 </div>

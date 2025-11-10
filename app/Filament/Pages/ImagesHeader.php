@@ -32,6 +32,8 @@ class ImagesHeader extends Page
         $this->form->fill([
             'blog_header_image' => $settings->blog_header_image,
             'gallery_parallax_bg' => $settings->gallery_parallax_bg,
+            'petshop_header_images' => $settings->petshop_header_images ?? [],
+            'home_slider_images' => $settings->home_slider_images ?? [],
         ]);
     }
 
@@ -73,6 +75,48 @@ class ImagesHeader extends Page
                             ])
                             ->maxSize(3072)
                             ->helperText('Gambar background untuk efek parallax di halaman gallery. Rekomendasi: 1920x1080px atau lebih besar. Max: 3MB')
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Petshop Header Slider')
+                    ->description('Upload multiple gambar untuk slider header halaman Petshop (Max: 5 gambar)')
+                    ->schema([
+                        FileUpload::make('petshop_header_images')
+                            ->label('Gambar Slider Petshop')
+                            ->disk('public')
+                            ->directory('petshop/header')
+                            ->image()
+                            ->multiple()
+                            ->maxFiles(5)
+                            ->reorderable()
+                            ->imageEditor()
+                            ->imageEditorAspectRatios([
+                                '16:9',
+                                '21:9',
+                            ])
+                            ->maxSize(3072)
+                            ->helperText('Upload 1-5 gambar untuk slider header Petshop. Gambar akan berganti otomatis setiap 5 detik. Rekomendasi: 1920x1080px. Max: 3MB per gambar')
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Home Hero Slider')
+                    ->description('Upload multiple gambar untuk slider hero di halaman Home (Max: 5 gambar)')
+                    ->schema([
+                        FileUpload::make('home_slider_images')
+                            ->label('Gambar Slider Home')
+                            ->disk('public')
+                            ->directory('home/slider')
+                            ->image()
+                            ->multiple()
+                            ->maxFiles(5)
+                            ->reorderable()
+                            ->imageEditor()
+                            ->imageEditorAspectRatios([
+                                '16:9',
+                                '21:9',
+                            ])
+                            ->maxSize(3072)
+                            ->helperText('Upload 1-5 gambar untuk slider hero di halaman Home. Gambar akan berganti otomatis setiap 5 detik. Rekomendasi: 1920x1080px. Max: 3MB per gambar')
                             ->columnSpanFull(),
                     ]),
             ])

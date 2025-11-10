@@ -23,6 +23,9 @@ class SliderImageResource extends Resource
 
     protected static ?string $navigationGroup = 'Website Settings';
 
+    // Hide from navigation (moved to Images Header)
+    protected static bool $shouldRegisterNavigation = false;
+
     public static function form(Form $form): Form
     {
         return $form

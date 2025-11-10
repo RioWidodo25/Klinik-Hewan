@@ -29,6 +29,15 @@ const placeholderGradients = [
 // Gunakan slider dari database atau fallback ke placeholder
 const sliderImages = computed(() => {
     if (props.sliders && props.sliders.length > 0) {
+        // Convert string URLs to object format
+        if (typeof props.sliders[0] === 'string') {
+            return props.sliders.map((url, index) => ({
+                id: index + 1,
+                title: null,
+                image_url: url,
+                gradient: null,
+            }));
+        }
         return props.sliders;
     }
     // Fallback placeholder
@@ -182,64 +191,87 @@ onUnmounted(() => {
                     </p>
                 </div>
 
-                <div class="mt-12 grid gap-8 md:grid-cols-3">
-                    <!-- Loop services dari database -->
-                    <div
-                        v-for="(service, index) in services"
-                        :key="service.id"
-                        class="group relative overflow-hidden rounded-lg bg-white p-6 shadow-md transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 dark:bg-gray-800"
-                        data-aos="fade-up"
-                        :data-aos-delay="(index + 1) * 100"
-                    >
-                        <!-- Decorative background effect on hover -->
-                        <div class="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+                <!-- Card Frame Transparan untuk membungkus grid services -->
+                <div class="mt-12 rounded-2xl bg-white/50 p-8 backdrop-blur-sm dark:bg-gray-800/50" data-aos="fade-up" data-aos-delay="200">
+                    <div class="grid gap-8 md:grid-cols-3">
+                        <!-- Loop services dari database -->
+                        <div
+                            v-for="(service, index) in services"
+                            :key="service.id"
+                            class="group relative overflow-hidden rounded-lg bg-white p-6 shadow-md transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 dark:bg-gray-700"
+                            data-aos="fade-up"
+                            :data-aos-delay="(index + 1) * 100"
+                        >
+                            <!-- Decorative background effect on hover -->
+                            <div class="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
 
-                        <!-- Content wrapper -->
-                        <div class="relative z-10">
-                            <!-- Icon with animated background -->
-                            <div
-                                class="flex h-12 w-12 items-center justify-center rounded-md text-white transition-all duration-300 group-hover:scale-110 group-hover:rotate-6"
-                                :class="service.icon_color"
-                            >
-                                <!-- Tampilkan icon custom jika ada -->
-                                <img
-                                    v-if="service.icon_url"
-                                    :src="service.icon_url"
-                                    :alt="service.title"
-                                    class="h-8 w-8 object-contain transition-transform duration-300 group-hover:scale-110"
-                                />
-                                <!-- Default SVG icon jika tidak ada -->
-                                <svg
-                                    v-else
-                                    class="h-6 w-6 transition-transform duration-300 group-hover:rotate-12"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
+                            <!-- Content wrapper -->
+                            <div class="relative z-10">
+                                <!-- Icon with animated background -->
+                                <div
+                                    class="flex h-12 w-12 items-center justify-center rounded-md text-white transition-all duration-300 group-hover:scale-110 group-hover:rotate-6"
+                                    :class="service.icon_color"
                                 >
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
+                                    <!-- Tampilkan icon custom jika ada -->
+                                    <img
+                                        v-if="service.icon_url"
+                                        :src="service.icon_url"
+                                        :alt="service.title"
+                                        class="h-8 w-8 object-contain transition-transform duration-300 group-hover:scale-110"
+                                    />
+                                    <!-- Default SVG icon jika tidak ada -->
+                                    <svg
+                                        v-else
+                                        class="h-6 w-6 transition-transform duration-300 group-hover:rotate-12"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                </div>
+
+                                <!-- Title with hover effect -->
+                                <h3 class="mt-4 text-xl font-semibold text-gray-900 transition-colors duration-300 group-hover:text-amber-600 dark:text-white dark:group-hover:text-amber-400">
+                                    {{ service.title }}
+                                </h3>
+
+                                <!-- Description -->
+                                <p class="mt-2 text-gray-600 dark:text-gray-300">
+                                    {{ service.description }}
+                                </p>
+
+                                <!-- Animated bottom border on hover -->
+                                <div class="mt-4 h-1 w-0 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 transition-all duration-300 group-hover:w-full"></div>
                             </div>
-
-                            <!-- Title with hover effect -->
-                            <h3 class="mt-4 text-xl font-semibold text-gray-900 transition-colors duration-300 group-hover:text-amber-600 dark:text-white dark:group-hover:text-amber-400">
-                                {{ service.title }}
-                            </h3>
-
-                            <!-- Description -->
-                            <p class="mt-2 text-gray-600 dark:text-gray-300">
-                                {{ service.description }}
-                            </p>
-
-                            <!-- Animated bottom border on hover -->
-                            <div class="mt-4 h-1 w-0 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 transition-all duration-300 group-hover:w-full"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Divider/Sekat -->
+        <div class="bg-gray-50 dark:bg-gray-900">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="relative py-8">
+                    <!-- Decorative divider line -->
+                    <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div class="w-full border-t-2 border-gray-300 dark:border-gray-700"></div>
+                    </div>
+                    <!-- Icon in center -->
+                    <div class="relative flex justify-center">
+                        <span class="bg-gray-50 px-4 dark:bg-gray-900">
+                            <svg class="h-8 w-8 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Dokter Spesialis Section -->
-        <div class="bg-white py-16 dark:bg-gray-800">
+        <div class="bg-gray-50 py-16 pb-32 dark:bg-gray-900">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
                     <h2 class="text-3xl font-bold text-gray-900 dark:text-white" data-aos="fade-up">
@@ -250,48 +282,51 @@ onUnmounted(() => {
                     </p>
                 </div>
 
-                <div class="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-                    <!-- Loop dokter dari database -->
-                    <div
-                        v-for="(doctor, index) in doctors"
-                        :key="doctor.id"
-                        class="group relative overflow-hidden rounded-xl bg-gray-50 shadow-lg transition-all duration-300 hover:shadow-2xl dark:bg-gray-700"
-                        data-aos="zoom-in"
-                        :data-aos-delay="(index + 1) * 100"
-                    >
-                        <!-- Foto atau Gradient Background -->
-                        <div class="aspect-[3/4] overflow-hidden">
-                            <!-- Tampilkan foto jika ada -->
-                            <div
-                                v-if="doctor.photo_url"
-                                class="h-full w-full bg-cover bg-center"
-                                :style="{ backgroundImage: `url(${doctor.photo_url})` }"
-                            ></div>
-                            <!-- Tampilkan gradient dengan icon jika tidak ada foto -->
-                            <div
-                                v-else
-                                class="bg-gradient-to-br h-full w-full"
-                                :class="doctor.gradient_color"
-                            >
-                                <div class="flex h-full items-center justify-center">
-                                    <svg class="h-32 w-32 text-white opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
+                <!-- Card Frame Transparan untuk membungkus grid dokter -->
+                <div class="mt-12 rounded-2xl bg-white/50 p-8 backdrop-blur-sm dark:bg-gray-800/50" data-aos="fade-up" data-aos-delay="200">
+                    <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                        <!-- Loop dokter dari database -->
+                        <div
+                            v-for="(doctor, index) in doctors"
+                            :key="doctor.id"
+                            class="group relative overflow-hidden rounded-xl bg-white shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 dark:bg-gray-700"
+                            data-aos="zoom-in"
+                            :data-aos-delay="(index + 1) * 100"
+                        >
+                            <!-- Foto atau Gradient Background -->
+                            <div class="aspect-[3/4] overflow-hidden">
+                                <!-- Tampilkan foto jika ada -->
+                                <div
+                                    v-if="doctor.photo_url"
+                                    class="h-full w-full bg-cover bg-center"
+                                    :style="{ backgroundImage: `url(${doctor.photo_url})` }"
+                                ></div>
+                                <!-- Tampilkan gradient dengan icon jika tidak ada foto -->
+                                <div
+                                    v-else
+                                    class="bg-gradient-to-br h-full w-full"
+                                    :class="doctor.gradient_color"
+                                >
+                                    <div class="flex h-full items-center justify-center">
+                                        <svg class="h-32 w-32 text-white opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Info Dokter -->
-                        <div class="p-6 text-center">
-                            <h3 class="text-xl font-bold text-gray-900 dark:text-white">
-                                {{ doctor.title }} {{ doctor.name }}
-                            </h3>
-                            <p class="mt-2 text-sm font-medium text-amber-600 dark:text-amber-400">
-                                {{ doctor.specialization }}
-                            </p>
-                            <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">
-                                {{ doctor.description }}
-                            </p>
+                            <!-- Info Dokter -->
+                            <div class="p-6 text-center">
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+                                    {{ doctor.title }} {{ doctor.name }}
+                                </h3>
+                                <p class="mt-2 text-sm font-medium text-amber-600 dark:text-amber-400">
+                                    {{ doctor.specialization }}
+                                </p>
+                                <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">
+                                    {{ doctor.description }}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -9,21 +9,28 @@ class Payment extends Model
 {
     protected $fillable = [
         'order_id',
-        'tripay_reference',
-        'tripay_merchant_ref',
+        'midtrans_order_id',
+        'midtrans_transaction_id',
         'payment_method',
         'payment_channel',
+        'midtrans_payment_type',
         'payment_name',
+        'bank',
+        'va_number',
+        'bill_key',
+        'biller_code',
+        'pdf_url',
         'amount',
         'fee',
         'total_amount',
         'status',
-        'payment_code',
-        'qr_url',
-        'checkout_url',
+        'transaction_status',
+        'fraud_status',
+        'snap_token',
+        'snap_redirect_url',
         'expired_at',
         'paid_at',
-        'tripay_response',
+        'midtrans_response',
     ];
 
     protected $casts = [
@@ -32,7 +39,7 @@ class Payment extends Model
         'total_amount' => 'decimal:2',
         'expired_at' => 'datetime',
         'paid_at' => 'datetime',
-        'tripay_response' => 'array',
+        'midtrans_response' => 'array',
     ];
 
     // Relationships
@@ -109,11 +116,11 @@ class Payment extends Model
         ]);
     }
 
-    // Tripay Methods
-    public function getTripayInstructions()
+    // Midtrans Methods
+    public function getMidtransInstructions()
     {
-        if ($this->tripay_response && isset($this->tripay_response['instructions'])) {
-            return $this->tripay_response['instructions'];
+        if ($this->midtrans_response && isset($this->midtrans_response['va_numbers'])) {
+            return $this->midtrans_response['va_numbers'];
         }
 
         return [];
@@ -121,19 +128,31 @@ class Payment extends Model
 
     public function isQris()
     {
-        return strtoupper($this->payment_method) === 'QRIS' || strtoupper($this->payment_channel) === 'QRIS';
+        return strtoupper($this->midtrans_payment_type ?? '') === 'QRIS' || 
+               strtoupper($this->payment_channel ?? '') === 'QRIS';
     }
 
     public function isVirtualAccount()
     {
-        return in_array(strtoupper($this->payment_method), ['VA', 'VIRTUAL_ACCOUNT']) ||
-               str_contains(strtoupper($this->payment_channel ?? ''), 'VA');
+        return in_array(strtoupper($this->midtrans_payment_type ?? ''), ['BANK_TRANSFER', 'ECHANNEL']) ||
+               str_contains(strtoupper($this->payment_channel ?? ''), 'VA') ||
+               !empty($this->va_number);
     }
 
     public function isEwallet()
     {
-        return in_array(strtoupper($this->payment_method), ['EWALLET', 'E-WALLET']) ||
-               in_array(strtoupper($this->payment_channel ?? ''), ['OVO', 'DANA', 'SHOPEEPAY', 'GOPAY', 'LINKAJA']);
+        return in_array(strtoupper($this->midtrans_payment_type ?? ''), ['GOPAY', 'SHOPEEPAY']) ||
+               in_array(strtoupper($this->payment_channel ?? ''), ['GOPAY', 'SHOPEEPAY']);
+    }
+
+    public function isCreditCard()
+    {
+        return strtoupper($this->midtrans_payment_type ?? '') === 'CREDIT_CARD';
+    }
+
+    public function isConvenienceStore()
+    {
+        return in_array(strtoupper($this->midtrans_payment_type ?? ''), ['CSTORE', 'ALFAMART', 'INDOMARET']);
     }
 
     // Accessor
@@ -145,8 +164,33 @@ class Payment extends Model
             return 'Virtual Account';
         } elseif ($this->isEwallet()) {
             return 'E-Wallet';
+        } elseif ($this->isCreditCard()) {
+            return 'Credit Card';
+        } elseif ($this->isConvenienceStore()) {
+            return 'Convenience Store';
         }
 
-        return $this->payment_method;
+        return $this->midtrans_payment_type ?? $this->payment_method;
+    }
+
+    // Transaction Status Checkers
+    public function isTransactionPending()
+    {
+        return in_array($this->transaction_status, ['pending', 'authorize']);
+    }
+
+    public function isTransactionSuccess()
+    {
+        return in_array($this->transaction_status, ['capture', 'settlement']);
+    }
+
+    public function isTransactionDenied()
+    {
+        return $this->transaction_status === 'deny';
+    }
+
+    public function isTransactionCancelled()
+    {
+        return in_array($this->transaction_status, ['cancel', 'expire']);
     }
 }
