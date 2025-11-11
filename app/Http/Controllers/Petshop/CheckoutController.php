@@ -36,6 +36,9 @@ class CheckoutController extends Controller
         $cartData = $this->cartService->transformCart($cart, summary: false);
 
         $user = auth()->user();
+        
+        // Get default address if available
+        $defaultAddress = $user?->addresses()->where('is_default', true)->first();
 
         return Inertia::render('Petshop/Checkout/Index', [
             'cart' => $cartData,
@@ -44,6 +47,14 @@ class CheckoutController extends Controller
                 'email' => $user?->email ?? '',
                 'phone' => $user?->getAttribute('phone') ?? '',
             ],
+            'defaultAddress' => $defaultAddress ? [
+                'recipient_name' => $defaultAddress->recipient_name,
+                'phone_number' => $defaultAddress->phone_number,
+                'full_address' => $defaultAddress->full_address,
+                'city' => $defaultAddress->city ?? '',
+                'province' => $defaultAddress->province ?? '',
+                'postal_code' => $defaultAddress->postal_code ?? '',
+            ] : null,
             'shippingMethods' => [
                 ['code' => 'regular', 'label' => 'Regular (2-4 hari)', 'fee' => 20000],
                 ['code' => 'express', 'label' => 'Express (1-2 hari)', 'fee' => 35000],

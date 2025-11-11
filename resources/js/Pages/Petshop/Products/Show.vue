@@ -83,6 +83,20 @@ const setActiveImage = (url) => {
 const addToCart = () => {
     variantError.value = '';
 
+    // Check if user is authenticated
+    if (!page.props.auth?.user) {
+        // Show alert and redirect to login
+        if (confirm('Anda harus login terlebih dahulu untuk menambahkan produk ke keranjang. Login sekarang?')) {
+            router.visit(route('login'), {
+                onBefore: () => {
+                    // Store the current page as intended URL
+                    sessionStorage.setItem('intended_url', window.location.href);
+                }
+            });
+        }
+        return;
+    }
+
     if (productHasVariants.value && !selectedVariantId.value) {
         variantError.value = 'Silakan pilih varian terlebih dahulu.';
         return;

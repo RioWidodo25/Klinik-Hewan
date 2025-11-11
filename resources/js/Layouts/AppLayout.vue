@@ -8,6 +8,7 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import ThemeSwitch from '@/Components/ThemeSwitch.vue';
+import Toast from '@/Components/Toast.vue';
 
 defineProps({
     title: String,
@@ -52,6 +53,12 @@ const logout = () => {
                                 <NavLink :href="route('home')" :active="route().current('home')">
                                     Home
                                 </NavLink>
+                                <NavLink :href="route('petshop.index')" :active="route().current('petshop.*')">
+                                    Petshop
+                                </NavLink>
+                                <NavLink :href="route('blog')" :active="route().current('blog')">
+                                    Blog
+                                </NavLink>
                                 <NavLink :href="route('gallery')" :active="route().current('gallery')">
                                     Gallery
                                 </NavLink>
@@ -59,6 +66,16 @@ const logout = () => {
                         </div>
 
                         <div class="hidden sm:flex sm:items-center sm:ms-6">
+                            <!-- Cart Icon -->
+                            <Link :href="route('petshop.cart.show')" class="relative p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                </svg>
+                                <span v-if="$page.props.cart && $page.props.cart.items_count > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full size-5 flex items-center justify-center">
+                                    {{ $page.props.cart.items_count }}
+                                </span>
+                            </Link>
+
                             <!-- Dark Mode Toggle -->
                             <ThemeSwitch />
 
@@ -149,6 +166,14 @@ const logout = () => {
                                             Profile
                                         </DropdownLink>
 
+                                        <DropdownLink :href="route('profile.addresses.index')">
+                                            Daftar Alamat
+                                        </DropdownLink>
+
+                                        <DropdownLink :href="route('profile.favorites.index')">
+                                            Barang Favorit
+                                        </DropdownLink>
+
                                         <DropdownLink v-if="$page.props.jetstream.hasApiFeatures" :href="route('api-tokens.index')">
                                             API Tokens
                                         </DropdownLink>
@@ -201,6 +226,12 @@ const logout = () => {
                         <ResponsiveNavLink :href="route('home')" :active="route().current('home')">
                             Home
                         </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('petshop.index')" :active="route().current('petshop.*')">
+                            Petshop
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('blog')" :active="route().current('blog')">
+                            Blog
+                        </ResponsiveNavLink>
                         <ResponsiveNavLink :href="route('gallery')" :active="route().current('gallery')">
                             Gallery
                         </ResponsiveNavLink>
@@ -226,6 +257,14 @@ const logout = () => {
                         <div class="mt-3 space-y-1">
                             <ResponsiveNavLink :href="route('profile.show')" :active="route().current('profile.show')">
                                 Profile
+                            </ResponsiveNavLink>
+
+                            <ResponsiveNavLink :href="route('profile.addresses.index')" :active="route().current('profile.addresses.index')">
+                                Daftar Alamat
+                            </ResponsiveNavLink>
+
+                            <ResponsiveNavLink :href="route('profile.favorites.index')" :active="route().current('profile.favorites.index')">
+                                Barang Favorit
                             </ResponsiveNavLink>
 
                             <ResponsiveNavLink v-if="$page.props.jetstream.hasApiFeatures" :href="route('api-tokens.index')" :active="route().current('api-tokens.index')">
@@ -295,5 +334,8 @@ const logout = () => {
                 <slot />
             </main>
         </div>
+
+        <!-- Toast Notification -->
+        <Toast />
     </div>
 </template>

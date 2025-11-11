@@ -1,7 +1,9 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, watch, nextTick, onBeforeUnmount, onMounted } from 'vue';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 const page = usePage();
 
@@ -15,8 +17,11 @@ defineProps({
 const showAddressModal = ref(false);
 const showMapModal = ref(false);
 const showDetailModal = ref(false);
+const showEditModal = ref(false);
+const showEditMapModal = ref(false);
 const searchQuery = ref('');
 const currentLocation = ref(null);
+const editLocation = ref(null);
 const selectedAddress = ref({
     name: '',
     latitude: null,
@@ -26,6 +31,58 @@ const selectedAddress = ref({
     recipient_name: '',
     phone_number: '',
 });
+const editingAddress = ref(null);
+
+const mapElement = ref(null);
+const editMapElement = ref(null);
+const mapInstance = ref(null);
+const editMapInstance = ref(null);
+const mapLoading = ref(false);
+let mapUpdateTimeout = null;
+let editMapUpdateTimeout = null;
+
+const DEFAULT_COORDS = { lat: -6.2088, lng: 106.8456 };
+const MAP_PAN_STEP = 0.001; // ~111m per step
+
+const reverseGeocode = async (lat, lng) => {
+    const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+    );
+    return response.json();
+};
+
+const updateSelectedAddressFromCoords = async (coords) => {
+    if (!coords) return;
+
+    try {
+        const data = await reverseGeocode(coords.lat, coords.lng);
+        selectedAddress.value.latitude = coords.lat;
+        selectedAddress.value.longitude = coords.lng;
+        selectedAddress.value.name = data.display_name || 'Lokasi Terpilih';
+        selectedAddress.value.full_address = data.display_name || '';
+    } catch (error) {
+        console.error('Error fetching address:', error);
+    }
+};
+
+const updateEditingAddressFromCoords = async (coords) => {
+    if (!coords || !editingAddress.value) return;
+
+    try {
+        const data = await reverseGeocode(coords.lat, coords.lng);
+        editingAddress.value.latitude = coords.lat;
+        editingAddress.value.longitude = coords.lng;
+        editingAddress.value.full_address = data.display_name || editingAddress.value.full_address;
+
+        if (data.address) {
+            editingAddress.value.province = data.address.state || editingAddress.value.province;
+            editingAddress.value.city = data.address.city || data.address.town || data.address.county || editingAddress.value.city;
+            editingAddress.value.postal_code = data.address.postcode || editingAddress.value.postal_code;
+        }
+    } catch (error) {
+        console.error('Error fetching address:', error);
+    }
+};
 
 const openAddressModal = () => {
     showAddressModal.value = true;
@@ -45,33 +102,14 @@ const useCurrentLocation = () => {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             async (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                
-                currentLocation.value = {
-                    lat: lat,
-                    lng: lng
+                const coords = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
                 };
-                
-                // Get address from coordinates using reverse geocoding
-                try {
-                    const response = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
-                    );
-                    const data = await response.json();
-                    
-                    selectedAddress.value.latitude = lat;
-                    selectedAddress.value.longitude = lng;
-                    selectedAddress.value.name = data.display_name || 'Lokasi Saat Ini';
-                    selectedAddress.value.full_address = data.display_name || '';
-                } catch (error) {
-                    console.error('Error fetching address:', error);
-                    selectedAddress.value.name = 'Lokasi Saat Ini';
-                    selectedAddress.value.latitude = lat;
-                    selectedAddress.value.longitude = lng;
-                }
-                
-                // Close search modal and open map modal
+
+                currentLocation.value = coords;
+                await updateSelectedAddressFromCoords(coords);
+
                 showAddressModal.value = false;
                 showMapModal.value = true;
             },
@@ -85,11 +123,162 @@ const useCurrentLocation = () => {
     }
 };
 
+const updateAddressFromLocation = async (coords = currentLocation.value) => {
+    if (!coords) return;
+    await updateSelectedAddressFromCoords(coords);
+};
+
 const searchLocation = () => {
     if (searchQuery.value.trim()) {
         console.log('Searching for:', searchQuery.value);
         // TODO: Implement location search functionality
     }
+};
+
+watch(showMapModal, async (value) => {
+    if (value) {
+        if (!currentLocation.value) {
+            currentLocation.value = selectedAddress.value.latitude && selectedAddress.value.longitude
+                ? { lat: selectedAddress.value.latitude, lng: selectedAddress.value.longitude }
+                : DEFAULT_COORDS;
+        }
+        await nextTick();
+        initializeMap();
+    } else {
+        destroyMap();
+    }
+});
+
+watch(showEditMapModal, async (value) => {
+    if (value) {
+        await nextTick();
+        initializeEditMap();
+    } else {
+        destroyEditMap();
+    }
+});
+
+onBeforeUnmount(() => {
+    destroyMap();
+    destroyEditMap();
+});
+
+const destroyMap = () => {
+    if (mapUpdateTimeout) {
+        clearTimeout(mapUpdateTimeout);
+        mapUpdateTimeout = null;
+    }
+    if (mapInstance.value) {
+        mapInstance.value.remove();
+        mapInstance.value = null;
+    }
+};
+
+const destroyEditMap = () => {
+    if (editMapUpdateTimeout) {
+        clearTimeout(editMapUpdateTimeout);
+        editMapUpdateTimeout = null;
+    }
+    if (editMapInstance.value) {
+        editMapInstance.value.remove();
+        editMapInstance.value = null;
+    }
+};
+
+const initializeMap = () => {
+    try {
+        if (!mapElement.value) return;
+
+        const initialCoords = currentLocation.value || DEFAULT_COORDS;
+        currentLocation.value = initialCoords;
+
+        destroyMap();
+        
+        mapLoading.value = true;
+        
+        mapInstance.value = L.map(mapElement.value, {
+            center: [initialCoords.lat, initialCoords.lng],
+            zoom: 16,
+            zoomControl: false,
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 19,
+        }).addTo(mapInstance.value);
+
+        mapInstance.value.on('moveend', () => {
+            const center = mapInstance.value.getCenter();
+            const coords = { lat: center.lat, lng: center.lng };
+            currentLocation.value = coords;
+            
+            if (mapUpdateTimeout) clearTimeout(mapUpdateTimeout);
+            mapUpdateTimeout = setTimeout(() => updateAddressFromLocation(coords), 500);
+        });
+
+        mapLoading.value = false;
+        updateAddressFromLocation(initialCoords);
+    } catch (error) {
+        console.error('Error initializing map:', error);
+        mapLoading.value = false;
+    }
+};
+
+const initializeEditMap = () => {
+    if (!editingAddress.value) return;
+
+    try {
+        if (!editMapElement.value) return;
+
+        const initialCoords = editLocation.value
+            || (editingAddress.value.latitude && editingAddress.value.longitude
+                ? { lat: editingAddress.value.latitude, lng: editingAddress.value.longitude }
+                : DEFAULT_COORDS);
+
+        editLocation.value = initialCoords;
+
+        destroyEditMap();
+        
+        mapLoading.value = true;
+
+        editMapInstance.value = L.map(editMapElement.value, {
+            center: [initialCoords.lat, initialCoords.lng],
+            zoom: 16,
+            zoomControl: false,
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 19,
+        }).addTo(editMapInstance.value);
+
+        editMapInstance.value.on('moveend', () => {
+            const center = editMapInstance.value.getCenter();
+            const coords = { lat: center.lat, lng: center.lng };
+            editLocation.value = coords;
+            
+            if (editMapUpdateTimeout) clearTimeout(editMapUpdateTimeout);
+            editMapUpdateTimeout = setTimeout(() => updateEditingAddressFromCoords(coords), 500);
+        });
+
+        mapLoading.value = false;
+        updateEditingAddressFromCoords(initialCoords);
+    } catch (error) {
+        console.error('Error initializing edit map:', error);
+        mapLoading.value = false;
+    }
+};
+
+const moveMapCenter = (latOffset, lngOffset) => {
+    if (!mapInstance.value) return;
+    const center = mapInstance.value.getCenter();
+    mapInstance.value.panTo([center.lat + latOffset, center.lng + lngOffset]);
+};
+
+const moveEditMapCenter = (latOffset, lngOffset) => {
+    if (!editMapInstance.value) return;
+    const center = editMapInstance.value.getCenter();
+    editMapInstance.value.panTo([center.lat + latOffset, center.lng + lngOffset]);
 };
 
 const saveAddressDetails = () => {
@@ -160,6 +349,136 @@ const deleteAddress = (addressId) => {
         });
     }
 };
+
+const editAddress = (address) => {
+    editingAddress.value = { ...address };
+    showEditModal.value = true;
+};
+
+const closeEditModal = () => {
+    showEditModal.value = false;
+    editingAddress.value = null;
+};
+
+const updateAddress = () => {
+    if (!editingAddress.value) return;
+    
+    router.patch(route('profile.addresses.update', editingAddress.value.id), {
+        label: editingAddress.value.label,
+        recipient_name: editingAddress.value.recipient_name,
+        phone_number: editingAddress.value.phone_number,
+        full_address: editingAddress.value.full_address,
+        city: editingAddress.value.city,
+        province: editingAddress.value.province,
+        postal_code: editingAddress.value.postal_code,
+        latitude: editingAddress.value.latitude,
+        longitude: editingAddress.value.longitude,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeEditModal();
+        },
+    });
+};
+
+const openEditMapModal = () => {
+    if (editingAddress.value) {
+        // Ensure we have valid coordinates
+        const lat = editingAddress.value.latitude || -6.2088; // Default to Jakarta if null
+        const lng = editingAddress.value.longitude || 106.8456;
+        
+        editLocation.value = {
+            lat: lat,
+            lng: lng
+        };
+        showEditMapModal.value = true;
+    }
+};
+
+const closeEditMapModal = () => {
+    showEditMapModal.value = false;
+    editLocation.value = null;
+};
+
+const saveEditLocation = async () => {
+    if (!editLocation.value || !editingAddress.value) return;
+    
+    // Update coordinates
+    editingAddress.value.latitude = editLocation.value.lat;
+    editingAddress.value.longitude = editLocation.value.lng;
+    
+    // Get address from coordinates using reverse geocoding
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${editLocation.value.lat}&lon=${editLocation.value.lng}&zoom=18&addressdetails=1`
+        );
+        const data = await response.json();
+        
+        // Update full address
+        editingAddress.value.full_address = data.display_name || editingAddress.value.full_address;
+        
+        // Parse address components if available
+        if (data.address) {
+            editingAddress.value.province = data.address.state || editingAddress.value.province;
+            editingAddress.value.city = data.address.city || data.address.town || data.address.county || editingAddress.value.city;
+            editingAddress.value.postal_code = data.address.postcode || editingAddress.value.postal_code;
+        }
+    } catch (error) {
+        console.error('Error fetching address:', error);
+    }
+    
+    closeEditMapModal();
+};
+
+const useCurrentLocationForEdit = () => {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                editLocation.value = {
+                    lat: lat,
+                    lng: lng
+                };
+                
+                if (editMapInstance.value) {
+                    editMapInstance.value.panTo([lat, lng]);
+                }
+                
+                // Update editing address
+                if (editingAddress.value) {
+                    editingAddress.value.latitude = lat;
+                    editingAddress.value.longitude = lng;
+                    
+                    // Get address from coordinates
+                    try {
+                        const response = await fetch(
+                            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+                        );
+                        const data = await response.json();
+                        
+                        editingAddress.value.full_address = data.display_name || '';
+                        
+                        if (data.address) {
+                            editingAddress.value.province = data.address.state || editingAddress.value.province;
+                            editingAddress.value.city = data.address.city || data.address.town || data.address.county || editingAddress.value.city;
+                            editingAddress.value.postal_code = data.address.postcode || editingAddress.value.postal_code;
+                        }
+                    } catch (error) {
+                        console.error('Error fetching address:', error);
+                    }
+                }
+            },
+            (error) => {
+                console.error('Error getting location:', error);
+                alert('Tidak dapat mengakses lokasi. Pastikan Anda mengizinkan akses lokasi.');
+            }
+        );
+    } else {
+        alert('Browser Anda tidak mendukung geolocation.');
+    }
+};
 </script>
 
 <template>
@@ -175,13 +494,24 @@ const deleteAddress = (addressId) => {
                 <div class="overflow-hidden bg-white shadow-xl dark:bg-gray-800 sm:rounded-lg">
                     <div class="p-6 lg:p-8">
                         <div class="flex items-center justify-between mb-6">
-                            <div>
-                                <h1 class="text-2xl font-medium text-gray-900 dark:text-white">
-                                    Daftar Alamat Pengiriman
-                                </h1>
-                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                    Kelola alamat pengiriman Anda untuk checkout yang lebih cepat
-                                </p>
+                            <div class="flex items-center gap-4">
+                                <Link
+                                    :href="route('home')"
+                                    class="inline-flex items-center justify-center rounded-lg p-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200 transition-colors"
+                                    title="Kembali ke Home"
+                                >
+                                    <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                                    </svg>
+                                </Link>
+                                <div>
+                                    <h1 class="text-2xl font-medium text-gray-900 dark:text-white">
+                                        Daftar Alamat Pengiriman
+                                    </h1>
+                                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                        Kelola alamat pengiriman Anda untuk checkout yang lebih cepat
+                                    </p>
+                                </div>
                             </div>
                             <button
                                 type="button"
@@ -219,21 +549,13 @@ const deleteAddress = (addressId) => {
                                     <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
                                         {{ address.label }}
                                     </span>
-                                    <button
-                                        v-if="!address.is_default"
-                                        @click="setDefaultAddress(address.id)"
-                                        class="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                                    >
-                                        Alamat Dipilih
-                                    </button>
                                     <span
-                                        v-else
-                                        class="inline-flex items-center text-sm font-medium text-blue-600 dark:text-blue-400"
+                                        v-if="address.is_default"
+                                        class="inline-flex items-center text-blue-600 dark:text-blue-400"
                                     >
-                                        <svg class="mr-1 size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                         </svg>
-                                        Alamat Dipilih
                                     </span>
                                 </div>
 
@@ -250,13 +572,28 @@ const deleteAddress = (addressId) => {
                                     {{ address.full_address }}
                                 </p>
 
-                                <!-- Edit Link -->
-                                <button
-                                    @click="deleteAddress(address.id)"
-                                    class="mt-4 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                                >
-                                    Ubah Alamat
-                                </button>
+                                <!-- Action Buttons -->
+                                <div class="mt-4 flex gap-3">
+                                    <button
+                                        @click="editAddress(address)"
+                                        class="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                                    >
+                                        Ubah
+                                    </button>
+                                    <button
+                                        v-if="!address.is_default"
+                                        @click="setDefaultAddress(address.id)"
+                                        class="text-sm font-medium text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                                    >
+                                        Pilih Alamat
+                                    </button>
+                                    <button
+                                        @click="deleteAddress(address.id)"
+                                        class="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                                    >
+                                        Hapus
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -315,19 +652,19 @@ const deleteAddress = (addressId) => {
                                 <!-- Search Input -->
                                 <div class="mb-4">
                                     <div class="relative">
-                                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                                        <input
+                                            v-model="searchQuery"
+                                            type="text"
+                                            placeholder="Cari lokasi/gedung/nama jalan"
+                                            class="block w-full rounded-lg border border-gray-300 bg-white py-3 pl-4 pr-12 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
+                                            @keyup.enter="searchLocation"
+                                        >
+                                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
                                             <svg class="size-5 text-blue-500 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                                             </svg>
                                         </div>
-                                        <input
-                                            v-model="searchQuery"
-                                            type="text"
-                                            placeholder="Cari lokasi/gedung/nama jalan"
-                                            class="block w-full rounded-lg border border-gray-300 bg-white py-3 pl-12 pr-4 text-sm text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-blue-500 dark:focus:ring-blue-500"
-                                            @keyup.enter="searchLocation"
-                                        >
                                     </div>
                                 </div>
 
@@ -411,59 +748,102 @@ const deleteAddress = (addressId) => {
                                 </div>
 
                                 <!-- Map Container -->
-                                <div class="relative h-80 w-full bg-gray-200 dark:bg-gray-700">
-                                    <iframe
-                                        v-if="currentLocation"
-                                        :src="`https://www.openstreetmap.org/export/embed.html?bbox=${currentLocation.lng-0.01},${currentLocation.lat-0.01},${currentLocation.lng+0.01},${currentLocation.lat+0.01}&layer=mapnik&marker=${currentLocation.lat},${currentLocation.lng}`"
-                                        class="h-full w-full"
-                                        frameborder="0"
-                                    ></iframe>
-                                    
-                                    <!-- Search Area Button -->
-                                    <div class="absolute bottom-4 left-1/2 -translate-x-1/2">
-                                        <button
-                                            type="button"
-                                            class="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                                        >
-                                            <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                                            </svg>
-                                            Cari Ulang Area
-                                        </button>
+                                <div class="relative h-96 w-full bg-gray-200 dark:bg-gray-700">
+                                    <div ref="mapElement" class="h-full w-full z-0"></div>
+                                    <div
+                                        v-if="mapLoading"
+                                        class="absolute inset-0 flex items-center justify-center bg-gray-200/80 dark:bg-gray-700/80 z-10"
+                                    >
+                                        <span class="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow dark:bg-gray-800 dark:text-gray-200">
+                                            Memuat peta...
+                                        </span>
                                     </div>
 
-                                    <!-- Recenter Button -->
-                                    <button
-                                        type="button"
-                                        class="absolute bottom-4 right-4 rounded-lg bg-white p-2 shadow-lg hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
-                                    >
-                                        <svg class="size-5 text-gray-700 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                                        </svg>
-                                    </button>
+                                    <!-- Center Pin Overlay -->
+                                    <div class="pointer-events-none absolute inset-0 flex items-center justify-center z-20">
+                                        <div class="relative -mt-5">
+                                            <svg class="size-12 text-red-500 drop-shadow-lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </div>
+
+                                    <!-- Direction Controls -->
+                                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                                        <div class="relative w-full h-full">
+                                            <!-- Up -->
+                                            <button
+                                                type="button"
+                                                @click="moveMapCenter(MAP_PAN_STEP, 0)"
+                                                class="pointer-events-auto absolute top-4 left-1/2 -translate-x-1/2 rounded-lg bg-white p-3 shadow-lg hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                                            >
+                                                <svg class="size-5 text-gray-700 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                                                </svg>
+                                            </button>
+                                            <!-- Down -->
+                                            <button
+                                                type="button"
+                                                @click="moveMapCenter(-MAP_PAN_STEP, 0)"
+                                                class="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg bg-white p-3 shadow-lg hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                                            >
+                                                <svg class="size-5 text-gray-700 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                                </svg>
+                                            </button>
+                                            <!-- Left -->
+                                            <button
+                                                type="button"
+                                                @click="moveMapCenter(0, -MAP_PAN_STEP)"
+                                                class="pointer-events-auto absolute top-1/2 left-4 -translate-y-1/2 rounded-lg bg-white p-3 shadow-lg hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                                            >
+                                                <svg class="size-5 text-gray-700 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                                                </svg>
+                                            </button>
+                                            <!-- Right -->
+                                            <button
+                                                type="button"
+                                                @click="moveMapCenter(0, MAP_PAN_STEP)"
+                                                class="pointer-events-auto absolute top-1/2 right-4 -translate-y-1/2 rounded-lg bg-white p-3 shadow-lg hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                                            >
+                                                <svg class="size-5 text-gray-700 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Address Details Form -->
                                 <div class="p-6 space-y-4">
-                                    <!-- Location Name -->
-                                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
-                                        <div class="flex items-start gap-3">
-                                            <div class="flex-shrink-0 rounded-lg bg-red-50 p-2 dark:bg-red-900/30">
-                                                <svg class="size-5 text-red-500 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                                                </svg>
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Area</p>
-                                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white break-words">
-                                                    {{ selectedAddress.name || 'Lokasi Terpilih' }}
-                                                </h4>
-                                                <p class="mt-1 text-xs text-gray-600 dark:text-gray-400 break-words">
-                                                    {{ selectedAddress.full_address || 'Memuat alamat...' }}
+                                    <!-- Instructions -->
+                                    <div class="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+                                        <div class="flex gap-3">
+                                            <svg class="size-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                                            </svg>
+                                            <div class="flex-1">
+                                                <p class="text-sm font-medium text-blue-900 dark:text-blue-200">
+                                                    Sesuaikan titik lokasi dengan tombol arah
+                                                </p>
+                                                <p class="mt-1 text-xs text-blue-700 dark:text-blue-300">
+                                                    Gunakan tombol panah untuk menggeser peta. Pin merah menunjukkan lokasi yang akan disimpan.
                                                 </p>
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Location Name -->
+                                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900">
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Area</p>
+                                            <h4 class="text-sm font-semibold text-gray-900 dark:text-white break-words">
+                                                {{ selectedAddress.name || 'Lokasi Terpilih' }}
+                                            </h4>
+                                            <p class="mt-1 text-xs text-gray-600 dark:text-gray-400 break-words">
+                                                {{ selectedAddress.full_address || 'Memuat alamat...' }}
+                                            </p>
                                         </div>
                                     </div>
 
@@ -632,6 +1012,396 @@ const deleteAddress = (addressId) => {
                                         {{ form.processing ? 'Menyimpan...' : 'Simpan Alamat' }}
                                     </button>
                                 </form>
+                            </div>
+                        </Transition>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
+
+        <!-- Modal Edit Alamat -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition ease-out duration-200"
+                enter-from-class="opacity-0"
+                enter-to-class="opacity-100"
+                leave-active-class="transition ease-in duration-150"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+            >
+                <div
+                    v-if="showEditModal && editingAddress"
+                    class="fixed inset-0 z-50 overflow-y-auto"
+                >
+                    <!-- Backdrop -->
+                    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity dark:bg-gray-900 dark:bg-opacity-75" @click="closeEditModal"></div>
+
+                    <!-- Modal Container -->
+                    <div class="flex min-h-full items-center justify-center p-4">
+                        <Transition
+                            enter-active-class="transition ease-out duration-200"
+                            enter-from-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                            enter-to-class="opacity-100 translate-y-0 sm:scale-100"
+                            leave-active-class="transition ease-in duration-150"
+                            leave-from-class="opacity-100 translate-y-0 sm:scale-100"
+                            leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        >
+                            <div
+                                v-if="showEditModal && editingAddress"
+                                class="relative w-full max-w-2xl transform overflow-hidden rounded-2xl bg-white p-6 text-left shadow-xl transition-all dark:bg-gray-800"
+                            >
+                                <!-- Header -->
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                        Ubah Alamat
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        @click="closeEditModal"
+                                        class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                                    >
+                                        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- Edit Form -->
+                                <form @submit.prevent="updateAddress" class="space-y-4">
+                                    <!-- Label Alamat -->
+                                    <div>
+                                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Label Alamat <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            v-model="editingAddress.label"
+                                            type="text"
+                                            required
+                                            class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+                                            placeholder="Cakra Buana Kost Putra"
+                                        >
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Contoh: Rumah, apartmen, atau kantor</p>
+                                    </div>
+
+                                    <!-- Titik Lokasi -->
+                                    <div>
+                                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Titik Lokasi <span class="text-red-500">*</span>
+                                        </label>
+                                        <div class="rounded-lg border border-gray-300 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-900">
+                                            <div class="flex items-start gap-3">
+                                                <div class="flex-shrink-0 rounded-lg bg-red-50 p-2 dark:bg-red-900/30">
+                                                    <svg class="size-5 text-red-500 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                                    </svg>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ editingAddress.full_address?.split(',')[0] || 'Jatiraden' }}</p>
+                                                    <p class="mt-1 text-xs text-gray-600 dark:text-gray-400 break-words">
+                                                        {{ editingAddress.full_address }}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    @click="openEditMapModal"
+                                                    class="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 flex-shrink-0"
+                                                >
+                                                    Ubah
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Untuk mempermudah pengiriman, pastikan titik lokasi kamu sudah tepat ya</p>
+                                    </div>
+
+                                    <!-- Alamat Lengkap -->
+                                    <div>
+                                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Alamat Lengkap <span class="text-red-500">*</span>
+                                        </label>
+                                        <textarea
+                                            v-model="editingAddress.full_address"
+                                            required
+                                            rows="3"
+                                            class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+                                            placeholder="Jl. Ganceng, RT.006/RW.008, Jatiranggon, Kec. Jatisampurna, Kota Bekasi, Jawa Barat 17433"
+                                        ></textarea>
+                                    </div>
+
+                                    <!-- Row: Provinsi & Kota -->
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Provinsi <span class="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                v-model="editingAddress.province"
+                                                type="text"
+                                                required
+                                                class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                                placeholder="Jawa Barat"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Kota <span class="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                v-model="editingAddress.city"
+                                                type="text"
+                                                required
+                                                class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                                placeholder="Kota Bekasi"
+                                            >
+                                        </div>
+                                    </div>
+
+                                    <!-- Row: Kecamatan & Kelurahan -->
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Kecamatan <span class="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                                placeholder="Jatisampurna"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Kelurahan <span class="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                                placeholder="Jatiraden"
+                                            >
+                                        </div>
+                                    </div>
+
+                                    <!-- Kode Pos -->
+                                    <div>
+                                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            Kode Pos <span class="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            v-model="editingAddress.postal_code"
+                                            type="text"
+                                            required
+                                            class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                            placeholder="17433"
+                                        >
+                                    </div>
+
+                                    <!-- Row: Nama Penerima & Nomor HP -->
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Nama Penerima <span class="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                v-model="editingAddress.recipient_name"
+                                                type="text"
+                                                required
+                                                class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                                placeholder="Rio"
+                                            >
+                                        </div>
+                                        <div>
+                                            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Nomor Handphone <span class="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                v-model="editingAddress.phone_number"
+                                                type="tel"
+                                                required
+                                                class="block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                                placeholder="085931402200"
+                                            >
+                                        </div>
+                                    </div>
+
+                                    <!-- Submit Button -->
+                                    <button
+                                        type="submit"
+                                        class="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                                    >
+                                        Simpan Perubahan
+                                    </button>
+                                </form>
+                            </div>
+                        </Transition>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
+
+        <!-- Modal Edit Map -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition ease-out duration-200"
+                enter-from-class="opacity-0"
+                enter-to-class="opacity-100"
+                leave-active-class="transition ease-in duration-150"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+            >
+                <div
+                    v-if="showEditMapModal"
+                    class="fixed inset-0 z-50 overflow-y-auto"
+                >
+                    <!-- Backdrop -->
+                    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity dark:bg-gray-900 dark:bg-opacity-75"></div>
+
+                    <!-- Modal Container -->
+                    <div class="flex min-h-full items-end justify-center sm:items-center">
+                        <Transition
+                            enter-active-class="transition ease-out duration-200"
+                            enter-from-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                            enter-to-class="opacity-100 translate-y-0 sm:scale-100"
+                            leave-active-class="transition ease-in duration-150"
+                            leave-from-class="opacity-100 translate-y-0 sm:scale-100"
+                            leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        >
+                            <div
+                                v-if="showEditMapModal"
+                                class="relative w-full max-w-2xl transform overflow-hidden rounded-t-3xl bg-white text-left shadow-xl transition-all sm:rounded-2xl dark:bg-gray-800"
+                            >
+                                <!-- Header -->
+                                <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
+                                    <button
+                                        type="button"
+                                        @click="closeEditMapModal"
+                                        class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                                    >
+                                        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                                        </svg>
+                                    </button>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                        Atur Titik Lokasi
+                                    </h3>
+                                    <button
+                                        type="button"
+                                        @click="closeEditMapModal"
+                                        class="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                                    >
+                                        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <!-- Map Container -->
+                                <div class="relative h-96 w-full bg-gray-200 dark:bg-gray-700">
+                                    <div ref="editMapElement" class="h-full w-full z-0"></div>
+                                    <div
+                                        v-if="mapLoading"
+                                        class="absolute inset-0 flex items-center justify-center bg-gray-200/80 dark:bg-gray-700/80 z-10"
+                                    >
+                                        <span class="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow dark:bg-gray-800 dark:text-gray-200">
+                                            Memuat peta...
+                                        </span>
+                                    </div>
+
+                                    <!-- Center Pin Overlay -->
+                                    <div class="pointer-events-none absolute inset-0 flex items-center justify-center z-20">
+                                        <div class="relative -mt-5">
+                                            <svg class="size-12 text-red-500 drop-shadow-lg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </div>
+
+                                    <!-- Direction Controls -->
+                                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                                        <div class="relative w-full h-full">
+                                            <!-- Up -->
+                                            <button
+                                                type="button"
+                                                @click="moveEditMapCenter(MAP_PAN_STEP, 0)"
+                                                class="pointer-events-auto absolute top-4 left-1/2 -translate-x-1/2 rounded-lg bg-white p-3 shadow-lg hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                                            >
+                                                <svg class="size-5 text-gray-700 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                                                </svg>
+                                            </button>
+                                            <!-- Down -->
+                                            <button
+                                                type="button"
+                                                @click="moveEditMapCenter(-MAP_PAN_STEP, 0)"
+                                                class="pointer-events-auto absolute bottom-4 left-1/2 -translate-x-1/2 rounded-lg bg-white p-3 shadow-lg hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                                            >
+                                                <svg class="size-5 text-gray-700 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                                </svg>
+                                            </button>
+                                            <!-- Left -->
+                                            <button
+                                                type="button"
+                                                @click="moveEditMapCenter(0, -MAP_PAN_STEP)"
+                                                class="pointer-events-auto absolute top-1/2 left-4 -translate-y-1/2 rounded-lg bg-white p-3 shadow-lg hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                                            >
+                                                <svg class="size-5 text-gray-700 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                                                </svg>
+                                            </button>
+                                            <!-- Right -->
+                                            <button
+                                                type="button"
+                                                @click="moveEditMapCenter(0, MAP_PAN_STEP)"
+                                                class="pointer-events-auto absolute top-1/2 right-4 -translate-y-1/2 rounded-lg bg-white p-3 shadow-lg hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+                                            >
+                                                <svg class="size-5 text-gray-700 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Instructions & Button -->
+                                <div class="p-6 space-y-4">
+                                    <!-- Use Current Location Button -->
+                                    <button
+                                        type="button"
+                                        @click="useCurrentLocationForEdit"
+                                        class="flex w-full items-center justify-center gap-3 rounded-lg border-2 border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-100 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                                    >
+                                        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                        </svg>
+                                        <span>Gunakan Lokasi Saat Ini</span>
+                                    </button>
+
+                                    <div class="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+                                        <div class="flex gap-3">
+                                            <svg class="size-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                                            </svg>
+                                            <div class="flex-1">
+                                                <p class="text-sm font-medium text-blue-900 dark:text-blue-200">
+                                                    Geser peta untuk menyesuaikan titik lokasi
+                                                </p>
+                                                <p class="mt-1 text-xs text-blue-700 dark:text-blue-300">
+                                                    Pin merah di tengah menunjukkan lokasi yang akan disimpan. Geser peta hingga pin tepat di lokasi yang diinginkan.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        @click="saveEditLocation"
+                                        class="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                                    >
+                                        Simpan Lokasi
+                                    </button>
+                                </div>
                             </div>
                         </Transition>
                     </div>

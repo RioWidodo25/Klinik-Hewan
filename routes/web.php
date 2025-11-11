@@ -133,23 +133,27 @@ Route::get('/blog/{slug}', function ($slug) {
 
 // Petshop Routes
 Route::prefix('petshop')->name('petshop.')->group(function () {
+    // Public routes - dapat diakses tanpa login
     Route::get('/', [PetshopProductController::class, 'index'])->name('index');
     Route::get('/products/{slug}', [PetshopProductController::class, 'show'])->name('product.show');
 
-    Route::get('/cart', [PetshopCartController::class, 'show'])->name('cart.show');
-    Route::post('/cart/items', [PetshopCartController::class, 'store'])->name('cart.items.store');
-    Route::patch('/cart/items/{cartItem}', [PetshopCartController::class, 'update'])->name('cart.items.update');
-    Route::delete('/cart/items/{cartItem}', [PetshopCartController::class, 'destroy'])->name('cart.items.destroy');
-    Route::post('/cart/clear', [PetshopCartController::class, 'clear'])->name('cart.clear');
+    // Protected routes - harus login
+    Route::middleware(['auth:sanctum', config('jetstream.auth_session')])->group(function () {
+        Route::get('/cart', [PetshopCartController::class, 'show'])->name('cart.show');
+        Route::post('/cart/items', [PetshopCartController::class, 'store'])->name('cart.items.store');
+        Route::patch('/cart/items/{cartItem}', [PetshopCartController::class, 'update'])->name('cart.items.update');
+        Route::delete('/cart/items/{cartItem}', [PetshopCartController::class, 'destroy'])->name('cart.items.destroy');
+        Route::post('/cart/clear', [PetshopCartController::class, 'clear'])->name('cart.clear');
 
-    Route::get('/checkout', [PetshopCheckoutController::class, 'index'])->name('checkout.index');
-    Route::post('/checkout', [PetshopCheckoutController::class, 'store'])->name('checkout.store');
+        Route::post('/cart/checkout', [PetshopCartController::class, 'checkout'])->name('cart.checkout');
+        
+        Route::get('/payment/status', [PetshopCartController::class, 'paymentStatus'])->name('payment.status');
+    });
     
-    // Payment callback routes
+    // Payment callback routes - tidak perlu auth karena dipanggil dari Midtrans
     Route::get('/payment/finish', [\App\Http\Controllers\Petshop\MidtransController::class, 'finish'])->name('payment.finish');
     Route::get('/payment/unfinish', [\App\Http\Controllers\Petshop\MidtransController::class, 'unfinish'])->name('payment.unfinish');
     Route::get('/payment/error', [\App\Http\Controllers\Petshop\MidtransController::class, 'error'])->name('payment.error');
-    Route::get('/payment/status', [PetshopCheckoutController::class, 'paymentStatus'])->name('payment.status');
 });
 
 Route::middleware([
@@ -163,12 +167,12 @@ Route::middleware([
     
     // Profile Routes
     Route::prefix('profile')->name('profile.')->group(function () {
-        Route::get('/addresses', [\App\Http\Controllers\Profile\AddressController::class, 'index'])->name('addresses');
+        Route::get('/addresses', [\App\Http\Controllers\Profile\AddressController::class, 'index'])->name('addresses.index');
         Route::post('/addresses', [\App\Http\Controllers\Profile\AddressController::class, 'store'])->name('addresses.store');
         Route::patch('/addresses/{address}', [\App\Http\Controllers\Profile\AddressController::class, 'update'])->name('addresses.update');
         Route::delete('/addresses/{address}', [\App\Http\Controllers\Profile\AddressController::class, 'destroy'])->name('addresses.destroy');
         Route::post('/addresses/{address}/set-default', [\App\Http\Controllers\Profile\AddressController::class, 'setDefault'])->name('addresses.set-default');
         
-        Route::get('/favorites', [\App\Http\Controllers\Profile\FavoriteController::class, 'index'])->name('favorites');
+        Route::get('/favorites', [\App\Http\Controllers\Profile\FavoriteController::class, 'index'])->name('favorites.index');
     });
 });

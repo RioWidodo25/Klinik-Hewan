@@ -15,6 +15,10 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    defaultAddress: {
+        type: Object,
+        default: null,
+    },
     shippingMethods: {
         type: Array,
         default: () => [],
@@ -30,13 +34,13 @@ watch(() => page.props.flash, (newFlash) => {
 }, { immediate: true, deep: true });
 
 const form = useForm({
-    customer_name: props.customer.name || '',
+    customer_name: props.defaultAddress?.recipient_name || props.customer.name || '',
     customer_email: props.customer.email || '',
-    customer_phone: props.customer.phone || '',
-    shipping_address: '',
-    shipping_city: '',
-    shipping_province: '',
-    shipping_postal_code: '',
+    customer_phone: props.defaultAddress?.phone_number || props.customer.phone || '',
+    shipping_address: props.defaultAddress?.full_address || '',
+    shipping_city: props.defaultAddress?.city || '',
+    shipping_province: props.defaultAddress?.province || '',
+    shipping_postal_code: props.defaultAddress?.postal_code || '',
     shipping_method: props.shippingMethods[0]?.code || '',
     notes: '',
 });
@@ -225,7 +229,6 @@ const submitCheckout = () => {
                                         type="text"
                                         autocomplete="name"
                                         class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-700 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
-                                        placeholder="Nama penerima pesanan"
                                     >
                                     <InputError :message="form.errors.customer_name" class="mt-2" />
                                 </div>
@@ -237,7 +240,6 @@ const submitCheckout = () => {
                                         type="email"
                                         autocomplete="email"
                                         class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-700 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
-                                        placeholder="Alamat email aktif"
                                     >
                                     <InputError :message="form.errors.customer_email" class="mt-2" />
                                 </div>
@@ -249,7 +251,6 @@ const submitCheckout = () => {
                                         type="tel"
                                         autocomplete="tel"
                                         class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-700 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
-                                        placeholder="08xxxxxxxxxx"
                                     >
                                     <InputError :message="form.errors.customer_phone" class="mt-2" />
                                 </div>
@@ -268,7 +269,6 @@ const submitCheckout = () => {
                                         v-model="form.shipping_address"
                                         rows="3"
                                         class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-700 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
-                                        placeholder="Tuliskan detail alamat lengkap beserta patokan lokasi"
                                     />
                                     <InputError :message="form.errors.shipping_address" class="mt-2" />
                                 </div>
@@ -281,7 +281,6 @@ const submitCheckout = () => {
                                             v-model="form.shipping_city"
                                             type="text"
                                             class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-700 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
-                                            placeholder="Contoh: Surabaya"
                                         >
                                         <InputError :message="form.errors.shipping_city" class="mt-2" />
                                     </div>
@@ -292,7 +291,6 @@ const submitCheckout = () => {
                                             v-model="form.shipping_province"
                                             type="text"
                                             class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-700 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
-                                            placeholder="Contoh: Jawa Timur"
                                         >
                                         <InputError :message="form.errors.shipping_province" class="mt-2" />
                                     </div>
@@ -306,7 +304,6 @@ const submitCheckout = () => {
                                             v-model="form.shipping_postal_code"
                                             type="text"
                                             class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-700 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
-                                            placeholder="Contoh: 60231"
                                         >
                                         <InputError :message="form.errors.shipping_postal_code" class="mt-2" />
                                     </div>
@@ -317,40 +314,10 @@ const submitCheckout = () => {
                                             v-model="form.notes"
                                             rows="2"
                                             class="mt-2 w-full rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-700 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
-                                            placeholder="Contoh: Mohon hubungi sebelum pengiriman"
                                         />
                                         <InputError :message="form.errors.notes" class="mt-2" />
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div class="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                                Metode Pengiriman
-                            </h2>
-                            <div class="mt-4 space-y-3">
-                                <label
-                                    v-for="method in shippingMethods"
-                                    :key="method.code"
-                                    class="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-gray-200 px-4 py-3 text-sm transition hover:border-amber-300 hover:bg-amber-50 dark:border-gray-700 dark:hover:border-amber-500/60 dark:hover:bg-amber-900/20"
-                                >
-                                    <div class="flex items-center gap-3">
-                                        <input
-                                            type="radio"
-                                            v-model="form.shipping_method"
-                                            :value="method.code"
-                                            class="size-4 border-gray-300 text-amber-500 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-900"
-                                        >
-                                        <div>
-                                            <p class="font-semibold text-gray-900 dark:text-gray-100">
-                                                {{ method.label }}
-                                            </p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400">Estimasi biaya {{ formatCurrency(method.fee) }}</p>
-                                        </div>
-                                    </div>
-                                </label>
-                                <InputError :message="form.errors.shipping_method" class="mt-2" />
                             </div>
                         </div>
 

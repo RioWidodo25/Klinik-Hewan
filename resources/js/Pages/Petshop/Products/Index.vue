@@ -34,7 +34,6 @@ const props = defineProps({
 });
 
 const page = usePage();
-const flash = computed(() => page.props.flash || {});
 
 const state = reactive({
     search: props.filters.search || '',
@@ -72,6 +71,20 @@ const resetFilters = () => {
 };
 
 const handleAddToCart = (product) => {
+    // Check if user is authenticated
+    if (!page.props.auth?.user) {
+        // Show alert and redirect to login
+        if (confirm('Anda harus login terlebih dahulu untuk menambahkan produk ke keranjang. Login sekarang?')) {
+            router.visit(route('login'), {
+                onBefore: () => {
+                    // Store the current page as intended URL
+                    sessionStorage.setItem('intended_url', window.location.href);
+                }
+            });
+        }
+        return;
+    }
+
     router.post(route('petshop.cart.items.store'), {
         product_id: product.id,
         quantity: 1,
@@ -297,13 +310,6 @@ onUnmounted(() => {
 
                     <!-- Product list -->
                     <div>
-                        <div v-if="flash.success" class="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 shadow-sm dark:border-green-700/40 dark:bg-green-900/40 dark:text-green-200">
-                            {{ flash.success }}
-                        </div>
-                        <div v-if="flash.error" class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm dark:border-red-700/40 dark:bg-red-900/40 dark:text-red-200">
-                            {{ flash.error }}
-                        </div>
-
                         <!-- Card Frame Transparan untuk Grid Produk -->
                         <div v-if="products.data && products.data.length > 0" class="rounded-2xl bg-white/50 p-6 backdrop-blur-sm dark:bg-gray-800/50" data-aos="fade-up">
                             <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">

@@ -6,13 +6,13 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import Footer from '@/Components/Footer.vue';
 import WhatsAppButton from '@/Components/WhatsAppButton.vue';
 import ThemeSwitch from '@/Components/ThemeSwitch.vue';
-import { Link, router, usePage } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import Toast from '@/Components/Toast.vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { ref, computed, onMounted } from 'vue';
 
 const page = usePage();
 const footerSettings = computed(() => page.props.footerSettings || {});
 const cartSummary = computed(() => page.props.cartSummary || { total_items: 0, subtotal: 0 });
-const flash = computed(() => page.props.flash || {});
 
 const logout = () => {
     router.post(route('logout'));
@@ -24,6 +24,17 @@ const showMobileMenu = ref(false);
 const toggleMobileMenu = () => {
     showMobileMenu.value = !showMobileMenu.value;
 };
+
+// Load Midtrans Snap script
+onMounted(() => {
+    if (!document.getElementById('midtrans-script')) {
+        const script = document.createElement('script');
+        script.id = 'midtrans-script';
+        script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+        script.setAttribute('data-client-key', page.props.midtransClientKey || '');
+        document.head.appendChild(script);
+    }
+});
 </script>
 
 <template>
@@ -107,11 +118,11 @@ const toggleMobileMenu = () => {
                                             Profile
                                         </DropdownLink>
 
-                                        <DropdownLink :href="route('profile.addresses')">
+                                        <DropdownLink :href="route('profile.addresses.index')">
                                             Daftar Alamat
                                         </DropdownLink>
 
-                                        <DropdownLink :href="route('profile.favorites')">
+                                        <DropdownLink :href="route('profile.favorites.index')">
                                             Barang Favorit
                                         </DropdownLink>
 
@@ -230,13 +241,13 @@ const toggleMobileMenu = () => {
                                 Profile
                             </Link>
                             <Link
-                                :href="route('profile.addresses')"
+                                :href="route('profile.addresses.index')"
                                 class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition duration-150 ease-in-out"
                             >
                                 Daftar Alamat
                             </Link>
                             <Link
-                                :href="route('profile.favorites')"
+                                :href="route('profile.favorites.index')"
                                 class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition duration-150 ease-in-out"
                             >
                                 Barang Favorit
@@ -280,19 +291,6 @@ const toggleMobileMenu = () => {
 
         <!-- Page Content -->
         <main>
-            <div v-if="flash.success || flash.error || flash.info" class="bg-transparent">
-                <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-                    <div v-if="flash.success" class="mb-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 shadow-sm dark:border-green-700/40 dark:bg-green-900/40 dark:text-green-200">
-                        {{ flash.success }}
-                    </div>
-                    <div v-if="flash.error" class="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm dark:border-red-700/40 dark:bg-red-900/40 dark:text-red-200">
-                        {{ flash.error }}
-                    </div>
-                    <div v-if="flash.info" class="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 shadow-sm dark:border-amber-700/40 dark:bg-amber-900/40 dark:text-amber-200">
-                        {{ flash.info }}
-                    </div>
-                </div>
-            </div>
             <slot />
         </main>
 
@@ -301,5 +299,8 @@ const toggleMobileMenu = () => {
 
         <!-- WhatsApp Floating Button -->
         <WhatsAppButton :phone-number="footerSettings.whatsapp_number" />
+
+        <!-- Toast Notification -->
+        <Toast />
     </div>
 </template>

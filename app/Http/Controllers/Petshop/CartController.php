@@ -22,9 +22,27 @@ class CartController extends Controller
     public function show(Request $request)
     {
         $cart = $this->cartService->getCart(createIfMissing: true);
+        
+        // Get default shipping address if user is authenticated
+        $defaultAddress = null;
+        if ($user = auth()->user()) {
+            $address = $user->addresses()->where('is_default', true)->first();
+            if ($address) {
+                $defaultAddress = [
+                    'label' => $address->label,
+                    'recipient_name' => $address->recipient_name,
+                    'phone_number' => $address->phone_number,
+                    'full_address' => $address->full_address,
+                    'city' => $address->city,
+                    'province' => $address->province,
+                    'postal_code' => $address->postal_code,
+                ];
+            }
+        }
 
         return Inertia::render('Petshop/Cart/Index', [
             'cart' => $this->cartService->transformCart($cart, summary: false),
+            'defaultAddress' => $defaultAddress,
         ]);
     }
 
@@ -175,5 +193,205 @@ class CartController extends Controller
         return redirect()
             ->route('petshop.cart.show')
             ->with('success', 'Keranjang berhasil dikosongkan.');
+    }
+
+    /**
+     * Process checkout and create Midtrans payment.
+     */
+    public function checkout(Request $request)
+    {
+        $validated = $request->validate([
+            'delivery_type' => ['required', 'in:delivery,pickup'],
+            'delivery_option' => ['nullable', 'in:instant,regular'],
+            'delivery_date' => ['nullable', 'in:today,tomorrow'],
+            'delivery_time' => ['nullable', 'string'],
+            'shipping_fee' => ['required', 'numeric', 'min:0'],
+            'shipping_address' => ['nullable', 'array'],
+            'shipping_address.recipient_name' => ['required_if:delivery_type,delivery', 'string'],
+            'shipping_address.phone_number' => ['required_if:delivery_type,delivery', 'string'],
+            'shipping_address.full_address' => ['required_if:delivery_type,delivery', 'string'],
+            'shipping_address.city' => ['required_if:delivery_type,delivery', 'string'],
+            'shipping_address.province' => ['required_if:delivery_type,delivery', 'string'],
+            'shipping_address.postal_code' => ['required_if:delivery_type,delivery', 'string'],
+        ]);
+
+        $cart = $this->cartService->getCart(createIfMissing: false);
+
+        if (! $cart || $cart->items->isEmpty()) {
+            return back()->with('error', 'Keranjang Anda kosong.');
+        }
+
+        // Validate shipping address for delivery
+        if ($validated['delivery_type'] === 'delivery' && empty($validated['shipping_address'])) {
+            return back()->with('error', 'Silakan tambahkan alamat pengiriman terlebih dahulu.');
+        }
+
+        // Calculate totals
+        $subtotal = $cart->total; // Using cart's total accessor
+        $shippingCost = $validated['shipping_fee'];
+        $totalAmount = $subtotal + $shippingCost;
+
+        // Prepare shipping address data
+        $shippingAddressData = $validated['shipping_address'] ?? [];
+        $shippingAddress = '';
+        $shippingCity = '';
+        $shippingProvince = '';
+        $shippingPostalCode = '';
+        $customerPhone = '';
+        
+        if ($validated['delivery_type'] === 'delivery' && !empty($shippingAddressData)) {
+            $shippingAddress = json_encode($shippingAddressData);
+            $shippingCity = $shippingAddressData['city'];
+            $shippingProvince = $shippingAddressData['province'];
+            $shippingPostalCode = $shippingAddressData['postal_code'];
+            $customerPhone = $shippingAddressData['phone_number'];
+        }
+
+        // Create order
+        $order = auth()->user()->orders()->create([
+            'order_number' => 'ORD-' . strtoupper(uniqid()),
+            'customer_name' => auth()->user()->name,
+            'customer_email' => auth()->user()->email,
+            'customer_phone' => $customerPhone ?: auth()->user()->email,
+            'subtotal' => $subtotal,
+            'shipping_cost' => $shippingCost,
+            'total' => $totalAmount,
+            'status' => 'pending',
+            'shipping_address' => $shippingAddress,
+            'shipping_city' => $shippingCity,
+            'shipping_province' => $shippingProvince,
+            'shipping_postal_code' => $shippingPostalCode,
+            'delivery_type' => $validated['delivery_type'],
+            'delivery_option' => $validated['delivery_option'],
+            'delivery_date' => $validated['delivery_date'],
+            'delivery_time' => $validated['delivery_time'],
+        ]);
+
+        // Create order items
+        foreach ($cart->items as $item) {
+            $order->items()->create([
+                'product_id' => $item->product_id,
+                'variant_id' => $item->variant_id,
+                'product_name' => $item->product->name,
+                'variant_name' => $item->variant?->name ?? null,
+                'quantity' => $item->quantity,
+                'price' => $item->price,
+                'subtotal' => $item->subtotal,
+            ]);
+        }
+
+        // Create Midtrans payment
+        \Midtrans\Config::$serverKey = config('services.midtrans.server_key');
+        \Midtrans\Config::$isProduction = config('services.midtrans.is_production');
+        \Midtrans\Config::$isSanitized = true;
+        \Midtrans\Config::$is3ds = true;
+
+        $params = [
+            'transaction_details' => [
+                'order_id' => $order->order_number,
+                'gross_amount' => (int) $order->total,
+            ],
+            'customer_details' => [
+                'first_name' => auth()->user()->name,
+                'email' => auth()->user()->email,
+                'phone' => $customerPhone ?: '',
+            ],
+            'item_details' => $cart->items->map(function ($item) {
+                return [
+                    'id' => $item->product_id,
+                    'price' => (int) $item->price,
+                    'quantity' => $item->quantity,
+                    'name' => $item->product->name,
+                ];
+            })->toArray(),
+        ];
+
+        // Add shipping fee as item
+        if ($validated['shipping_fee'] > 0) {
+            $params['item_details'][] = [
+                'id' => 'shipping',
+                'price' => (int) $validated['shipping_fee'],
+                'quantity' => 1,
+                'name' => 'Biaya Pengiriman',
+            ];
+        }
+
+        try {
+            $snapToken = \Midtrans\Snap::getSnapToken($params);
+            
+            // Save snap token to order
+            $order->update(['snap_token' => $snapToken]);
+
+            // Clear cart after successful order creation
+            $cart->clear();
+
+            return back()->with([
+                'snap_token' => $snapToken,
+                'order_number' => $order->order_number,
+            ]);
+        } catch (\Exception $e) {
+            // Delete order if payment creation failed
+            $order->delete();
+            
+            return back()->with('error', 'Gagal membuat pembayaran: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Display payment status page
+     */
+    public function paymentStatus(Request $request)
+    {
+        $orderNumber = $request->get('order_number');
+        
+        if (!$orderNumber) {
+            return redirect()->route('petshop.products.index')
+                ->with('error', 'Nomor pesanan tidak ditemukan.');
+        }
+
+        $order = auth()->user()->orders()->where('order_number', $orderNumber)->first();
+
+        if (!$order) {
+            return redirect()->route('petshop.products.index')
+                ->with('error', 'Pesanan tidak ditemukan.');
+        }
+
+        // Check payment status from Midtrans
+        try {
+            \Midtrans\Config::$serverKey = config('services.midtrans.server_key');
+            \Midtrans\Config::$isProduction = config('services.midtrans.is_production');
+            
+            $status = \Midtrans\Transaction::status($orderNumber);
+            
+            // Update order status based on Midtrans response
+            if ($status->transaction_status == 'settlement' || $status->transaction_status == 'capture') {
+                $order->update([
+                    'payment_status' => 'paid',
+                    'status' => 'processing',
+                    'paid_at' => now(),
+                ]);
+            } elseif ($status->transaction_status == 'pending') {
+                $order->update([
+                    'payment_status' => 'pending',
+                ]);
+            } elseif (in_array($status->transaction_status, ['deny', 'expire', 'cancel'])) {
+                $order->update([
+                    'payment_status' => 'failed',
+                    'status' => 'cancelled',
+                ]);
+            }
+        } catch (\Exception $e) {
+            // If error checking status, just show current order status
+        }
+
+        return Inertia::render('Petshop/Payment/Status', [
+            'order' => [
+                'order_number' => $order->order_number,
+                'total' => $order->total,
+                'status' => $order->status,
+                'payment_status' => $order->payment_status,
+                'created_at' => $order->created_at->format('d F Y H:i'),
+            ],
+        ]);
     }
 }

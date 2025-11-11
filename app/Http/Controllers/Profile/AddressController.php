@@ -47,7 +47,7 @@ class AddressController extends Controller
         // Create new address
         $address = auth()->user()->addresses()->create($validated);
 
-        return redirect()->route('profile.addresses')->with('success', 'Alamat berhasil ditambahkan!');
+        return redirect()->route('profile.addresses.index')->with('success', 'Alamat berhasil ditambahkan!');
     }
 
     /**
@@ -80,7 +80,7 @@ class AddressController extends Controller
 
         $address->update($validated);
 
-        return redirect()->route('profile.addresses')->with('success', 'Alamat berhasil diperbarui!');
+        return redirect()->route('profile.addresses.index')->with('success', 'Alamat berhasil diperbarui!');
     }
 
     /**
@@ -95,7 +95,7 @@ class AddressController extends Controller
 
         $address->delete();
 
-        return redirect()->route('profile.addresses')->with('success', 'Alamat berhasil dihapus!');
+        return redirect()->route('profile.addresses.index')->with('success', 'Alamat berhasil dihapus!');
     }
 
     /**
@@ -114,6 +114,6 @@ class AddressController extends Controller
         // Set this address as default
         $address->update(['is_default' => true]);
 
-        return redirect()->route('profile.addresses')->with('success', 'Alamat default berhasil diubah!');
+        return redirect()->route('profile.addresses.index')->with('success', 'Alamat default berhasil diubah!');
     }
 }

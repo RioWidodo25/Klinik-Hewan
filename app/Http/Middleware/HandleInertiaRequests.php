@@ -64,6 +64,7 @@ class HandleInertiaRequests extends Middleware
                 'whatsapp_number' => $footerSettings->whatsapp_number ?? null,
             ],
             'cartSummary' => $cartSummary,
+            'midtransClientKey' => config('services.midtrans.client_key'),
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
