@@ -26,7 +26,7 @@ return new class extends Migration
             $table->text('allergies')->nullable(); // Alergi
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             $table->index(['user_id', 'is_active']);
         });
     }

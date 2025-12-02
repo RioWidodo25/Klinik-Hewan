@@ -41,7 +41,6 @@ class FooterSettings extends Page
             'youtube_url' => $settings->youtube_url,
             'whatsapp_number' => $settings->whatsapp_number,
             'logo' => $settings->logo,
-            'logo_dark' => $settings->logo_dark,
         ]);
     }
 
@@ -50,26 +49,18 @@ class FooterSettings extends Page
         return $form
             ->schema([
                 Section::make('Logo Website')
-                    ->description('Upload logo untuk mode terang dan gelap')
+                    ->description('Upload logo website')
                     ->schema([
                         FileUpload::make('logo')
-                            ->label('Logo (Mode Terang)')
+                            ->label('Logo Website')
                             ->disk('public')
                             ->directory('logos')
                             ->image()
                             ->imageEditor()
                             ->maxSize(1024)
-                            ->helperText('Logo yang akan ditampilkan di mode terang. Format: PNG, JPG, SVG. Max: 1MB'),
-                        FileUpload::make('logo_dark')
-                            ->label('Logo (Mode Gelap)')
-                            ->disk('public')
-                            ->directory('logos')
-                            ->image()
-                            ->imageEditor()
-                            ->maxSize(1024)
-                            ->helperText('Logo yang akan ditampilkan di mode gelap. Format: PNG, JPG, SVG. Max: 1MB'),
-                    ])
-                    ->columns(2),
+                            ->helperText('Logo yang akan ditampilkan di website. Gunakan logo dengan background transparan (PNG) untuk hasil terbaik. Format: PNG, JPG, SVG. Max: 1MB')
+                            ->columnSpanFull(),
+                    ]),
 
                 Section::make('About')
                     ->description('Informasi tentang klinik hewan')
@@ -100,6 +91,13 @@ class FooterSettings extends Page
                             ->label('Alamat')
                             ->rows(3)
                             ->placeholder('Jl. Contoh No. 123, Kota, Provinsi 12345'),
+
+                        TextInput::make('whatsapp_number')
+                            ->label('Nomor WhatsApp (Floating Button)')
+                            ->tel()
+                            ->placeholder('628123456789')
+                            ->helperText('Format: 628xxx (tanpa tanda + atau spasi). Contoh: 628123456789. Digunakan untuk floating button WhatsApp.')
+                            ->maxLength(15),
 
                         Textarea::make('google_maps_iframe')
                             ->label('Google Maps Embed Code')
@@ -138,18 +136,6 @@ class FooterSettings extends Page
                             ->helperText('Link lengkap ke channel YouTube'),
                     ])
                     ->columns(2),
-
-                Section::make('WhatsApp Floating Button')
-                    ->description('Nomor WhatsApp untuk floating button')
-                    ->schema([
-                        TextInput::make('whatsapp_number')
-                            ->label('Nomor WhatsApp')
-                            ->tel()
-                            ->placeholder('628123456789')
-                            ->helperText('Format: 628xxx (tanpa tanda + atau spasi). Contoh: 628123456789')
-                            ->maxLength(15)
-                            ->columnSpanFull(),
-                    ]),
             ])
             ->statePath('data');
     }

@@ -9,7 +9,7 @@ class DoctorSchedule extends Model
 {
     protected $fillable = [
         'doctor_id',
-        'day_of_week',
+        'schedule_date',
         'start_time',
         'end_time',
         'is_active',
@@ -18,6 +18,7 @@ class DoctorSchedule extends Model
     ];
 
     protected $casts = [
+        'schedule_date' => 'date',
         'is_active' => 'boolean',
         'start_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
@@ -29,24 +30,6 @@ class DoctorSchedule extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Doctor::class);
-    }
-
-    /**
-     * Get formatted day name.
-     */
-    public function getDayNameAttribute(): string
-    {
-        $days = [
-            'monday' => 'Senin',
-            'tuesday' => 'Selasa',
-            'wednesday' => 'Rabu',
-            'thursday' => 'Kamis',
-            'friday' => 'Jumat',
-            'saturday' => 'Sabtu',
-            'sunday' => 'Minggu',
-        ];
-
-        return $days[$this->day_of_week] ?? $this->day_of_week;
     }
 
     /**

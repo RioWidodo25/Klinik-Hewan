@@ -18,75 +18,100 @@ class DoctorScheduleResource extends Resource
     protected static ?string $model = DoctorSchedule::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
-    
+
     protected static ?string $navigationLabel = 'Jadwal Dokter';
-    
+
     protected static ?string $modelLabel = 'Jadwal Dokter';
-    
+
     protected static ?string $pluralModelLabel = 'Jadwal Dokter';
-    
-    protected static ?string $navigationGroup = 'Manajemen Klinik';
-    
+
+    protected static ?string $navigationGroup = null;
+
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Informasi Jadwal')
+                Forms\Components\Section::make('Tanggal Praktik')
+                    ->description('Pilih tanggal untuk jadwal praktik dokter')
                     ->schema([
-                        Forms\Components\Select::make('doctor_id')
-                            ->label('Dokter')
-                            ->relationship('doctor', 'name')
-                            ->searchable()
-                            ->preload()
+                        Forms\Components\DatePicker::make('schedule_date')
+                            ->label('Tanggal')
                             ->required()
+                            ->native(false)
+                            ->displayFormat('d/m/Y')
+                            ->minDate(now())
+                            ->live()
                             ->columnSpanFull(),
-                        
-                        Forms\Components\Select::make('day_of_week')
-                            ->label('Hari')
-                            ->options([
-                                'monday' => 'Senin',
-                                'tuesday' => 'Selasa',
-                                'wednesday' => 'Rabu',
-                                'thursday' => 'Kamis',
-                                'friday' => 'Jumat',
-                                'saturday' => 'Sabtu',
-                                'sunday' => 'Minggu',
+                    ]),
+
+                Forms\Components\Section::make('Jadwal Dokter')
+                    ->description('Tambahkan satu atau lebih dokter dengan jam praktik masing-masing')
+                    ->schema([
+                        Forms\Components\Repeater::make('schedules')
+                            ->label('')
+                            ->schema([
+                                Forms\Components\Select::make('doctor_id')
+                                    ->label('Dokter')
+                                    ->relationship('doctor', 'name')
+                                    ->searchable()
+                                    ->preload()
+                                    ->required()
+                                    ->distinct()
+                                    ->disableOptionsWhenSelectedInSiblingRepeaterItems()
+                                    ->live()
+                                    ->columnSpan(2),
+
+                                Forms\Components\TimePicker::make('start_time')
+                                    ->label('Jam Mulai')
+                                    ->seconds(false)
+                                    ->required()
+                                    ->live()
+                                    ->columnSpan(1),
+
+                                Forms\Components\TimePicker::make('end_time')
+                                    ->label('Jam Selesai')
+                                    ->seconds(false)
+                                    ->required()
+                                    ->columnSpan(1),
+
+                                Forms\Components\Toggle::make('is_active')
+                                    ->label('Aktif')
+                                    ->default(true)
+                                    ->inline(false)
+                                    ->columnSpan(1),
+
+                                Forms\Components\TextInput::make('order')
+                                    ->label('Urutan')
+                                    ->numeric()
+                                    ->default(0)
+                                    ->columnSpan(1),
+
+                                Forms\Components\Textarea::make('notes')
+                                    ->label('Catatan')
+                                    ->rows(2)
+                                    ->columnSpanFull()
+                                    ->placeholder('Catatan khusus untuk jadwal dokter ini (opsional)'),
                             ])
-                            ->required()
-                            ->native(false),
-                        
-                        Forms\Components\TimePicker::make('start_time')
-                            ->label('Jam Mulai')
-                            ->seconds(false)
-                            ->required(),
-                        
-                        Forms\Components\TimePicker::make('end_time')
-                            ->label('Jam Selesai')
-                            ->seconds(false)
-                            ->required()
-                            ->after('start_time'),
-                        
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Aktif')
-                            ->default(true)
-                            ->required()
-                            ->inline(false),
-                        
-                        Forms\Components\TextInput::make('order')
-                            ->label('Urutan')
-                            ->numeric()
-                            ->default(0)
-                            ->required()
-                            ->helperText('Urutan tampilan jadwal (semakin kecil semakin atas)'),
-                        
-                        Forms\Components\Textarea::make('notes')
-                            ->label('Catatan')
-                            ->rows(3)
-                            ->columnSpanFull()
-                            ->helperText('Catatan tambahan untuk jadwal ini (opsional)'),
-                    ])->columns(2),
+                            ->columns(6)
+                            ->defaultItems(1)
+                            ->reorderableWithButtons()
+                            ->collapsible()
+                            ->itemLabel(
+                                fn(array $state): ?string =>
+                                isset($state['doctor_id'])
+                                    ? \App\Models\Doctor::find($state['doctor_id'])?->name .
+                                    (isset($state['start_time']) && isset($state['end_time'])
+                                        ? ' (' . substr($state['start_time'], 0, 5) . ' - ' . substr($state['end_time'], 0, 5) . ')'
+                                        : '')
+                                    : 'Jadwal Baru'
+                            )
+                            ->addActionLabel('Tambah Dokter Lain')
+                            ->reorderableWithDragAndDrop(false)
+                            ->cloneable()
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 
@@ -98,33 +123,24 @@ class DoctorScheduleResource extends Resource
                     ->label('Dokter')
                     ->searchable()
                     ->sortable(),
-                
-                Tables\Columns\TextColumn::make('day_of_week')
-                    ->label('Hari')
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'monday' => 'Senin',
-                        'tuesday' => 'Selasa',
-                        'wednesday' => 'Rabu',
-                        'thursday' => 'Kamis',
-                        'friday' => 'Jumat',
-                        'saturday' => 'Sabtu',
-                        'sunday' => 'Minggu',
-                        default => $state,
-                    })
+
+                Tables\Columns\TextColumn::make('schedule_date')
+                    ->label('Tanggal')
+                    ->date('d M Y')
                     ->badge()
                     ->color('info')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('start_time')
                     ->label('Jam Mulai')
                     ->time('H:i')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('end_time')
                     ->label('Jam Selesai')
                     ->time('H:i')
                     ->sortable(),
-                
+
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Status')
                     ->boolean()
@@ -132,44 +148,51 @@ class DoctorScheduleResource extends Resource
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')
                     ->falseColor('danger'),
-                
+
                 Tables\Columns\TextColumn::make('order')
                     ->label('Urutan')
                     ->numeric()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                
+
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Diperbarui')
                     ->dateTime('d M Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->defaultSort('order', 'asc')
+            ->defaultSort('schedule_date', 'asc')
             ->filters([
                 Tables\Filters\SelectFilter::make('doctor_id')
                     ->label('Dokter')
                     ->relationship('doctor', 'name')
                     ->searchable()
                     ->preload(),
-                
-                Tables\Filters\SelectFilter::make('day_of_week')
-                    ->label('Hari')
-                    ->options([
-                        'monday' => 'Senin',
-                        'tuesday' => 'Selasa',
-                        'wednesday' => 'Rabu',
-                        'thursday' => 'Kamis',
-                        'friday' => 'Jumat',
-                        'saturday' => 'Sabtu',
-                        'sunday' => 'Minggu',
-                    ]),
-                
+
+                Tables\Filters\Filter::make('schedule_date')
+                    ->form([
+                        Forms\Components\DatePicker::make('date_from')
+                            ->label('Dari Tanggal'),
+                        Forms\Components\DatePicker::make('date_until')
+                            ->label('Sampai Tanggal'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['date_from'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('schedule_date', '>=', $date),
+                            )
+                            ->when(
+                                $data['date_until'],
+                                fn(Builder $query, $date): Builder => $query->whereDate('schedule_date', '<=', $date),
+                            );
+                    }),
+
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Status')
                     ->placeholder('Semua')

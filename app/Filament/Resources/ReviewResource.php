@@ -18,15 +18,15 @@ class ReviewResource extends Resource
     protected static ?string $model = Review::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-star';
-    
+
     protected static ?string $navigationLabel = 'Ulasan';
-    
+
     protected static ?string $modelLabel = 'Ulasan';
-    
+
     protected static ?string $pluralModelLabel = 'Ulasan';
-    
+
     protected static ?string $navigationGroup = 'Manajemen Booking';
-    
+
     protected static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
@@ -42,7 +42,7 @@ class ReviewResource extends Resource
                             ->preload()
                             ->required()
                             ->columnSpan(1),
-                        
+
                         Forms\Components\Select::make('appointment_id')
                             ->label('Appointment')
                             ->relationship('appointment', 'booking_code')
@@ -50,7 +50,7 @@ class ReviewResource extends Resource
                             ->preload()
                             ->required()
                             ->columnSpan(1),
-                        
+
                         Forms\Components\Select::make('doctor_id')
                             ->label('Dokter')
                             ->relationship('doctor', 'name')
@@ -61,7 +61,7 @@ class ReviewResource extends Resource
                     ])
                     ->columns(2)
                     ->collapsible(),
-                
+
                 Forms\Components\Section::make('Penilaian')
                     ->schema([
                         Forms\Components\TextInput::make('rating')
@@ -73,7 +73,7 @@ class ReviewResource extends Resource
                             ->step(1)
                             ->suffix('/ 5')
                             ->columnSpan(2),
-                        
+
                         Forms\Components\Select::make('service_quality')
                             ->label('Kualitas Layanan')
                             ->options([
@@ -83,7 +83,7 @@ class ReviewResource extends Resource
                                 'excellent' => 'Sangat Baik',
                             ])
                             ->columnSpan(1),
-                        
+
                         Forms\Components\Select::make('cleanliness')
                             ->label('Kebersihan')
                             ->options([
@@ -93,7 +93,7 @@ class ReviewResource extends Resource
                                 'excellent' => 'Sangat Baik',
                             ])
                             ->columnSpan(1),
-                        
+
                         Forms\Components\Select::make('friendliness')
                             ->label('Keramahan')
                             ->options([
@@ -103,7 +103,7 @@ class ReviewResource extends Resource
                                 'excellent' => 'Sangat Baik',
                             ])
                             ->columnSpan(2),
-                        
+
                         Forms\Components\Textarea::make('comment')
                             ->label('Komentar')
                             ->rows(4)
@@ -111,7 +111,7 @@ class ReviewResource extends Resource
                     ])
                     ->columns(2)
                     ->collapsible(),
-                
+
                 Forms\Components\Section::make('Status')
                     ->schema([
                         Forms\Components\Toggle::make('is_visible')
@@ -119,7 +119,7 @@ class ReviewResource extends Resource
                             ->default(true)
                             ->required()
                             ->columnSpan(1),
-                        
+
                         Forms\Components\DateTimePicker::make('verified_at')
                             ->label('Waktu Verifikasi')
                             ->displayFormat('d/m/Y H:i')
@@ -138,22 +138,22 @@ class ReviewResource extends Resource
                     ->label('Pengguna')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('doctor.name')
                     ->label('Dokter')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('appointment.booking_code')
                     ->label('Booking')
                     ->searchable()
                     ->toggleable(),
-                
+
                 Tables\Columns\TextColumn::make('rating')
                     ->label('Rating')
-                    ->formatStateUsing(fn (int $state): string => str_repeat('⭐', $state))
+                    ->formatStateUsing(fn(int $state): string => str_repeat('⭐', $state))
                     ->sortable(),
-                
+
                 Tables\Columns\BadgeColumn::make('service_quality')
                     ->label('Layanan')
                     ->colors([
@@ -162,7 +162,7 @@ class ReviewResource extends Resource
                         'success' => 'good',
                         'primary' => 'excellent',
                     ])
-                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                    ->formatStateUsing(fn(?string $state): string => match ($state) {
                         'poor' => 'Buruk',
                         'fair' => 'Cukup',
                         'good' => 'Baik',
@@ -170,24 +170,24 @@ class ReviewResource extends Resource
                         default => '-',
                     })
                     ->toggleable(),
-                
+
                 Tables\Columns\TextColumn::make('comment')
                     ->label('Komentar')
                     ->limit(50)
                     ->searchable()
                     ->toggleable(),
-                
+
                 Tables\Columns\IconColumn::make('is_visible')
                     ->label('Ditampilkan')
                     ->boolean()
                     ->sortable(),
-                
+
                 Tables\Columns\IconColumn::make('verified_at')
                     ->label('Terverifikasi')
                     ->boolean()
-                    ->getStateUsing(fn (Review $record): bool => $record->verified_at !== null)
+                    ->getStateUsing(fn(Review $record): bool => $record->verified_at !== null)
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y, H:i')
@@ -205,53 +205,53 @@ class ReviewResource extends Resource
                         2 => '2 Bintang ⭐⭐',
                         1 => '1 Bintang ⭐',
                     ]),
-                
+
                 Tables\Filters\SelectFilter::make('doctor_id')
                     ->label('Dokter')
                     ->relationship('doctor', 'name')
                     ->searchable()
                     ->preload(),
-                
+
                 Tables\Filters\TernaryFilter::make('is_visible')
                     ->label('Ditampilkan')
                     ->placeholder('Semua')
                     ->trueLabel('Ya')
                     ->falseLabel('Tidak'),
-                
+
                 Tables\Filters\TernaryFilter::make('verified')
                     ->label('Terverifikasi')
                     ->placeholder('Semua')
                     ->trueLabel('Ya')
                     ->falseLabel('Belum')
                     ->queries(
-                        true: fn (Builder $query) => $query->whereNotNull('verified_at'),
-                        false: fn (Builder $query) => $query->whereNull('verified_at'),
+                        true: fn(Builder $query) => $query->whereNotNull('verified_at'),
+                        false: fn(Builder $query) => $query->whereNull('verified_at'),
                     ),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
-                    
+
                     Tables\Actions\Action::make('verify')
                         ->label('Verifikasi')
                         ->icon('heroicon-o-check-badge')
                         ->color('success')
                         ->requiresConfirmation()
-                        ->visible(fn (Review $record): bool => $record->verified_at === null)
+                        ->visible(fn(Review $record): bool => $record->verified_at === null)
                         ->action(function (Review $record) {
                             $record->update(['verified_at' => now()]);
                         }),
-                    
+
                     Tables\Actions\Action::make('toggleVisibility')
-                        ->label(fn (Review $record): string => $record->is_visible ? 'Sembunyikan' : 'Tampilkan')
-                        ->icon(fn (Review $record): string => $record->is_visible ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
+                        ->label(fn(Review $record): string => $record->is_visible ? 'Sembunyikan' : 'Tampilkan')
+                        ->icon(fn(Review $record): string => $record->is_visible ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
                         ->color('warning')
                         ->requiresConfirmation()
                         ->action(function (Review $record) {
                             $record->update(['is_visible' => !$record->is_visible]);
                         }),
-                    
+
                     Tables\Actions\DeleteAction::make(),
                 ]),
             ])
@@ -263,27 +263,27 @@ class ReviewResource extends Resource
                         ->color('success')
                         ->requiresConfirmation()
                         ->action(function ($records) {
-                            $records->each(fn (Review $record) => $record->update(['verified_at' => now()]));
+                            $records->each(fn(Review $record) => $record->update(['verified_at' => now()]));
                         }),
-                    
+
                     Tables\Actions\BulkAction::make('show')
                         ->label('Tampilkan Terpilih')
                         ->icon('heroicon-o-eye')
                         ->color('info')
                         ->requiresConfirmation()
                         ->action(function ($records) {
-                            $records->each(fn (Review $record) => $record->update(['is_visible' => true]));
+                            $records->each(fn(Review $record) => $record->update(['is_visible' => true]));
                         }),
-                    
+
                     Tables\Actions\BulkAction::make('hide')
                         ->label('Sembunyikan Terpilih')
                         ->icon('heroicon-o-eye-slash')
                         ->color('warning')
                         ->requiresConfirmation()
                         ->action(function ($records) {
-                            $records->each(fn (Review $record) => $record->update(['is_visible' => false]));
+                            $records->each(fn(Review $record) => $record->update(['is_visible' => false]));
                         }),
-                    
+
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

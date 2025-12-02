@@ -10,6 +10,35 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string $role
+ * @property \Illuminate\Support\Carbon|null $email_verified_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Address> $addresses
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Order> $orders
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\UserFavorite> $favorites
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Product> $favoritedProducts
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Notification> $notifications
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Notification> $unreadNotifications
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Pet> $pets
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Appointment> $appointments
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Review> $reviews
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\LoyaltyPoint> $loyaltyPoints
+ * @property-read int $loyalty_points_balance
+ * @property-read string $profile_photo_url
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany addresses()
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany orders()
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany favorites()
+ * @method \Illuminate\Database\Eloquent\Relations\BelongsToMany favoritedProducts()
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany notifications()
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany unreadNotifications()
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany pets()
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany appointments()
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany reviews()
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany loyaltyPoints()
+ */
 class User extends Authenticatable
 {
     use HasApiTokens;

@@ -24,7 +24,7 @@ return new class extends Migration
             $table->boolean('is_visible')->default(true); // Admin bisa hide jika inappropriate
             $table->timestamp('verified_at')->nullable(); // Verifikasi review asli
             $table->timestamps();
-            
+
             $table->index(['doctor_id', 'is_visible']);
             $table->index(['rating', 'is_visible']);
             $table->unique('appointment_id'); // 1 appointment = 1 review

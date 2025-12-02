@@ -59,7 +59,7 @@ class Review extends Model
     protected function qualityLabel(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => match($value) {
+            get: fn($value) => match ($value) {
                 'excellent' => 'Sangat Baik',
                 'good' => 'Baik',
                 'average' => 'Cukup',

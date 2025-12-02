@@ -21,7 +21,7 @@ class GalleryImageResource extends Resource
 
     protected static ?string $navigationLabel = 'Gallery Images';
 
-    protected static ?string $navigationGroup = 'Website Settings';
+    protected static ?string $navigationGroup = null;
 
     protected static ?int $navigationSort = 3;
 
@@ -102,7 +102,7 @@ class GalleryImageResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->defaultSort('order')
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Status')

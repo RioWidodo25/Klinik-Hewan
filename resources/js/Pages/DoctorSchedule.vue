@@ -72,15 +72,8 @@ const autoSelectDay = () => {
 // Auto-select on mount
 autoSelectDay();
 
-// Check if day has any schedules (excluding holidays)
+// Check if day has any schedules
 const dayHasSchedules = (dayKey) => {
-    const day = props.currentWeek.find(d => d.dayKey === dayKey);
-    
-    // If it's a holiday, return false (clinic closed)
-    if (day?.isHoliday) {
-        return false;
-    }
-    
     return props.doctors.some(doctor => 
         doctor.schedules.some(s => s.day_of_week === dayKey)
     );
@@ -88,14 +81,15 @@ const dayHasSchedules = (dayKey) => {
 
 // Check if we should show "Tutup" status
 const shouldShowClosedStatus = (day) => {
-    // Only show "Tutup" for past days or today
-    // Don't show for future days unless it's manually set as holiday
+    // Don't show "Tutup" for past days (dates before today)
+    // Only show "Tutup" for today and future dates if clinic is closed
     const dayDate = new Date(day.fullDate);
     const todayDate = new Date(props.today);
     dayDate.setHours(0, 0, 0, 0);
     todayDate.setHours(0, 0, 0, 0);
     
-    return dayDate <= todayDate;
+    // Hide "Tutup" for past dates
+    return dayDate >= todayDate;
 };
 
 // Helper for getting doctor schedules grouped by day (not used in calendar view)
@@ -184,17 +178,7 @@ const getDoctorSchedulesByDay = (doctor) => {
                                     Hari ini
                                 </span>
                             </div>
-                            <div v-if="day.isHoliday" class="mt-1">
-                                <span :class="[
-                                    'text-xs px-2 py-0.5 rounded-full font-semibold',
-                                    selectedDay?.dayKey === day.dayKey 
-                                        ? 'bg-white text-red-600' 
-                                        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                ]">
-                                    Libur
-                                </span>
-                            </div>
-                            <div v-if="!dayHasSchedules(day.dayKey) && !day.isHoliday && shouldShowClosedStatus(day)" class="mt-1">
+                            <div v-if="!dayHasSchedules(day.dayKey) && shouldShowClosedStatus(day)" class="mt-1">
                                 <span class="text-xs text-gray-400 dark:text-gray-600">Tutup</span>
                             </div>
                         </div>
@@ -216,30 +200,6 @@ const getDoctorSchedulesByDay = (doctor) => {
                     <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center" data-aos="fade-up">
                         Jadwal {{ selectedDay.isToday ? 'Hari Ini ' : '' }}{{ selectedDay.dayName }}, {{ selectedDay.dayNumber }} {{ selectedDay.monthName }} {{ selectedDay.fullDate ? new Date(selectedDay.fullDate).getFullYear() : '' }}
                     </h2>
-
-                    <!-- Holiday Notice -->
-                    <div v-if="selectedDay.isHoliday" class="mb-8" data-aos="fade-up">
-                        <div class="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-6">
-                            <div class="flex items-start gap-4">
-                                <div class="flex-shrink-0">
-                                    <svg class="w-12 h-12 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <div class="flex-1">
-                                    <h3 class="text-2xl font-bold text-red-900 dark:text-red-100 mb-2">
-                                        {{ selectedDay.holiday.name }}
-                                    </h3>
-                                    <p class="text-red-800 dark:text-red-200 text-lg mb-2">
-                                        Klinik Tutup - Hari Libur
-                                    </p>
-                                    <p v-if="selectedDay.holiday.description" class="text-red-700 dark:text-red-300 text-sm">
-                                        {{ selectedDay.holiday.description }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                     <div v-if="schedulesForDay.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div 
@@ -306,10 +266,10 @@ const getDoctorSchedulesByDay = (doctor) => {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <p class="text-gray-500 dark:text-gray-400 text-lg font-medium">
-                            {{ selectedDay.isHoliday ? 'Klinik tutup pada hari libur' : 'Tidak ada jadwal dokter untuk hari ini' }}
+                            Tidak ada jadwal dokter untuk hari ini
                         </p>
                         <p class="text-gray-400 dark:text-gray-500 text-sm mt-2">
-                            {{ selectedDay.isHoliday ? 'Silakan kunjungi kami di hari kerja' : 'Silakan pilih hari lain dari kalender di atas' }}
+                            Silakan pilih hari lain dari kalender di atas
                         </p>
                     </div>
                 </div>

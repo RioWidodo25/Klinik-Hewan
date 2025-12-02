@@ -10,6 +10,7 @@ use App\Services\MidtransService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class CheckoutController extends Controller
@@ -34,7 +35,8 @@ class CheckoutController extends Controller
 
         $cartData = $this->cartService->transformCart($cart, summary: false);
 
-        $user = auth()->user();
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
 
         // Get default address if available
         $defaultAddress = $user?->addresses()->where('is_default', true)->first();
@@ -106,7 +108,7 @@ class CheckoutController extends Controller
 
             // Create order
             $order = Order::create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'order_number' => Order::generateOrderNumber(),
                 'customer_name' => $validated['customer_name'],
                 'customer_email' => $validated['customer_email'],

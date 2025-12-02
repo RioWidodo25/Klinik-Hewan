@@ -7,6 +7,7 @@ use App\Models\Doctor;
 use App\Models\DoctorSchedule;
 use App\Models\Service;
 use App\Models\BlogPost;
+use App\Models\Branch;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -91,11 +92,42 @@ Route::get('/blog', function () {
     ]);
 })->name('blog');
 
+Route::get('/about-us', function () {
+    $settings = \App\Models\FooterSetting::first();
+    
+    $branches = Branch::active()->ordered()->get()->map(function ($branch) {
+        return [
+            'id' => $branch->id,
+            'name' => $branch->name,
+            'address' => $branch->address,
+            'phone' => $branch->phone,
+            'email' => $branch->email,
+            'operational_hours' => $branch->operational_hours,
+            'latitude' => $branch->latitude,
+            'longitude' => $branch->longitude,
+            'google_maps_iframe' => $branch->google_maps_iframe,
+            'image_url' => $branch->image_path ? asset('storage/' . $branch->image_path) : null,
+        ];
+    });
+
+    return Inertia::render('AboutUs', [
+        'clinic' => [
+            'name' => 'Klinik Hewan',
+            'about' => $settings?->about_text,
+            'phone' => $settings?->contact_phone,
+            'email' => $settings?->contact_email,
+            'address' => $settings?->contact_address,
+            'logo' => $settings?->logo ? asset('storage/' . $settings->logo) : null,
+        ],
+        'branches' => $branches,
+    ]);
+})->name('about-us');
+
 Route::get('/doctor-schedule', function () {
     // Get current week dates (Asia/Jakarta timezone)
     $today = now()->timezone('Asia/Jakarta');
     $currentDayOfWeek = $today->dayOfWeek; // 0 = Sunday, 1 = Monday, ...
-    
+
     // Get Monday of current week
     if ($currentDayOfWeek === 0) {
         // If Sunday, go back to previous Monday
@@ -104,7 +136,7 @@ Route::get('/doctor-schedule', function () {
         // Otherwise get Monday of this week
         $monday = $today->copy()->startOfWeek(\Carbon\Carbon::MONDAY)->startOfDay();
     }
-    
+
     // Generate week dates
     $weekDates = [];
     $dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -117,20 +149,11 @@ Route::get('/doctor-schedule', function () {
         'saturday' => 'Sabtu',
         'sunday' => 'Minggu',
     ];
-    
-    // Get holidays in current week
-    $weekStart = $monday->copy()->startOfDay();
-    $weekEnd = $monday->copy()->addDays(6)->endOfDay();
-    $holidays = \App\Models\Holiday::active()
-        ->whereBetween('date', [$weekStart->format('Y-m-d'), $weekEnd->format('Y-m-d')])
-        ->get()
-        ->keyBy(fn($h) => $h->date->format('Y-m-d'));
-    
+
     for ($i = 0; $i < 7; $i++) {
         $date = $monday->copy()->addDays($i);
         $dateString = $date->format('Y-m-d');
-        $holiday = $holidays->get($dateString);
-        
+
         $weekDates[] = [
             'dayKey' => $dayOrder[$i],
             'dayName' => $dayNamesIndo[$dayOrder[$i]],
@@ -140,23 +163,15 @@ Route::get('/doctor-schedule', function () {
             'year' => $date->year,
             'isToday' => $date->isSameDay($today),
             'fullDate' => $dateString,
-            'isHoliday' => $holiday !== null,
-            'holiday' => $holiday ? [
-                'id' => $holiday->id,
-                'name' => $holiday->name,
-                'description' => $holiday->description,
-                'type' => $holiday->type,
-                'color' => $holiday->color,
-            ] : null,
         ];
     }
-    
+
     // Get week range
     $weekStart = $monday->copy();
     $weekEnd = $monday->copy()->addDays(6);
-    $weekRange = $weekStart->day . ' ' . $weekStart->locale('id')->translatedFormat('F') . ' - ' . 
-                 $weekEnd->day . ' ' . $weekEnd->locale('id')->translatedFormat('F Y');
-    
+    $weekRange = $weekStart->day . ' ' . $weekStart->locale('id')->translatedFormat('F') . ' - ' .
+        $weekEnd->day . ' ' . $weekEnd->locale('id')->translatedFormat('F Y');
+
     // Get all active doctors with their active schedules
     $doctors = Doctor::active()
         ->ordered()

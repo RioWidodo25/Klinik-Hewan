@@ -60,7 +60,7 @@ class Pet extends Model
                 if (!$this->birth_date) return 'Tidak diketahui';
                 $years = $this->birth_date->diffInYears(now());
                 $months = $this->birth_date->copy()->addYears($years)->diffInMonths(now());
-                
+
                 if ($years > 0) {
                     return $months > 0 ? "{$years} tahun {$months} bulan" : "{$years} tahun";
                 }
@@ -72,7 +72,7 @@ class Pet extends Model
     protected function speciesLabel(): Attribute
     {
         return Attribute::make(
-            get: fn () => match($this->species) {
+            get: fn() => match ($this->species) {
                 'dog' => 'Anjing',
                 'cat' => 'Kucing',
                 'bird' => 'Burung',
@@ -86,7 +86,7 @@ class Pet extends Model
     protected function genderLabel(): Attribute
     {
         return Attribute::make(
-            get: fn () => match($this->gender) {
+            get: fn() => match ($this->gender) {
                 'male' => 'Jantan',
                 'female' => 'Betina',
                 default => '-',
@@ -97,7 +97,7 @@ class Pet extends Model
     protected function photoUrl(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->photo ? asset('storage/' . $this->photo) : null
+            get: fn() => $this->photo ? asset('storage/' . $this->photo) : null
         );
     }
 }

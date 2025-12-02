@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Profile;
 use App\Http\Controllers\Controller;
 use App\Models\Address;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class AddressController extends Controller
@@ -14,7 +15,9 @@ class AddressController extends Controller
      */
     public function index()
     {
-        $addresses = auth()->user()->addresses()->latest()->get();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $addresses = $user->addresses()->latest()->get();
 
         return Inertia::render('Profile/Addresses/Index', [
             'addresses' => $addresses,
@@ -40,13 +43,16 @@ class AddressController extends Controller
             'is_default' => 'boolean',
         ]);
 
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
         // If this address is set as default, unset other defaults
         if ($validated['is_default'] ?? false) {
-            auth()->user()->addresses()->update(['is_default' => false]);
+            $user->addresses()->update(['is_default' => false]);
         }
 
         // Create new address
-        $address = auth()->user()->addresses()->create($validated);
+        $address = $user->addresses()->create($validated);
 
         return redirect()->route('profile.addresses.index')->with('success', 'Alamat berhasil ditambahkan!');
     }
@@ -57,7 +63,7 @@ class AddressController extends Controller
     public function update(Request $request, Address $address)
     {
         // Check if user owns this address
-        if ($address->user_id !== auth()->id()) {
+        if ($address->user_id !== Auth::id()) {
             abort(403);
         }
 
@@ -75,9 +81,12 @@ class AddressController extends Controller
             'is_default' => 'boolean',
         ]);
 
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
         // If this address is set as default, unset other defaults
         if ($validated['is_default'] ?? false) {
-            auth()->user()->addresses()->where('id', '!=', $address->id)->update(['is_default' => false]);
+            $user->addresses()->where('id', '!=', $address->id)->update(['is_default' => false]);
         }
 
         $address->update($validated);
@@ -91,7 +100,7 @@ class AddressController extends Controller
     public function destroy(Address $address)
     {
         // Check if user owns this address
-        if ($address->user_id !== auth()->id()) {
+        if ($address->user_id !== Auth::id()) {
             abort(403);
         }
 
@@ -106,12 +115,15 @@ class AddressController extends Controller
     public function setDefault(Address $address)
     {
         // Check if user owns this address
-        if ($address->user_id !== auth()->id()) {
+        if ($address->user_id !== Auth::id()) {
             abort(403);
         }
 
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
         // Unset all other defaults
-        auth()->user()->addresses()->update(['is_default' => false]);
+        $user->addresses()->update(['is_default' => false]);
 
         // Set this address as default
         $address->update(['is_default' => true]);

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\UserFavorite;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class FavoriteController extends Controller
@@ -15,7 +16,9 @@ class FavoriteController extends Controller
      */
     public function index()
     {
-        $favorites = auth()->user()
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $favorites = $user
             ->favorites()
             ->with(['product.category', 'product.images'])
             ->latest()
@@ -48,7 +51,7 @@ class FavoriteController extends Controller
      */
     public function toggle(Product $product)
     {
-        $favorite = UserFavorite::where('user_id', auth()->id())
+        $favorite = UserFavorite::where('user_id', Auth::id())
             ->where('product_id', $product->id)
             ->first();
 
@@ -58,7 +61,7 @@ class FavoriteController extends Controller
             $isFavorited = false;
         } else {
             UserFavorite::create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'product_id' => $product->id,
             ]);
             $message = 'Produk ditambahkan ke favorit';
@@ -81,7 +84,7 @@ class FavoriteController extends Controller
     public function destroy(UserFavorite $favorite)
     {
         // Check if user owns this favorite
-        if ($favorite->user_id !== auth()->id()) {
+        if ($favorite->user_id !== Auth::id()) {
             abort(403);
         }
 

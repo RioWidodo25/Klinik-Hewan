@@ -44,9 +44,9 @@ class LoyaltyPoint extends Model
 
     public function scopeActive($query)
     {
-        return $query->where(function($q) {
+        return $query->where(function ($q) {
             $q->whereNull('expires_at')
-              ->orWhere('expires_at', '>=', now());
+                ->orWhere('expires_at', '>=', now());
         });
     }
 
@@ -59,7 +59,7 @@ class LoyaltyPoint extends Model
     protected function typeLabel(): Attribute
     {
         return Attribute::make(
-            get: fn () => match($this->type) {
+            get: fn() => match ($this->type) {
                 'earned' => 'Didapat',
                 'redeemed' => 'Ditukar',
                 'expired' => 'Kadaluarsa',

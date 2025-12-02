@@ -1,0 +1,143 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@config 'tailwind.config.js';
+
+/* Custom Filament Theme - Modern & Professional */
+
+/* Import Google Font - Inter */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* Enhanced Sidebar */
+.fi-sidebar {
+    @apply shadow-2xl;
+}
+
+.fi-sidebar-nav {
+    @apply bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800;
+}
+
+/* Modern Navigation Items */
+.fi-sidebar-item-button {
+    @apply rounded-xl transition-all duration-200;
+}
+
+.fi-sidebar-item-button:hover {
+    @apply bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 scale-[1.02] shadow-sm;
+}
+
+.fi-sidebar-item-button.fi-active {
+    @apply bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg scale-[1.02];
+}
+
+/* Enhanced Table Styling */
+.fi-ta-table {
+    @apply rounded-xl overflow-hidden shadow-lg;
+}
+
+.fi-ta-header-cell {
+    @apply bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 font-semibold;
+}
+
+.fi-ta-row:hover {
+    @apply bg-amber-50/50 dark:bg-amber-900/10 transition-colors duration-150;
+}
+
+/* Modern Cards */
+.fi-section {
+    @apply rounded-2xl shadow-lg border-0 ring-1 ring-gray-200/50 dark:ring-gray-700/50;
+}
+
+.fi-section-header {
+    @apply bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-t-2xl;
+}
+
+/* Enhanced Forms */
+.fi-fo-field-wrp {
+    @apply transition-all duration-200;
+}
+
+.fi-input:focus {
+    @apply ring-2 ring-amber-500/50 border-amber-500 scale-[1.01] transition-all duration-200;
+}
+
+/* Modern Buttons */
+.fi-btn-primary {
+    @apply bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02];
+}
+
+.fi-btn-secondary {
+    @apply bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 hover:shadow-md transition-all duration-200;
+}
+
+/* Enhanced Header */
+.fi-topbar {
+    @apply shadow-md bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl;
+}
+
+/* Modern Stats/Widgets */
+.fi-wi-stats-overview-stat {
+    @apply rounded-2xl shadow-lg ring-1 ring-gray-200/50 dark:ring-gray-700/50 hover:shadow-xl transition-all duration-200 hover:scale-[1.02];
+}
+
+/* Enhanced Modal */
+.fi-modal-window {
+    @apply rounded-2xl shadow-2xl;
+}
+
+.fi-modal-header {
+    @apply bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-900 rounded-t-2xl;
+}
+
+/* Modern Notifications */
+.fi-no-notification {
+    @apply rounded-xl shadow-lg ring-1 ring-gray-200/50 dark:ring-gray-700/50;
+}
+
+/* Enhanced Dropdown */
+.fi-dropdown-panel {
+    @apply rounded-xl shadow-2xl ring-1 ring-gray-200/50 dark:ring-gray-700/50;
+}
+
+/* Smooth Animations */
+.fi-section,
+.fi-btn,
+.fi-ta-table,
+.fi-wi-stats-overview-stat {
+    @apply transition-all duration-200 ease-in-out;
+}
+
+/* Badge Enhancements */
+.fi-badge {
+    @apply rounded-full px-3 py-1 font-semibold shadow-sm;
+}
+
+/* Enhanced Tabs */
+.fi-tabs-item {
+    @apply rounded-lg transition-all duration-200;
+}
+
+.fi-tabs-item.fi-active {
+    @apply bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md;
+}
+
+/* Loading States */
+.fi-loading {
+    @apply animate-pulse;
+}
+
+/* Custom Scrollbar */
+.fi-sidebar-nav::-webkit-scrollbar {
+    @apply w-2;
+}
+
+.fi-sidebar-nav::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800;
+}
+
+.fi-sidebar-nav::-webkit-scrollbar-thumb {
+    @apply bg-amber-500 rounded-full;
+}
+
+.fi-sidebar-nav::-webkit-scrollbar-thumb:hover {
+    @apply bg-amber-600;
+}

@@ -60,8 +60,8 @@ class ImagesHeader extends Page
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('Gallery Parallax Background')
-                    ->description('Upload gambar background dengan efek parallax untuk halaman Gallery')
+                Section::make('Gallery Header Image')
+                    ->description('Gambar header untuk halaman Gallery')
                     ->schema([
                         FileUpload::make('gallery_parallax_bg')
                             ->label('Background Parallax Gallery')

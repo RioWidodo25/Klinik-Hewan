@@ -48,11 +48,28 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->authGuard('web')
-            ->brandLogo($brandLogo)
-            ->darkModeBrandLogo($darkModeBrandLogo)
+            ->brandLogo(fn() => view('filament.admin.brand'))
             ->brandLogoHeight('3rem')
+            ->favicon(asset('favicon.ico'))
             ->colors([
                 'primary' => Color::Amber,
+                'danger' => Color::Rose,
+                'gray' => Color::Slate,
+                'info' => Color::Blue,
+                'success' => Color::Emerald,
+                'warning' => Color::Orange,
+            ])
+            ->font('Inter')
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
+            ->viteTheme('resources/css/filament/admin/theme.css')
+            ->sidebarCollapsibleOnDesktop()
+            ->navigationGroups([
+                'Appointments',
+                'Veterinary',
+                'E-Commerce',
+                'Content',
+                'Settings',
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -61,8 +78,11 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+                \App\Filament\Widgets\StatsOverview::class,
+                \App\Filament\Widgets\AppointmentsChart::class,
+                \App\Filament\Widgets\AppointmentStatusChart::class,
+                \App\Filament\Widgets\TodayAppointments::class,
+                \App\Filament\Widgets\LowStockProducts::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -78,6 +98,7 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
                 IsAdmin::class,
-            ]);
+            ])
+            ->plugin(\Awcodes\FilamentQuickCreate\QuickCreatePlugin::make());
     }
 }

@@ -85,15 +85,19 @@
                                     v-for="slot in availableTimeSlots"
                                     :key="slot.time"
                                     type="button"
-                                    @click="form.appointment_time = slot.time"
+                                    @click="!slot.isPast && (form.appointment_time = slot.time)"
+                                    :disabled="slot.isPast"
                                     :class="[
                                         'py-3 px-4 rounded-lg border-2 transition-all font-medium',
-                                        form.appointment_time === slot.time 
-                                            ? 'border-blue-500 bg-blue-500 text-white' 
-                                            : 'border-gray-200 hover:border-blue-300 text-gray-700'
+                                        slot.isPast
+                                            ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                                            : form.appointment_time === slot.time 
+                                                ? 'border-blue-500 bg-blue-500 text-white' 
+                                                : 'border-gray-200 hover:border-blue-300 text-gray-700 cursor-pointer'
                                     ]"
                                 >
                                     {{ slot.formatted }}
+                                    <span v-if="slot.isPast" class="block text-xs mt-1">Lewat</span>
                                 </button>
                             </div>
                             <p v-if="form.errors.appointment_time" class="mt-1 text-sm text-red-600">{{ form.errors.appointment_time }}</p>
@@ -210,7 +214,7 @@
                                             </div>
                                             <div class="flex-1">
                                                 <h4 class="font-semibold text-gray-900">{{ pet.name }}</h4>
-                                                <p class="text-sm text-gray-600">{{ pet.species_label }} • {{ formatPetAge(pet.birth_date) }}</p>
+                                                <p class="text-sm text-gray-600">{{ pet.species_label }}</p>
                                             </div>
                                         </div>
                                         
@@ -307,15 +311,6 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir</label>
-                                        <input 
-                                            type="date" 
-                                            v-model="form.pet_birth_date"
-                                            :max="today"
-                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                        />
-                                    </div>
-                                    <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Berat (kg)</label>
                                         <input 
                                             type="number" 
@@ -324,6 +319,42 @@
                                             min="0"
                                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                         />
+                                    </div>
+                                </div>
+
+                                <!-- Owner Information -->
+                                <div class="border-t pt-4 mt-4">
+                                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Informasi Pemilik</h4>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pemilik *</label>
+                                            <input 
+                                                type="text" 
+                                                v-model="form.owner_name"
+                                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Telepon *</label>
+                                            <input 
+                                                type="tel" 
+                                                v-model="form.owner_phone"
+                                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="08xxxxxxxxxx"
+                                                required
+                                            />
+                                        </div>
+                                        <div class="sm:col-span-2">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Alamat *</label>
+                                            <textarea 
+                                                v-model="form.owner_address"
+                                                rows="2"
+                                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                placeholder="Alamat lengkap"
+                                                required
+                                            ></textarea>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -429,15 +460,10 @@ const maxDate = props.weekEnd;
 const availableTimeSlots = computed(() => {
     if (!form.appointment_date) return [];
     
-    // Get day of week from selected date
-    const selectedDate = new Date(form.appointment_date);
-    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const dayOfWeek = dayNames[selectedDate.getDay()];
-    
-    // Find all doctors who practice on this day
+    // Find all doctors who have schedules on this specific date
     const doctorsSchedules = props.doctors
         .map(doctor => {
-            const schedule = doctor.schedules.find(s => s.day_of_week === dayOfWeek);
+            const schedule = doctor.schedules.find(s => s.schedule_date === form.appointment_date);
             return schedule ? {
                 start_time: schedule.start_time,
                 end_time: schedule.end_time
@@ -461,6 +487,10 @@ const availableTimeSlots = computed(() => {
     let currentHour = startHour;
     let currentMinute = startMinute;
     
+    // Check if selected date is today
+    const isToday = new Date(form.appointment_date).toDateString() === new Date().toDateString();
+    const now = new Date();
+    
     while (currentHour < endHour || (currentHour === endHour && currentMinute < endMinute)) {
         const timeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
         
@@ -469,10 +499,19 @@ const availableTimeSlots = computed(() => {
             return timeStr >= schedule.start_time && timeStr < schedule.end_time;
         });
         
+        // Check if this time slot is in the past
+        let isPast = false;
+        if (isToday) {
+            const slotDateTime = new Date(selectedDate);
+            slotDateTime.setHours(currentHour, currentMinute, 0, 0);
+            isPast = slotDateTime < now;
+        }
+        
         if (isAvailable) {
             slots.push({
                 time: timeStr,
-                formatted: timeStr
+                formatted: timeStr,
+                isPast: isPast
             });
         }
         
@@ -493,15 +532,10 @@ const filteredDoctors = computed(() => {
         return [];
     }
     
-    // Get day of week from selected date
-    const selectedDate = new Date(form.appointment_date);
-    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-    const dayOfWeek = dayNames[selectedDate.getDay()];
-    
-    // Filter doctors who have schedules on that day and time
+    // Filter doctors who have schedules on that specific date and time
     return props.doctors.filter(doctor => {
         return doctor.schedules.some(schedule => {
-            if (schedule.day_of_week !== dayOfWeek) return false;
+            if (schedule.schedule_date !== form.appointment_date) return false;
             
             // Check if selected time is within doctor's schedule
             const selectedTime = form.appointment_time;
@@ -519,9 +553,11 @@ const form = useForm({
     pet_name: '',
     pet_species: '',
     pet_breed: '',
-    pet_birth_date: '',
     pet_gender: '',
     pet_weight: null,
+    owner_name: '',
+    owner_phone: '',
+    owner_address: '',
     complaint: '',
 });
 
@@ -538,8 +574,8 @@ const canProceed = computed(() => {
         case 2: return !!form.doctor_id;
         case 3: return form.service_ids.length > 0;
         case 4: 
-            if (form.pet_id) return !!form.complaint;
-            return !!form.pet_name && !!form.pet_species && !!form.complaint;
+            if (form.pet_id) return !!form.complaint && !!form.owner_name && !!form.owner_phone && !!form.owner_address;
+            return !!form.pet_name && !!form.pet_species && !!form.complaint && !!form.owner_name && !!form.owner_phone && !!form.owner_address;
         default: return false;
     }
 });
@@ -564,9 +600,9 @@ const selectPet = (pet) => {
     form.pet_name = '';
     form.pet_species = '';
     form.pet_breed = '';
-    form.pet_birth_date = '';
     form.pet_gender = '';
     form.pet_weight = null;
+    // Keep owner info as it's still needed
 };
 
 const loadAvailableSlots = async () => {
@@ -639,6 +675,9 @@ const handleSubmit = () => {
         appointment_date: form.appointment_date,
         appointment_time: form.appointment_time,
         complaint: form.complaint,
+        owner_name: form.owner_name,
+        owner_phone: form.owner_phone,
+        owner_address: form.owner_address,
     };
 
     // Only include pet_id OR pet details, not both
@@ -648,7 +687,6 @@ const handleSubmit = () => {
         submitData.pet_name = form.pet_name;
         submitData.pet_species = form.pet_species;
         if (form.pet_breed) submitData.pet_breed = form.pet_breed;
-        if (form.pet_birth_date) submitData.pet_birth_date = form.pet_birth_date;
         if (form.pet_gender) submitData.pet_gender = form.pet_gender;
         if (form.pet_weight) submitData.pet_weight = form.pet_weight;
     }
@@ -721,42 +759,6 @@ const formatDate = (dateStr) => {
     return date.toLocaleDateString('id-ID', options);
 };
 
-// Format pet age helper
-const formatPetAge = (birthDate) => {
-    if (!birthDate) return 'Umur tidak diketahui';
-    
-    const birth = new Date(birthDate);
-    const now = new Date();
-    
-    let years = now.getFullYear() - birth.getFullYear();
-    let months = now.getMonth() - birth.getMonth();
-    
-    // Adjust if birth month hasn't occurred yet this year
-    if (months < 0) {
-        years--;
-        months += 12;
-    }
-    
-    // Adjust for day of month
-    if (now.getDate() < birth.getDate()) {
-        months--;
-        if (months < 0) {
-            years--;
-            months += 12;
-        }
-    }
-    
-    if (years > 0 && months > 0) {
-        return `${years} tahun ${months} bulan`;
-    } else if (years > 0) {
-        return `${years} tahun`;
-    } else if (months > 0) {
-        return `${months} bulan`;
-    } else {
-        return 'Kurang dari 1 bulan';
-    }
-};
-
 // Open edit modal with SweetAlert2
 const openEditModal = async (pet) => {
     const { value: formValues } = await Swal.fire({
@@ -791,10 +793,6 @@ const openEditModal = async (pet) => {
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir</label>
-                    <input id="edit-birth-date" type="date" class="swal2-input w-full m-0" value="${pet.birth_date || ''}" max="${today}">
-                </div>
-                <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Berat (kg)</label>
                     <input id="edit-weight" type="number" step="0.1" class="swal2-input w-full m-0" value="${pet.weight || ''}" placeholder="Berat dalam kg">
                 </div>
@@ -821,7 +819,6 @@ const openEditModal = async (pet) => {
                 species: species,
                 breed: document.getElementById('edit-breed').value,
                 gender: document.getElementById('edit-gender').value,
-                birth_date: document.getElementById('edit-birth-date').value,
                 weight: document.getElementById('edit-weight').value,
             };
         }

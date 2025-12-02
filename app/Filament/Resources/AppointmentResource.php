@@ -18,15 +18,15 @@ class AppointmentResource extends Resource
     protected static ?string $model = Appointment::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
-    
+
     protected static ?string $navigationLabel = 'Janji Temu';
-    
+
     protected static ?string $modelLabel = 'Janji Temu';
-    
+
     protected static ?string $pluralModelLabel = 'Janji Temu';
-    
+
     protected static ?string $navigationGroup = 'Manajemen Booking';
-    
+
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
@@ -39,8 +39,8 @@ class AppointmentResource extends Resource
                             ->label('Kode Booking')
                             ->disabled()
                             ->dehydrated(false)
-                            ->visible(fn ($record) => $record !== null),
-                        
+                            ->visible(fn($record) => $record !== null),
+
                         Forms\Components\Select::make('user_id')
                             ->label('Pemilik')
                             ->relationship('user', 'name')
@@ -59,7 +59,7 @@ class AppointmentResource extends Resource
                                     ->required()
                                     ->minLength(8),
                             ]),
-                        
+
                         Forms\Components\Select::make('pet_id')
                             ->label('Hewan Peliharaan')
                             ->relationship('pet', 'name')
@@ -82,7 +82,7 @@ class AppointmentResource extends Resource
                                     ])
                                     ->required(),
                             ]),
-                        
+
                         Forms\Components\Select::make('doctor_id')
                             ->label('Dokter')
                             ->relationship('doctor', 'name')
@@ -91,7 +91,7 @@ class AppointmentResource extends Resource
                             ->preload(),
                     ])
                     ->columns(2),
-                
+
                 Forms\Components\Section::make('Jadwal')
                     ->schema([
                         Forms\Components\DatePicker::make('appointment_date')
@@ -100,18 +100,18 @@ class AppointmentResource extends Resource
                             ->native(false)
                             ->minDate(now())
                             ->displayFormat('d F Y'),
-                        
+
                         Forms\Components\TimePicker::make('appointment_time')
                             ->label('Jam Kunjungan')
                             ->required()
                             ->seconds(false)
                             ->minutesStep(30),
-                        
+
                         Forms\Components\TimePicker::make('end_time')
                             ->label('Estimasi Selesai')
                             ->seconds(false)
                             ->minutesStep(30),
-                        
+
                         Forms\Components\Select::make('status')
                             ->label('Status')
                             ->options([
@@ -126,35 +126,35 @@ class AppointmentResource extends Resource
                             ->default('pending'),
                     ])
                     ->columns(2),
-                
+
                 Forms\Components\Section::make('Detail Kunjungan')
                     ->schema([
                         Forms\Components\Textarea::make('complaint')
                             ->label('Keluhan Utama')
                             ->rows(3)
                             ->maxLength(500),
-                        
+
                         Forms\Components\Textarea::make('diagnosis')
                             ->label('Diagnosis')
                             ->rows(3)
                             ->helperText('Diisi oleh dokter'),
-                        
+
                         Forms\Components\Textarea::make('treatment')
                             ->label('Tindakan')
                             ->rows(3)
                             ->helperText('Diisi oleh dokter'),
-                        
+
                         Forms\Components\Textarea::make('prescription')
                             ->label('Resep Obat')
                             ->rows(3),
-                        
+
                         Forms\Components\Textarea::make('notes')
                             ->label('Catatan Tambahan')
                             ->rows(2),
                     ])
                     ->columns(1)
                     ->collapsible(),
-                
+
                 Forms\Components\Section::make('Biaya & Poin')
                     ->schema([
                         Forms\Components\TextInput::make('total_cost')
@@ -162,7 +162,7 @@ class AppointmentResource extends Resource
                             ->numeric()
                             ->prefix('Rp')
                             ->step(1000),
-                        
+
                         Forms\Components\TextInput::make('loyalty_points_earned')
                             ->label('Poin Loyalty')
                             ->numeric()
@@ -184,28 +184,28 @@ class AppointmentResource extends Resource
                     ->sortable()
                     ->copyable()
                     ->weight('semibold'),
-                
+
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Pemilik')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('pet.name')
                     ->label('Hewan')
                     ->searchable()
-                    ->description(fn (Appointment $record): string => $record->pet->species_label ?? ''),
-                
+                    ->description(fn(Appointment $record): string => $record->pet->species_label ?? ''),
+
                 Tables\Columns\TextColumn::make('doctor.name')
                     ->label('Dokter')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('appointment_date')
                     ->label('Tanggal')
                     ->date('d M Y')
                     ->sortable()
-                    ->description(fn (Appointment $record): string => $record->appointment_time ? $record->appointment_time->format('H:i') : ''),
-                
+                    ->description(fn(Appointment $record): string => $record->appointment_time ? $record->appointment_time->format('H:i') : ''),
+
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Status')
                     ->colors([
@@ -213,16 +213,16 @@ class AppointmentResource extends Resource
                         'info' => 'confirmed',
                         'primary' => 'in_progress',
                         'success' => 'completed',
-                        'danger' => fn ($state) => in_array($state, ['cancelled', 'no_show']),
+                        'danger' => fn($state) => in_array($state, ['cancelled', 'no_show']),
                     ])
                     ->icons([
                         'heroicon-o-clock' => 'pending',
                         'heroicon-o-check-circle' => 'confirmed',
                         'heroicon-o-arrow-path' => 'in_progress',
                         'heroicon-o-check-badge' => 'completed',
-                        'heroicon-o-x-circle' => fn ($state) => in_array($state, ['cancelled', 'no_show']),
+                        'heroicon-o-x-circle' => fn($state) => in_array($state, ['cancelled', 'no_show']),
                     ])
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
                         'pending' => 'Menunggu',
                         'confirmed' => 'Dikonfirmasi',
                         'in_progress' => 'Berlangsung',
@@ -231,19 +231,19 @@ class AppointmentResource extends Resource
                         'no_show' => 'Tidak Hadir',
                         default => $state,
                     }),
-                
+
                 Tables\Columns\TextColumn::make('total_cost')
                     ->label('Biaya')
                     ->money('IDR')
                     ->sortable()
                     ->toggleable(),
-                
+
                 Tables\Columns\TextColumn::make('loyalty_points_earned')
                     ->label('Poin')
                     ->numeric()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y, H:i')
@@ -263,21 +263,21 @@ class AppointmentResource extends Resource
                         'no_show' => 'Tidak Hadir',
                     ])
                     ->multiple(),
-                
+
                 Tables\Filters\SelectFilter::make('doctor_id')
                     ->label('Dokter')
                     ->relationship('doctor', 'name')
                     ->searchable()
                     ->preload(),
-                
+
                 Tables\Filters\Filter::make('today')
                     ->label('Hari Ini')
-                    ->query(fn (Builder $query): Builder => $query->today()),
-                
+                    ->query(fn(Builder $query): Builder => $query->today()),
+
                 Tables\Filters\Filter::make('upcoming')
                     ->label('Yang Akan Datang')
-                    ->query(fn (Builder $query): Builder => $query->upcoming()),
-                
+                    ->query(fn(Builder $query): Builder => $query->upcoming()),
+
                 Tables\Filters\Filter::make('appointment_date')
                     ->form([
                         Forms\Components\DatePicker::make('from')
@@ -289,11 +289,11 @@ class AppointmentResource extends Resource
                         return $query
                             ->when(
                                 $data['from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('appointment_date', '>=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('appointment_date', '>=', $date),
                             )
                             ->when(
                                 $data['until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('appointment_date', '<=', $date),
+                                fn(Builder $query, $date): Builder => $query->whereDate('appointment_date', '<=', $date),
                             );
                     }),
             ])
@@ -301,30 +301,30 @@ class AppointmentResource extends Resource
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
-                    
+
                     Tables\Actions\Action::make('confirm')
                         ->label('Konfirmasi')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->requiresConfirmation()
-                        ->visible(fn (Appointment $record): bool => $record->status === 'pending')
+                        ->visible(fn(Appointment $record): bool => $record->status === 'pending')
                         ->action(function (Appointment $record) {
                             $record->update(['status' => 'confirmed']);
                         }),
-                    
+
                     Tables\Actions\Action::make('checkin')
                         ->label('Check-in')
                         ->icon('heroicon-o-arrow-right-on-rectangle')
                         ->color('primary')
                         ->requiresConfirmation()
-                        ->visible(fn (Appointment $record): bool => $record->status === 'confirmed')
+                        ->visible(fn(Appointment $record): bool => $record->status === 'confirmed')
                         ->action(function (Appointment $record) {
                             $record->update([
                                 'status' => 'in_progress',
                                 'checked_in_at' => now(),
                             ]);
                         }),
-                    
+
                     Tables\Actions\Action::make('complete')
                         ->label('Selesai')
                         ->icon('heroicon-o-check-badge')
@@ -348,7 +348,7 @@ class AppointmentResource extends Resource
                                 ->default(10)
                                 ->required(),
                         ])
-                        ->visible(fn (Appointment $record): bool => $record->status === 'in_progress')
+                        ->visible(fn(Appointment $record): bool => $record->status === 'in_progress')
                         ->action(function (Appointment $record, array $data) {
                             $record->update([
                                 'status' => 'completed',
@@ -359,7 +359,7 @@ class AppointmentResource extends Resource
                                 'total_cost' => $data['total_cost'],
                                 'loyalty_points_earned' => $data['loyalty_points_earned'],
                             ]);
-                            
+
                             // Add loyalty points
                             \App\Models\LoyaltyPoint::create([
                                 'user_id' => $record->user_id,
@@ -384,7 +384,7 @@ class AppointmentResource extends Resource
                                 ],
                             ]);
                         }),
-                    
+
                     Tables\Actions\Action::make('cancel')
                         ->label('Batalkan')
                         ->icon('heroicon-o-x-circle')
@@ -394,7 +394,7 @@ class AppointmentResource extends Resource
                                 ->label('Alasan Pembatalan')
                                 ->required(),
                         ])
-                        ->visible(fn (Appointment $record): bool => in_array($record->status, ['pending', 'confirmed']))
+                        ->visible(fn(Appointment $record): bool => in_array($record->status, ['pending', 'confirmed']))
                         ->action(function (Appointment $record, array $data) {
                             $record->update([
                                 'status' => 'cancelled',
@@ -403,7 +403,7 @@ class AppointmentResource extends Resource
                                 'cancellation_reason' => $data['cancellation_reason'],
                             ]);
                         }),
-                    
+
                     Tables\Actions\DeleteAction::make(),
                 ]),
             ])

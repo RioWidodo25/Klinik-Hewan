@@ -45,7 +45,7 @@ class Holiday extends Model
     public function scopeUpcoming($query)
     {
         return $query->where('date', '>=', now()->startOfDay())
-                     ->orderBy('date', 'asc');
+            ->orderBy('date', 'asc');
     }
 
     /**
@@ -62,7 +62,7 @@ class Holiday extends Model
     protected function formattedDate(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->date->locale('id')->translatedFormat('d F Y')
+            get: fn() => $this->date->locale('id')->translatedFormat('d F Y')
         );
     }
 
@@ -72,7 +72,7 @@ class Holiday extends Model
     protected function typeLabel(): Attribute
     {
         return Attribute::make(
-            get: fn () => match($this->type) {
+            get: fn() => match ($this->type) {
                 'national' => 'Libur Nasional',
                 'religious' => 'Hari Keagamaan',
                 'custom' => 'Libur Khusus',

@@ -21,7 +21,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->integer('order')->default(0);
             $table->timestamps();
-            
+
             // Index untuk performa
             $table->index(['doctor_id', 'day_of_week', 'is_active']);
         });

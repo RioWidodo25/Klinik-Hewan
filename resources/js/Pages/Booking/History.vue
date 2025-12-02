@@ -40,7 +40,7 @@
                     <div
                         v-for="appointment in filteredAppointments"
                         :key="appointment.id"
-                        class="bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                        class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
                     >
                         <div class="p-6">
                             <div class="flex flex-col md:flex-row md:items-center md:justify-between">

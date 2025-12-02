@@ -19,7 +19,7 @@ return new class extends Migration
             $table->integer('quantity')->default(1);
             $table->text('notes')->nullable();
             $table->timestamps();
-            
+
             $table->unique(['appointment_id', 'service_id']);
         });
     }

@@ -21,7 +21,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->date('expires_at')->nullable(); // Poin bisa expire
             $table->timestamps();
-            
+
             $table->index(['user_id', 'type']);
             $table->index(['user_id', 'expires_at']);
         });

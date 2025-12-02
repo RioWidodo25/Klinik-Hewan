@@ -63,7 +63,7 @@ class ServiceResource extends Resource
                         Forms\Components\Select::make('icon_color')
                             ->label('Warna Background Icon')
                             ->options([
-                                'bg-amber-600' => 'Amber (Default)',
+                                'bg-amber-600' => 'Amber',
                                 'bg-blue-600' => 'Blue',
                                 'bg-green-600' => 'Green',
                                 'bg-red-600' => 'Red',
@@ -73,9 +73,16 @@ class ServiceResource extends Resource
                                 'bg-teal-600' => 'Teal',
                                 'bg-orange-600' => 'Orange',
                                 'bg-cyan-600' => 'Cyan',
+                                'bg-emerald-600' => 'Emerald',
+                                'bg-lime-600' => 'Lime',
+                                'bg-rose-600' => 'Rose',
+                                'bg-sky-600' => 'Sky',
+                                'bg-violet-600' => 'Violet',
                             ])
                             ->default('bg-amber-600')
                             ->required()
+                            ->native(false)
+                            ->searchable()
                             ->helperText('Pilih warna background untuk icon'),
                     ])
                     ->columns(2),
@@ -119,10 +126,12 @@ class ServiceResource extends Resource
                     ->limit(50)
                     ->searchable(),
 
-                Tables\Columns\ColorColumn::make('icon_color')
+                Tables\Columns\TextColumn::make('icon_color')
                     ->label('Warna')
-                    ->copyable()
-                    ->copyMessage('Warna disalin'),
+                    ->badge()
+                    ->formatStateUsing(fn(string $state): string => str_replace(['bg-', '-600'], '', $state))
+                    ->color(fn(string $state): string => str_replace(['bg-', '-600'], '', $state))
+                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('order')
                     ->label('Urutan')

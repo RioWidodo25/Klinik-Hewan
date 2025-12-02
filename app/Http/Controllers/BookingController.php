@@ -6,7 +6,6 @@ use App\Models\Appointment;
 use App\Models\Doctor;
 use App\Models\Pet;
 use App\Models\Service;
-use App\Models\Holiday;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -33,7 +32,11 @@ class BookingController extends Controller
         $startOfWeek = $today->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
         $endOfWeek = $today->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
 
-        $doctors = Doctor::active()->ordered()->with('schedules')->get()->map(function ($doctor) {
+        $doctors = Doctor::active()->ordered()->with(['schedules' => function ($query) use ($startOfWeek, $endOfWeek) {
+            $query->whereBetween('schedule_date', [$startOfWeek, $endOfWeek])
+                ->where('is_active', true)
+                ->orderBy('schedule_date');
+        }])->get()->map(function ($doctor) {
             return [
                 'id' => $doctor->id,
                 'name' => $doctor->name,
@@ -43,7 +46,7 @@ class BookingController extends Controller
                 'photo_url' => $doctor->photo_path ? asset('storage/' . $doctor->photo_path) : null,
                 'schedules' => $doctor->schedules->map(function ($schedule) {
                     return [
-                        'day_of_week' => $schedule->day_of_week,
+                        'schedule_date' => $schedule->schedule_date->format('Y-m-d'),
                         'start_time' => $schedule->start_time->format('H:i'),
                         'end_time' => $schedule->end_time->format('H:i'),
                     ];
@@ -52,7 +55,7 @@ class BookingController extends Controller
         });
 
         // Get user's pets if authenticated
-        $userPets = auth()->check() 
+        $userPets = auth()->check()
             ? auth()->user()->pets()->active()->get()->map(function ($pet) {
                 return [
                     'id' => $pet->id,
@@ -97,7 +100,7 @@ class BookingController extends Controller
         ]);
 
         $date = \Carbon\Carbon::parse($request->date);
-        
+
         // Validate date is within current week
         if ($date->lt($startOfWeek) || $date->gt($endOfWeek)) {
             return response()->json([
@@ -107,24 +110,9 @@ class BookingController extends Controller
             ], 422);
         }
 
-        $dayOfWeek = strtolower($date->englishDayOfWeek);
-
-        // Check if date is a holiday
-        $holiday = Holiday::active()
-            ->whereDate('date', $date)
-            ->first();
-
-        if ($holiday) {
-            return response()->json([
-                'available' => false,
-                'message' => 'Tanggal yang dipilih adalah hari libur: ' . $holiday->name,
-                'slots' => [],
-            ]);
-        }
-
-        // Get doctor's schedule for this day
-        $doctor = Doctor::with(['schedules' => function ($query) use ($dayOfWeek) {
-            $query->where('day_of_week', $dayOfWeek)->active();
+        // Get doctor's schedule for this specific date
+        $doctor = Doctor::with(['schedules' => function ($query) use ($date) {
+            $query->whereDate('schedule_date', $date->format('Y-m-d'))->active();
         }])->findOrFail($request->doctor_id);
 
         if ($doctor->schedules->isEmpty()) {
@@ -151,29 +139,29 @@ class BookingController extends Controller
         // Generate 30-minute slots
         $slots = [];
         $currentSlot = $startTime->copy();
-        
+
         while ($currentSlot->addMinutes(30) <= $endTime) {
             $slotTime = $currentSlot->format('H:i');
             $slotDateTime = $date->copy()->setTimeFromTimeString($slotTime);
-            
-            // Skip if slot is in the past (for today)
-            if ($date->isToday() && $slotDateTime->isPast()) {
-                continue;
-            }
 
-            // Check if slot is not booked
-            if (!in_array($slotTime, $existingAppointments)) {
-                $slots[] = [
-                    'time' => $slotTime,
-                    'formatted' => $currentSlot->format('H:i'),
-                    'available' => true,
-                ];
-            }
+            // Check if slot is in the past (for today)
+            $isPast = $date->isToday() && $slotDateTime->isPast();
+
+            // Check if slot is booked
+            $isBooked = in_array($slotTime, $existingAppointments);
+
+            $slots[] = [
+                'time' => $slotTime,
+                'formatted' => $currentSlot->format('H:i'),
+                'available' => !$isBooked && !$isPast,
+                'is_past' => $isPast,
+                'is_booked' => $isBooked,
+            ];
         }
 
         return response()->json([
-            'available' => count($slots) > 0,
-            'message' => count($slots) > 0 ? null : 'Tidak ada slot tersedia untuk tanggal ini',
+            'available' => count(array_filter($slots, fn($slot) => $slot['available'])) > 0,
+            'message' => count(array_filter($slots, fn($slot) => $slot['available'])) > 0 ? null : 'Tidak ada slot tersedia untuk tanggal ini',
             'slots' => $slots,
             'schedule' => [
                 'start_time' => $schedule->start_time->format('H:i'),
@@ -208,7 +196,19 @@ class BookingController extends Controller
                     }
                 },
             ],
-            'appointment_time' => 'required|date_format:H:i',
+            'appointment_time' => [
+                'required',
+                'date_format:H:i',
+                function ($attribute, $value, $fail) use ($request) {
+                    $appointmentDate = \Carbon\Carbon::parse($request->appointment_date);
+                    $appointmentDateTime = $appointmentDate->copy()->setTimeFromTimeString($value);
+
+                    // Check if the appointment time is in the past
+                    if ($appointmentDateTime->isPast()) {
+                        $fail('Jam booking tidak boleh memilih waktu yang sudah lewat.');
+                    }
+                },
+            ],
             'pet_id' => 'nullable|exists:pets,id',
             'pet_name' => 'required_without:pet_id|string|nullable|max:255',
             'pet_species' => 'required_without:pet_id|string|nullable|in:dog,cat,bird,rabbit,hamster,other',
@@ -216,6 +216,9 @@ class BookingController extends Controller
             'pet_birth_date' => 'nullable|date|before:today',
             'pet_gender' => 'nullable|string|in:male,female',
             'pet_weight' => 'nullable|numeric|min:0',
+            'owner_name' => 'required|string|max:255',
+            'owner_phone' => 'required|string|max:20',
+            'owner_address' => 'required|string|max:500',
             'complaint' => 'required|string|max:1000',
         ]);
 
@@ -251,6 +254,9 @@ class BookingController extends Controller
                 'end_time' => $endTime->format('H:i:s'),
                 'status' => 'pending',
                 'complaint' => $validated['complaint'],
+                'owner_name' => $validated['owner_name'],
+                'owner_phone' => $validated['owner_phone'],
+                'owner_address' => $validated['owner_address'],
             ]);
 
             // Attach services
@@ -262,7 +268,6 @@ class BookingController extends Controller
 
             return redirect()->route('booking.success', ['bookingCode' => $appointment->booking_code])
                 ->with('success', 'Pendaftaran berhasil! Kode booking Anda: ' . $appointment->booking_code);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Terjadi kesalahan saat membuat appointment: ' . $e->getMessage());

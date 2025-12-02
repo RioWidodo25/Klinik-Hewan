@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Pet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class PetController extends Controller
 {
@@ -15,7 +16,7 @@ class PetController extends Controller
     public function update(Request $request, Pet $pet)
     {
         // Ensure user owns this pet
-        if ($pet->user_id !== auth()->id()) {
+        if ($pet->user_id !== Auth::id()) {
             abort(403);
         }
 
@@ -42,7 +43,7 @@ class PetController extends Controller
     public function destroy(Pet $pet)
     {
         // Ensure user owns this pet
-        if ($pet->user_id !== auth()->id()) {
+        if ($pet->user_id !== Auth::id()) {
             abort(403);
         }
 

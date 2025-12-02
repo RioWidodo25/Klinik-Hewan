@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\HolidayResource\Pages;
+namespace App\Filament\Resources\BranchResource\Pages;
 
-use App\Filament\Resources\HolidayResource;
+use App\Filament\Resources\BranchResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
-class EditHoliday extends EditRecord
+class EditBranch extends EditRecord
 {
-    protected static string $resource = HolidayResource::class;
+    protected static string $resource = BranchResource::class;
 
     protected function getHeaderActions(): array
     {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Profile;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class TransactionController extends Controller
@@ -14,7 +15,9 @@ class TransactionController extends Controller
      */
     public function index(Request $request)
     {
-        $query = auth()->user()->orders()->with(['items.product.images']);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $query = $user->orders()->with(['items.product.images']);
 
         // Search filter
         if ($request->filled('search')) {
@@ -73,7 +76,7 @@ class TransactionController extends Controller
     public function show(Order $order)
     {
         // Check ownership
-        if ($order->user_id !== auth()->id()) {
+        if ($order->user_id !== Auth::id()) {
             abort(403);
         }
 
