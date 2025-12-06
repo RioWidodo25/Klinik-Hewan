@@ -60,10 +60,69 @@ const formatCurrency = (value) => {
         minimumFractionDigits: 0,
     }).format(value);
 };
+
+// Modal state
+const showModal = ref(false);
+const quantity = ref(1);
+const selectedVariantId = ref(null);
+const isAdding = ref(false);
+
+const openAddToCartModal = () => {
+    if (!isLoggedIn.value) {
+        router.visit(route('login'));
+        return;
+    }
+    
+    // Reset state
+    quantity.value = 1;
+    selectedVariantId.value = props.product.has_variants && props.product.variants?.length === 1 
+        ? props.product.variants[0].id 
+        : null;
+    showModal.value = true;
+};
+
+const selectedVariant = computed(() => 
+    props.product.variants?.find(v => v.id === selectedVariantId.value) ?? null
+);
+
+const displayPrice = computed(() => {
+    if (selectedVariant.value) {
+        return selectedVariant.value.final_price || props.product.price;
+    }
+    return props.product.price;
+});
+
+const maxQuantity = computed(() => {
+    const stock = selectedVariant.value ? selectedVariant.value.stock : props.product.stock;
+    return Math.max(stock || 0, 0);
+});
+
+const addToCart = () => {
+    if (props.product.has_variants && !selectedVariantId.value) {
+        return;
+    }
+
+    isAdding.value = true;
+    
+    router.post(route('petshop.cart.items.store'), {
+        product_id: props.product.id,
+        variant_id: selectedVariantId.value,
+        quantity: quantity.value,
+    }, {
+        preserveScroll: true,
+        onFinish: () => {
+            isAdding.value = false;
+            showModal.value = false;
+        },
+    });
+};
 </script>
 
 <template>
-    <div class="group relative flex h-full flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-gray-700/60 dark:bg-gray-800">
+    <Link
+        :href="route('petshop.product.show', product.slug)"
+        class="group relative flex h-full flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:border-gray-700/60 dark:bg-gray-800"
+    >
         <div class="relative aspect-square overflow-hidden">
             <img
                 :src="primaryImage"
@@ -74,7 +133,7 @@ const formatCurrency = (value) => {
             <!-- Favorite Button -->
             <button
                 type="button"
-                @click="toggleFavorite"
+                @click.prevent="toggleFavorite"
                 :disabled="isTogglingFavorite"
                 class="absolute left-2 top-2 z-10 rounded-full bg-white/90 p-1.5 shadow-md transition hover:scale-110 hover:bg-white disabled:opacity-50 dark:bg-gray-800/90 dark:hover:bg-gray-800"
                 :class="isFavorited ? 'text-red-500' : 'text-gray-400 hover:text-red-500'"
@@ -143,22 +202,10 @@ const formatCurrency = (value) => {
                 </span>
             </div>
 
-            <div v-if="product.has_variants" class="mt-0.5 text-[9px] font-medium uppercase text-amber-600 dark:text-amber-300">
-                Ada variasi
-            </div>
-
-            <div class="mt-auto flex flex-col gap-1.5 pt-2">
-                <Link
-                    :href="route('petshop.product.show', product.slug)"
-                    class="inline-flex items-center justify-center rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-[10px] font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:border-amber-700/60 dark:bg-amber-900/30 dark:text-amber-200 dark:hover:border-amber-500 dark:hover:bg-amber-900/50 dark:focus:ring-offset-gray-900"
-                >
-                    Lihat Detail
-                </Link>
-
+            <div v-if="showAddButton" class="mt-auto flex flex-col gap-1.5 pt-2">
                 <button
-                    v-if="canAddToCart"
                     type="button"
-                    @click="emit('add-to-cart', product)"
+                    @click.prevent="openAddToCartModal"
                     class="inline-flex items-center justify-center rounded-lg bg-amber-500 px-2 py-1 text-[10px] font-semibold text-white shadow transition hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                 >
                     <svg class="me-1 size-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -166,11 +213,135 @@ const formatCurrency = (value) => {
                     </svg>
                     + Keranjang
                 </button>
-
-                <div v-else-if="showAddButton" class="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-2 py-1 text-center text-[9px] font-medium text-gray-500 dark:border-gray-600 dark:bg-gray-800/60 dark:text-gray-300">
-                    Pilih varian di detail
-                </div>
             </div>
         </div>
-    </div>
+    </Link>
+
+    <!-- Add to Cart Modal -->
+    <Teleport to="body">
+        <Transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="opacity-0"
+            enter-to-class="opacity-100"
+            leave-active-class="transition ease-in duration-150"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
+        >
+            <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" @click.self="showModal = false">
+                <Transition
+                    enter-active-class="transition ease-out duration-200"
+                    enter-from-class="opacity-0 translate-y-4 scale-95"
+                    enter-to-class="opacity-100 translate-y-0 scale-100"
+                    leave-active-class="transition ease-in duration-150"
+                    leave-from-class="opacity-100 translate-y-0 scale-100"
+                    leave-to-class="opacity-0 translate-y-4 scale-95"
+                >
+                    <div v-if="showModal" class="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800">
+                        <!-- Close Button -->
+                        <button
+                            type="button"
+                            @click="showModal = false"
+                            class="absolute right-4 top-4 rounded-lg p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                        >
+                            <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Tambah ke Keranjang</h3>
+
+                        <div class="flex gap-4 mb-6">
+                            <!-- Product Image -->
+                            <div class="h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-700">
+                                <img :src="primaryImage" :alt="product.name" class="h-full w-full object-cover">
+                            </div>
+
+                            <!-- Product Info -->
+                            <div class="flex-1">
+                                <h4 class="font-semibold text-gray-900 dark:text-white line-clamp-2">{{ product.name }}</h4>
+                                <p class="mt-1 text-lg font-bold text-amber-600 dark:text-amber-400">{{ formatCurrency(displayPrice) }}</p>
+                                <p v-if="maxQuantity > 0" class="text-xs text-gray-500 dark:text-gray-400">Stok: {{ maxQuantity }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Variants Selection -->
+                        <div v-if="product.has_variants && product.variants" class="mb-4">
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Pilih Varian</label>
+                            <div class="flex flex-wrap gap-2">
+                                <button
+                                    v-for="variant in product.variants"
+                                    :key="variant.id"
+                                    type="button"
+                                    @click="selectedVariantId = variant.id"
+                                    :disabled="variant.stock === 0"
+                                    :class="[
+                                        'rounded-lg border px-3 py-2 text-sm font-medium transition',
+                                        selectedVariantId === variant.id
+                                            ? 'border-amber-500 bg-amber-50 text-amber-600 dark:bg-amber-900/40 dark:text-amber-200'
+                                            : 'border-gray-200 text-gray-600 hover:border-amber-300 dark:border-gray-700 dark:text-gray-300',
+                                        variant.stock === 0 ? 'cursor-not-allowed opacity-50' : ''
+                                    ]"
+                                >
+                                    {{ variant.name || variant.size || variant.color }}
+                                </button>
+                            </div>
+                            <p v-if="product.has_variants && !selectedVariantId" class="mt-2 text-xs text-red-500">Pilih varian terlebih dahulu</p>
+                        </div>
+
+                        <!-- Quantity Selector -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Jumlah</label>
+                            <div class="flex items-center gap-3">
+                                <button
+                                    type="button"
+                                    @click="quantity = Math.max(1, quantity - 1)"
+                                    class="flex size-8 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                                >
+                                    <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" />
+                                    </svg>
+                                </button>
+                                <input
+                                    v-model.number="quantity"
+                                    type="number"
+                                    min="1"
+                                    :max="maxQuantity"
+                                    class="w-16 rounded-lg border border-gray-300 px-3 py-1 text-center text-sm font-semibold dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                >
+                                <button
+                                    type="button"
+                                    @click="quantity = Math.min(maxQuantity, quantity + 1)"
+                                    :disabled="quantity >= maxQuantity"
+                                    class="flex size-8 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                                >
+                                    <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex gap-3">
+                            <button
+                                type="button"
+                                @click="showModal = false"
+                                class="flex-1 rounded-xl border border-gray-300 px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                @click="addToCart"
+                                :disabled="isAdding || maxQuantity === 0 || (product.has_variants && !selectedVariantId)"
+                                class="flex-1 rounded-xl bg-amber-500 px-4 py-2 font-semibold text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {{ isAdding ? 'Menambahkan...' : 'Tambah ke Keranjang' }}
+                            </button>
+                        </div>
+                    </div>
+                </Transition>
+            </div>
+        </Transition>
+    </Teleport>
 </template>

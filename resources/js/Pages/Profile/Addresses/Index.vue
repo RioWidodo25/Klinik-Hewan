@@ -543,7 +543,6 @@ const useCurrentLocationForEdit = () => {
                                         Daftar Alamat Pengiriman
                                     </h1>
                                     <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                        Kelola alamat pengiriman Anda untuk checkout yang lebih cepat
                                     </p>
                                 </div>
                             </div>

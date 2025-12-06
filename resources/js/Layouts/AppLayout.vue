@@ -67,13 +67,17 @@ onUnmounted(() => {
                     >
                         <div class="flex">
                             <!-- Logo -->
-                            <div class="shrink-0 flex items-center">
+                            <div class="flex shrink-0 items-center gap-3">
                                 <Link :href="route('home')">
                                     <ApplicationLogo 
-                                        class="block w-auto transition-all duration-300"
+                                        class="block w-auto fill-current text-gray-800 dark:text-gray-200 transition-all duration-300"
                                         :class="isScrolled ? 'h-24' : 'h-32'"
                                     />
                                 </Link>
+                                <span class="text-2xl font-bold text-gray-800 dark:text-white transition-all duration-300"
+                                      :class="isScrolled ? 'text-xl' : 'text-2xl'">
+                                    A2 VET
+                                </span>
                             </div>
 
                             <!-- Navigation Links -->

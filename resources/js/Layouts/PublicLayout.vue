@@ -126,6 +126,12 @@ onUnmounted(() => {
                                     <div v-show="showAboutDropdown" class="absolute left-0 top-full z-50 mt-2 w-48 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-gray-700">
                                         <div class="py-1">
                                             <Link
+                                                :href="route('about-us')"
+                                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600"
+                                            >
+                                                Tentang Kami
+                                            </Link>
+                                            <Link
                                                 :href="route('doctor-schedule')"
                                                 class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600"
                                             >
@@ -311,6 +317,13 @@ onUnmounted(() => {
                             </svg>
                         </button>
                         <div v-show="showAboutMobile" class="bg-gray-50 dark:bg-gray-700">
+                            <Link
+                                :href="route('about-us')"
+                                :class="{'border-amber-400 bg-amber-50 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300': route().current('about-us'), 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200': !route().current('about-us')}"
+                                class="block pl-6 pr-4 py-2 border-l-4 text-sm font-medium transition duration-150 ease-in-out"
+                            >
+                                Tentang Kami
+                            </Link>
                             <Link
                                 :href="route('doctor-schedule')"
                                 :class="{'border-amber-400 bg-amber-50 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300': route().current('doctor-schedule'), 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200': !route().current('doctor-schedule')}"

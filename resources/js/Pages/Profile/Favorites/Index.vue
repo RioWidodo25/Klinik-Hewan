@@ -50,15 +50,6 @@ const formatCurrency = (value) => {
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <div class="overflow-hidden bg-white shadow-xl dark:bg-gray-800 sm:rounded-lg">
                     <div class="p-6 lg:p-8">
-                        <div class="mb-6">
-                            <h1 class="text-2xl font-medium text-gray-900 dark:text-white">
-                                Produk Favorit Saya
-                            </h1>
-                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                                Daftar produk yang Anda sukai
-                            </p>
-                        </div>
-
                         <div v-if="favorites.length === 0" class="text-center py-12">
                             <svg class="mx-auto size-24 text-gray-400 dark:text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />

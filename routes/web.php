@@ -91,6 +91,39 @@ Route::get('/blog', function () {
     ]);
 })->name('blog');
 
+Route::get('/about-us', function () {
+    $footerSettings = \App\Models\FooterSetting::first();
+    
+    $clinic = [
+        'name' => $footerSettings->clinic_name ?? 'A2 VET',
+        'logo' => $footerSettings->logo ? asset('storage/' . $footerSettings->logo) : null,
+        'about' => $footerSettings->about_text ?? null,
+        'phone' => $footerSettings->contact_phone ?? null,
+        'email' => $footerSettings->contact_email ?? null,
+        'address' => $footerSettings->contact_address ?? null,
+    ];
+
+    $branches = \App\Models\Branch::active()->ordered()->get()->map(function ($branch) {
+        return [
+            'id' => $branch->id,
+            'name' => $branch->name,
+            'address' => $branch->address,
+            'phone' => $branch->phone,
+            'email' => $branch->email,
+            'google_maps_iframe' => $branch->google_maps_iframe,
+            'latitude' => $branch->latitude,
+            'longitude' => $branch->longitude,
+            'operational_hours' => $branch->operational_hours,
+            'image_url' => $branch->image_path ? asset('storage/' . $branch->image_path) : null,
+        ];
+    });
+
+    return Inertia::render('AboutUs', [
+        'clinic' => $clinic,
+        'branches' => $branches,
+    ]);
+})->name('about-us');
+
 Route::get('/doctor-schedule', function () {
     // Get current week dates (Asia/Jakarta timezone)
     $today = now()->timezone('Asia/Jakarta');

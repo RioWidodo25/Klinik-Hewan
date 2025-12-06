@@ -45,6 +45,7 @@ class ProductVariantsRelationManager extends RelationManager
                     ->step(0.01)
                     ->prefix('Rp')
                     ->default(0)
+                    ->required()
                     ->helperText('Gunakan angka positif (+) untuk menambah harga atau negatif (-) untuk mengurangi harga dasar'),
 
                 Forms\Components\TextInput::make('stock')

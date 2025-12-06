@@ -494,7 +494,7 @@ const getShippingAddress = (address) => {
                                             <p class="mb-1 font-semibold text-gray-900 dark:text-white">Metode Pengiriman</p>
                                             <p class="text-gray-600 dark:text-gray-400">
                                                 <span class="font-medium">Instan ({{ formatCurrency(selectedOrder.shipping_cost) }})</span><br>
-                                                <span class="text-xs">1 jam sampai setelah lunas</span>
+                                                <span class="text-xs">1 jam sampai</span>
                                             </p>
                                         </div>
                                     </div>

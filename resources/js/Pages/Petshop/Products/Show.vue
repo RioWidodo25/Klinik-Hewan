@@ -194,6 +194,18 @@ const filteredReviews = computed(() => {
                 <div class="grid gap-12 lg:grid-cols-2">
                     <!-- Gallery -->
                     <div>
+                        <!-- Back Button -->
+                        <button
+                            type="button"
+                            @click="router.visit(route('petshop.index'))"
+                            class="mb-4 inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:focus-visible:ring-offset-gray-900"
+                        >
+                            <svg class="size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                            </svg>
+                            Kembali ke Petshop
+                        </button>
+
                         <div class="overflow-hidden rounded-3xl border border-gray-100 bg-gray-100 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                             <img
                                 :src="selectedImage"
@@ -366,13 +378,7 @@ const filteredReviews = computed(() => {
                                             variant.stock === 0 ? 'cursor-not-allowed opacity-50 dark:opacity-40' : '',
                                         ]"
                                     >
-                                        <span class="block text-left">
-                                            {{ variant.name || variant.size || variant.color || 'Varian' }}
-                                        </span>
-                                        <span class="block text-xs text-gray-400 dark:text-gray-300">
-                                            {{ formatCurrency(variant.final_price) }}
-                                            · Stok {{ variant.stock }}
-                                        </span>
+                                        {{ variant.name || variant.size || variant.color || 'Varian' }}
                                     </button>
                                 </div>
                                 <p v-if="variantError" class="mt-2 text-xs font-medium text-red-500">
@@ -443,7 +449,7 @@ const filteredReviews = computed(() => {
                         </SecondaryButton>
                     </div>
 
-                    <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <div class="mt-6 grid gap-4 grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
                         <ProductCard
                             v-for="related in relatedProducts"
                             :key="related.id"

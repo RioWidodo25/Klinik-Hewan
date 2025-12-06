@@ -502,7 +502,7 @@ const clearCart = () => {
     <Head title="Keranjang Belanja" />
 
     <PublicLayout>
-        <section class="bg-gray-50 py-12 dark:bg-gray-900">
+        <section class="min-h-screen bg-white py-12 pb-32 dark:bg-gray-900">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
@@ -536,25 +536,6 @@ const clearCart = () => {
                         </div>
 
                         <div v-else class="space-y-4">
-                            <!-- Header Grid: Pilih Semua dan Hapus -->
-                            <div class="flex items-center justify-between rounded-3xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
-                                <label class="flex items-center gap-2 cursor-pointer select-none">
-                                    <input 
-                                        type="checkbox" 
-                                        v-model="isAllSelected"
-                                        class="size-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800"
-                                    >
-                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Pilih Semua</span>
-                                </label>
-                                <button
-                                    v-if="selectedItems.length > 0"
-                                    @click="deleteSelectedItems"
-                                    class="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition"
-                                >
-                                    Hapus
-                                </button>
-                            </div>
-
                             <!-- Cart Items -->
                             <article
                                 v-for="item in cartItems"
@@ -669,7 +650,7 @@ const clearCart = () => {
                                             ⚠️ Wajib pilih tipe pengiriman
                                         </p>
                                         <p v-else-if="selectedDeliveryType === 'delivery' && selectedDeliveryOption === 'instant'" class="text-xs" :class="subtotal >= 150000 ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-amber-700 dark:text-amber-300'">
-                                            {{ subtotal >= 150000 ? 'Gratis Ongkir' : 'Rp 7.000' }} - 1 jam sampai setelah lunas
+                                            {{ subtotal >= 150000 ? 'Gratis Ongkir' : 'Rp 7.000' }} - 1 jam sampai
                                         </p>
                                         <p v-else-if="selectedDeliveryType === 'delivery' && selectedDeliveryOption === 'regular' && selectedDeliveryTime" class="text-xs" :class="subtotal >= 30000 ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-amber-700 dark:text-amber-300'">
                                             {{ subtotal >= 30000 ? 'Gratis Ongkir' : 'Rp 5.000' }}
@@ -757,48 +738,64 @@ const clearCart = () => {
                             </div>
                         </div>
 
-                        <!-- Ringkasan Pesanan -->
-                        <div class="rounded-3xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800">
-                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                                Ringkasan Pesanan
-                            </h2>
-                            <div class="space-y-3 text-sm text-gray-600 dark:text-gray-300 mt-4">
-                            <div class="flex items-center justify-between">
-                                <span>Subtotal ({{ selectedItems.length }} produk dipilih)</span>
-                                <span class="font-semibold text-gray-900 dark:text-white">
-                                    {{ formatCurrency(subtotal) }}
-                                </span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex flex-col">
-                                    <span>Ongkir</span>
-                                    <span v-if="shippingFee === 0 && selectedDeliveryType === 'delivery' && selectedDeliveryOption" class="text-xs text-green-600 dark:text-green-400">
-                                        🎉 Gratis ongkir!
-                                    </span>
-                                </div>
-                                <span class="font-semibold" :class="shippingFee === 0 && shippingFee !== null ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'">
-                                    {{ shippingFee === null ? '-' : (shippingFee === 0 ? 'Gratis' : formatCurrency(shippingFee)) }}
-                                </span>
-                            </div>
-                            <div class="flex items-center justify-between border-t border-dashed border-gray-200 pt-3 text-base font-semibold text-gray-900 dark:border-gray-700 dark:text-white">
-                                <span>Total</span>
-                                <span>{{ formatCurrency(total) }}</span>
-                            </div>
+                    </aside>
+                </div>
+
+                <!-- Bottom Sticky Checkout Bar -->
+                <div class="sticky bottom-4 z-40 mt-8">
+                    <div class="rounded-2xl border-2 border-amber-400 bg-white p-5 shadow-xl dark:border-amber-500 dark:bg-gray-800">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <!-- Left Side: Pilih Semua & Hapus -->
+                    <div class="flex items-center gap-4 text-sm w-full sm:w-auto">
+                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                            <input 
+                                type="checkbox" 
+                                v-model="isAllSelected"
+                                class="size-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-700"
+                            >
+                            <span class="font-medium text-gray-700 dark:text-gray-300">Pilih Semua</span>
+                        </label>
+                        <button
+                            v-if="selectedItems.length > 0"
+                            @click="deleteSelectedItems"
+                            class="font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition"
+                        >
+                            Hapus
+                        </button>
+                    </div>
+
+                    <!-- Middle: Ongkir Info -->
+                    <div class="hidden lg:flex items-center gap-2 text-sm">
+                        <span class="text-gray-600 dark:text-gray-400">Ongkir:</span>
+                        <span class="font-semibold" :class="shippingFee === 0 && shippingFee !== null ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'">
+                            {{ shippingFee === null ? '-' : (shippingFee === 0 ? 'Gratis' : formatCurrency(shippingFee)) }}
+                        </span>
+                        <span v-if="shippingFee === 0 && selectedDeliveryType === 'delivery' && selectedDeliveryOption" class="text-xs text-green-600 dark:text-green-400">
+                            🎉
+                        </span>
+                    </div>
+
+                    <!-- Right Side: Total & Checkout Button -->
+                    <div class="flex items-center gap-4 w-full sm:w-auto">
+                        <div class="text-right hidden sm:block">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Total ({{ selectedItems.length }} produk)</div>
+                            <div class="text-xl font-bold text-amber-600 dark:text-amber-400">{{ formatCurrency(total) }}</div>
                         </div>
 
                         <PrimaryButton
-                            class="w-full justify-center rounded-2xl py-3 text-base"
+                            class="justify-center rounded-2xl px-6 py-3 text-base font-semibold w-full sm:w-auto min-w-[200px]"
                             :disabled="isEmpty || isProcessingCheckout || selectedItems.length === 0"
                             @click="processCheckout"
                         >
-                            {{ isProcessingCheckout ? 'Memproses...' : (selectedItems.length === 0 ? 'Pilih Produk Terlebih Dahulu' : 'Bayar Sekarang') }}
+                            <span class="sm:hidden">{{ isProcessingCheckout ? 'Memproses...' : `Checkout (${formatCurrency(total)})` }}</span>
+                            <span class="hidden sm:inline">{{ isProcessingCheckout ? 'Memproses...' : 'Checkout' }}</span>
+                            <svg class="ml-2 size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                            </svg>
                         </PrimaryButton>
-
-                            <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Klik tombol di atas untuk melanjutkan ke pembayaran Midtrans.
-                            </p>
-                        </div>
-                    </aside>
+                    </div>
+                    </div>
+                </div>
                 </div>
             </div>
         </section>
@@ -925,7 +922,7 @@ const clearCart = () => {
                                                             : 'text-gray-500 dark:text-gray-400'
                                                     ]">
                                                         <span v-if="!isInstantAvailable">Tidak tersedia di luar jam operasional (07:00 - 21:00)</span>
-                                                        <span v-else>1 jam sampai setelah lunas</span>
+                                                        <span v-else>1 jam sampai</span>
                                                     </p>
                                                 </div>
                                                 <div v-if="selectedDeliveryOption === 'instant'" class="flex-shrink-0">
