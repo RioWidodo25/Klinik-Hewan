@@ -423,8 +423,8 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
-import { useForm, router } from '@inertiajs/vue3';
+import { ref, computed, watch, onMounted } from 'vue';
+import { useForm, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
@@ -438,6 +438,8 @@ const props = defineProps({
     weekEnd: String,
     today: String,
 });
+
+const page = usePage();
 
 const steps = [
     { title: 'Pilih Tanggal' },
@@ -752,6 +754,22 @@ watch(() => form.appointment_date, (newDate) => {
     }
 });
 
+// Auto-fill owner information from logged in user
+onMounted(() => {
+    const user = page.props.auth?.user;
+    console.log('User data:', user);
+    if (user) {
+        form.owner_name = user.name || '';
+        form.owner_phone = user.phone || '';
+        form.owner_address = user.address || '';
+        console.log('Form owner data:', {
+            name: form.owner_name,
+            phone: form.owner_phone,
+            address: form.owner_address
+        });
+    }
+});
+
 // Format date helper
 const formatDate = (dateStr) => {
     const date = new Date(dateStr);
@@ -843,12 +861,12 @@ const openEditModal = async (pet) => {
 
 // Delete pet function
 const deletePet = async (pet) => {
-    const result = await showConfirm(
-        `Apakah Anda yakin ingin menghapus data hewan "${pet.name}"?`,
-        'Hapus Data Hewan',
-        'Hapus',
-        'Batal'
-    );
+    const result = await showConfirm({
+        title: 'Hapus Data Hewan',
+        text: `Apakah Anda yakin ingin menghapus data hewan "${pet.name}"?`,
+        confirmButtonText: 'Hapus',
+        cancelButtonText: 'Batal'
+    });
     
     if (result.isConfirmed) {
         showLoading('Menghapus data hewan...');

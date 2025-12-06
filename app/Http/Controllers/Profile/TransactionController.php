@@ -80,7 +80,7 @@ class TransactionController extends Controller
             abort(403);
         }
 
-        $order->load(['items.product.images', 'payment']);
+        $order->load(['items.product.images', 'payment', 'reviews']);
 
         return response()->json([
             'order' => [
@@ -123,8 +123,92 @@ class TransactionController extends Controller
                     'va_number' => $order->payment->va_number,
                     'bank' => $order->payment->bank,
                 ] : null,
+                'has_reviews' => $order->reviews->count() > 0,
+                'reviews' => $order->reviews->map(fn($review) => [
+                    'product_id' => $review->product_id,
+                    'rating' => $review->rating,
+                    'review' => $review->review,
+                ]),
             ],
         ]);
+    }
+
+    /**
+     * Mark order as delivered/completed
+     */
+    public function complete(Order $order)
+    {
+        // Check ownership
+        if ($order->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Check if order is shipped
+        if ($order->status !== 'shipped') {
+            return back()->with('error', 'Pesanan belum dikirim');
+        }
+
+        $order->markAsDelivered();
+
+        return back()->with('success', 'Pesanan berhasil diselesaikan. Silakan berikan ulasan Anda!');
+    }
+
+    /**
+     * Submit product review
+     */
+    public function submitReview(Request $request, Order $order)
+    {
+        // Check ownership
+        if ($order->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Check if order is delivered
+        if ($order->status !== 'delivered') {
+            return back()->with('error', 'Anda hanya dapat memberikan ulasan setelah pesanan selesai');
+        }
+
+        $validated = $request->validate([
+            'reviews' => 'required|array',
+            'reviews.*.product_id' => 'required|exists:products,id',
+            'reviews.*.rating' => 'required|integer|min:1|max:5',
+            'reviews.*.review' => 'nullable|string|max:1000',
+        ]);
+
+        foreach ($validated['reviews'] as $reviewData) {
+            // Check if user already reviewed this product for this order
+            $existingReview = \App\Models\ProductReview::where('order_id', $order->id)
+                ->where('product_id', $reviewData['product_id'])
+                ->where('user_id', Auth::id())
+                ->first();
+
+            if ($existingReview) {
+                // Update existing review
+                $existingReview->update([
+                    'rating' => $reviewData['rating'],
+                    'review' => $reviewData['review'] ?? null,
+                    'is_approved' => true, // Keep approved status
+                ]);
+            } else {
+                // Create new review (auto-approved)
+                \App\Models\ProductReview::create([
+                    'user_id' => Auth::id(),
+                    'product_id' => $reviewData['product_id'],
+                    'order_id' => $order->id,
+                    'rating' => $reviewData['rating'],
+                    'review' => $reviewData['review'] ?? null,
+                    'is_approved' => true, // Auto-approve review from verified purchases
+                ]);
+            }
+
+            // Update product rating statistics
+            $product = \App\Models\Product::find($reviewData['product_id']);
+            if ($product) {
+                $product->updateRating();
+            }
+        }
+
+        return back()->with('success', 'Terima kasih atas ulasan Anda!');
     }
 
     /**

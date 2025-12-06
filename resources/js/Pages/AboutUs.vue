@@ -144,19 +144,37 @@ const closeMapModal = () => {
                         :key="branch.id"
                         class="group overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:shadow-2xl dark:bg-gray-900"
                     >
-                        <!-- Branch Image -->
+                        <!-- Branch Map Preview -->
                         <div class="relative h-48 overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500">
-                            <img
-                                v-if="branch.image_url"
-                                :src="branch.image_url"
-                                :alt="branch.name"
-                                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                            />
+                            <!-- Show Google Maps iframe if available -->
+                            <div 
+                                v-if="branch.google_maps_iframe" 
+                                v-html="branch.google_maps_iframe" 
+                                class="pointer-events-none h-full w-full [&>iframe]:h-full [&>iframe]:w-full [&>iframe]:border-0"
+                            ></div>
+                            <!-- Fallback to static map using coordinates -->
+                            <iframe
+                                v-else-if="branch.latitude && branch.longitude"
+                                :src="`https://www.google.com/maps?q=${branch.latitude},${branch.longitude}&hl=id&z=15&output=embed`"
+                                class="pointer-events-none h-full w-full border-0"
+                                loading="lazy"
+                            ></iframe>
+                            <!-- Fallback to image or placeholder -->
+                            <div v-else-if="branch.image_url" class="h-full w-full">
+                                <img
+                                    :src="branch.image_url"
+                                    :alt="branch.name"
+                                    class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                />
+                            </div>
+                            <!-- Default placeholder -->
                             <div v-else class="flex h-full w-full items-center justify-center">
                                 <svg class="h-20 w-20 text-white opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                 </svg>
                             </div>
+                            <!-- Interactive overlay -->
+                            <div class="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10"></div>
                         </div>
 
                         <!-- Branch Info -->

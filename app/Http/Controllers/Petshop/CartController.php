@@ -7,8 +7,6 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\CartService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -25,9 +23,7 @@ class CartController extends Controller
 
         // Get default shipping address if user is authenticated
         $defaultAddress = null;
-        /** @var \App\Models\User|null $user */
-        $user = Auth::user();
-        if ($user) {
+        if ($user = auth()->user()) {
             $address = $user->addresses()->where('is_default', true)->first();
             if ($address) {
                 $defaultAddress = [
@@ -293,13 +289,11 @@ class CartController extends Controller
         }
 
         // Create order
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-        $order = $user->orders()->create([
+        $order = auth()->user()->orders()->create([
             'order_number' => 'ORD-' . strtoupper(uniqid()),
-            'customer_name' => Auth::user()->name,
-            'customer_email' => Auth::user()->email,
-            'customer_phone' => $customerPhone ?: Auth::user()->email,
+            'customer_name' => auth()->user()->name,
+            'customer_email' => auth()->user()->email,
+            'customer_phone' => $customerPhone ?: auth()->user()->email,
             'subtotal' => $subtotal,
             'shipping_cost' => $shippingCost,
             'total' => $totalAmount,
@@ -339,8 +333,8 @@ class CartController extends Controller
                 'gross_amount' => (int) $order->total,
             ],
             'customer_details' => [
-                'first_name' => Auth::user()->name,
-                'email' => Auth::user()->email,
+                'first_name' => auth()->user()->name,
+                'email' => auth()->user()->email,
                 'phone' => $customerPhone ?: '',
             ],
             'item_details' => $selectedItems->map(function ($item) {
@@ -374,11 +368,8 @@ class CartController extends Controller
                 $item->delete();
             }
 
-            /** @var \App\Models\User $user */
-            $user = Auth::user();
-
             // Create notification for user
-            $user->notifications()->create([
+            auth()->user()->notifications()->create([
                 'type' => 'order_placed',
                 'title' => 'Pesanan Berhasil Dibuat',
                 'message' => "Pesanan {$order->order_number} berhasil dibuat. Silakan selesaikan pembayaran Anda.",
@@ -403,10 +394,10 @@ class CartController extends Controller
             $order->delete();
 
             // Log error for debugging
-            Log::error('Midtrans Snap Token Error', [
+            \Log::error('Midtrans Snap Token Error', [
                 'message' => $e->getMessage(),
                 'order_number' => $order->order_number,
-                'user_id' => Auth::id(),
+                'user_id' => auth()->id(),
             ]);
 
             return back()->withErrors([
@@ -427,9 +418,7 @@ class CartController extends Controller
                 ->with('error', 'Nomor pesanan tidak ditemukan.');
         }
 
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-        $order = $user->orders()->where('order_number', $orderNumber)->first();
+        $order = auth()->user()->orders()->where('order_number', $orderNumber)->first();
 
         if (!$order) {
             return redirect()->route('petshop.products.index')
@@ -441,7 +430,7 @@ class CartController extends Controller
             \Midtrans\Config::$serverKey = config('services.midtrans.server_key');
             \Midtrans\Config::$isProduction = config('services.midtrans.is_production');
 
-            $status = (object) \Midtrans\Transaction::status($orderNumber);
+            $status = \Midtrans\Transaction::status($orderNumber);
 
             // Update order status based on Midtrans response
             if ($status->transaction_status == 'settlement' || $status->transaction_status == 'capture') {

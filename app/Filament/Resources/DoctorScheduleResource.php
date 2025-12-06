@@ -18,15 +18,15 @@ class DoctorScheduleResource extends Resource
     protected static ?string $model = DoctorSchedule::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
-
+    
     protected static ?string $navigationLabel = 'Jadwal Dokter';
-
+    
     protected static ?string $modelLabel = 'Jadwal Dokter';
-
+    
     protected static ?string $pluralModelLabel = 'Jadwal Dokter';
-
+    
     protected static ?string $navigationGroup = null;
-
+    
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
@@ -62,32 +62,32 @@ class DoctorScheduleResource extends Resource
                                     ->disableOptionsWhenSelectedInSiblingRepeaterItems()
                                     ->live()
                                     ->columnSpan(2),
-
+                                
                                 Forms\Components\TimePicker::make('start_time')
                                     ->label('Jam Mulai')
                                     ->seconds(false)
                                     ->required()
                                     ->live()
                                     ->columnSpan(1),
-
+                                
                                 Forms\Components\TimePicker::make('end_time')
                                     ->label('Jam Selesai')
                                     ->seconds(false)
                                     ->required()
                                     ->columnSpan(1),
-
+                                
                                 Forms\Components\Toggle::make('is_active')
                                     ->label('Aktif')
                                     ->default(true)
                                     ->inline(false)
                                     ->columnSpan(1),
-
+                                
                                 Forms\Components\TextInput::make('order')
                                     ->label('Urutan')
                                     ->numeric()
                                     ->default(0)
                                     ->columnSpan(1),
-
+                                
                                 Forms\Components\Textarea::make('notes')
                                     ->label('Catatan')
                                     ->rows(2)
@@ -98,12 +98,11 @@ class DoctorScheduleResource extends Resource
                             ->defaultItems(1)
                             ->reorderableWithButtons()
                             ->collapsible()
-                            ->itemLabel(
-                                fn(array $state): ?string =>
-                                isset($state['doctor_id'])
-                                    ? \App\Models\Doctor::find($state['doctor_id'])?->name .
-                                    (isset($state['start_time']) && isset($state['end_time'])
-                                        ? ' (' . substr($state['start_time'], 0, 5) . ' - ' . substr($state['end_time'], 0, 5) . ')'
+                            ->itemLabel(fn (array $state): ?string => 
+                                isset($state['doctor_id']) 
+                                    ? \App\Models\Doctor::find($state['doctor_id'])?->name . 
+                                      (isset($state['start_time']) && isset($state['end_time']) 
+                                        ? ' (' . substr($state['start_time'], 0, 5) . ' - ' . substr($state['end_time'], 0, 5) . ')' 
                                         : '')
                                     : 'Jadwal Baru'
                             )
@@ -123,24 +122,24 @@ class DoctorScheduleResource extends Resource
                     ->label('Dokter')
                     ->searchable()
                     ->sortable(),
-
+                
                 Tables\Columns\TextColumn::make('schedule_date')
                     ->label('Tanggal')
                     ->date('d M Y')
                     ->badge()
                     ->color('info')
                     ->sortable(),
-
+                
                 Tables\Columns\TextColumn::make('start_time')
                     ->label('Jam Mulai')
                     ->time('H:i')
                     ->sortable(),
-
+                
                 Tables\Columns\TextColumn::make('end_time')
                     ->label('Jam Selesai')
                     ->time('H:i')
                     ->sortable(),
-
+                
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Status')
                     ->boolean()
@@ -148,18 +147,18 @@ class DoctorScheduleResource extends Resource
                     ->falseIcon('heroicon-o-x-circle')
                     ->trueColor('success')
                     ->falseColor('danger'),
-
+                
                 Tables\Columns\TextColumn::make('order')
                     ->label('Urutan')
                     ->numeric()
                     ->sortable(),
-
+                
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-
+                
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Diperbarui')
                     ->dateTime('d M Y H:i')
@@ -173,7 +172,7 @@ class DoctorScheduleResource extends Resource
                     ->relationship('doctor', 'name')
                     ->searchable()
                     ->preload(),
-
+                
                 Tables\Filters\Filter::make('schedule_date')
                     ->form([
                         Forms\Components\DatePicker::make('date_from')
@@ -185,14 +184,14 @@ class DoctorScheduleResource extends Resource
                         return $query
                             ->when(
                                 $data['date_from'],
-                                fn(Builder $query, $date): Builder => $query->whereDate('schedule_date', '>=', $date),
+                                fn (Builder $query, $date): Builder => $query->whereDate('schedule_date', '>=', $date),
                             )
                             ->when(
                                 $data['date_until'],
-                                fn(Builder $query, $date): Builder => $query->whereDate('schedule_date', '<=', $date),
+                                fn (Builder $query, $date): Builder => $query->whereDate('schedule_date', '<=', $date),
                             );
                     }),
-
+                
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Status')
                     ->placeholder('Semua')

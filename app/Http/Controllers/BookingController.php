@@ -32,10 +32,10 @@ class BookingController extends Controller
         $startOfWeek = $today->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
         $endOfWeek = $today->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
 
-        $doctors = Doctor::active()->ordered()->with(['schedules' => function ($query) use ($startOfWeek, $endOfWeek) {
+        $doctors = Doctor::active()->ordered()->with(['schedules' => function($query) use ($startOfWeek, $endOfWeek) {
             $query->whereBetween('schedule_date', [$startOfWeek, $endOfWeek])
-                ->where('is_active', true)
-                ->orderBy('schedule_date');
+                  ->where('is_active', true)
+                  ->orderBy('schedule_date');
         }])->get()->map(function ($doctor) {
             return [
                 'id' => $doctor->id,
@@ -55,7 +55,7 @@ class BookingController extends Controller
         });
 
         // Get user's pets if authenticated
-        $userPets = auth()->check()
+        $userPets = auth()->check() 
             ? auth()->user()->pets()->active()->get()->map(function ($pet) {
                 return [
                     'id' => $pet->id,
@@ -100,7 +100,7 @@ class BookingController extends Controller
         ]);
 
         $date = \Carbon\Carbon::parse($request->date);
-
+        
         // Validate date is within current week
         if ($date->lt($startOfWeek) || $date->gt($endOfWeek)) {
             return response()->json([
@@ -139,17 +139,17 @@ class BookingController extends Controller
         // Generate 30-minute slots
         $slots = [];
         $currentSlot = $startTime->copy();
-
+        
         while ($currentSlot->addMinutes(30) <= $endTime) {
             $slotTime = $currentSlot->format('H:i');
             $slotDateTime = $date->copy()->setTimeFromTimeString($slotTime);
-
+            
             // Check if slot is in the past (for today)
             $isPast = $date->isToday() && $slotDateTime->isPast();
-
+            
             // Check if slot is booked
             $isBooked = in_array($slotTime, $existingAppointments);
-
+            
             $slots[] = [
                 'time' => $slotTime,
                 'formatted' => $currentSlot->format('H:i'),
@@ -202,7 +202,7 @@ class BookingController extends Controller
                 function ($attribute, $value, $fail) use ($request) {
                     $appointmentDate = \Carbon\Carbon::parse($request->appointment_date);
                     $appointmentDateTime = $appointmentDate->copy()->setTimeFromTimeString($value);
-
+                    
                     // Check if the appointment time is in the past
                     if ($appointmentDateTime->isPast()) {
                         $fail('Jam booking tidak boleh memilih waktu yang sudah lewat.');
@@ -268,6 +268,7 @@ class BookingController extends Controller
 
             return redirect()->route('booking.success', ['bookingCode' => $appointment->booking_code])
                 ->with('success', 'Pendaftaran berhasil! Kode booking Anda: ' . $appointment->booking_code);
+
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Terjadi kesalahan saat membuat appointment: ' . $e->getMessage());

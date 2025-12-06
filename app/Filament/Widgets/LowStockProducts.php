@@ -10,7 +10,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 class LowStockProducts extends BaseWidget
 {
     protected static ?int $sort = 5;
-
+    
     protected int | string | array $columnSpan = 'full';
 
     public function table(Table $table): Table
@@ -29,31 +29,31 @@ class LowStockProducts extends BaseWidget
                     ->disk('public')
                     ->size(40)
                     ->defaultImageUrl(url('/images/no-image.png')),
-
+                    
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nama Produk')
                     ->searchable()
                     ->weight('bold'),
-
+                    
                 Tables\Columns\TextColumn::make('sku')
                     ->label('SKU')
                     ->searchable()
                     ->copyable(),
-
+                    
                 Tables\Columns\TextColumn::make('stock')
                     ->label('Stok')
                     ->badge()
-                    ->color(fn(int $state): string => match (true) {
+                    ->color(fn (int $state): string => match (true) {
                         $state <= 5 => 'danger',
                         $state <= 10 => 'warning',
                         default => 'success',
                     }),
-
+                    
                 Tables\Columns\TextColumn::make('price')
                     ->label('Harga')
                     ->money('IDR')
                     ->sortable(),
-
+                    
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Kategori')
                     ->badge()

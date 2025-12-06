@@ -17,9 +17,9 @@ class ProductCategoryResource extends Resource
     protected static ?string $model = ProductCategory::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
-
+    
     protected static ?string $navigationGroup = 'Petshop';
-
+    
     protected static ?int $navigationSort = 2;
 
     protected static ?string $navigationLabel = 'Kategori Produk';
@@ -39,7 +39,7 @@ class ProductCategoryResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(fn(string $operation, $state, Forms\Set $set) => $operation === 'create'
+                            ->afterStateUpdated(fn (string $operation, $state, Forms\Set $set) => $operation === 'create'
                                 ? $set('slug', \Illuminate\Support\Str::slug($state))
                                 : null)
                             ->placeholder('contoh: Makanan Kucing'),
@@ -97,7 +97,7 @@ class ProductCategoryResource extends Resource
                     ->label('Icon')
                     ->disk('public')
                     ->square()
-                    ->defaultImageUrl(fn() => 'https://ui-avatars.com/api/?name=Kategori&color=7F9CF5&background=EBF4FF'),
+                    ->defaultImageUrl(fn () => 'https://ui-avatars.com/api/?name=Kategori&color=7F9CF5&background=EBF4FF'),
 
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nama')

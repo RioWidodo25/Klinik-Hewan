@@ -17,6 +17,8 @@ const form = useForm({
     _method: 'PUT',
     name: props.user.name,
     email: props.user.email,
+    phone: props.user.phone,
+    address: props.user.address,
     photo: null,
 });
 
@@ -108,6 +110,33 @@ defineExpose({
                             A new verification link has been sent to your email address.
                         </div>
                     </div>
+                </div>
+
+                <!-- Phone -->
+                <div>
+                    <InputLabel for="phone" value="Phone Number" />
+                    <TextInput
+                        id="phone"
+                        v-model="form.phone"
+                        type="tel"
+                        class="mt-1 block w-full"
+                        placeholder="08xxxxxxxxxx"
+                        autocomplete="tel"
+                    />
+                    <InputError :message="form.errors.phone" class="mt-2" />
+                </div>
+
+                <!-- Address -->
+                <div>
+                    <InputLabel for="address" value="Address" />
+                    <textarea
+                        id="address"
+                        v-model="form.address"
+                        rows="3"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:focus:border-amber-600 dark:focus:ring-amber-600"
+                        placeholder="Enter your full address"
+                    ></textarea>
+                    <InputError :message="form.errors.address" class="mt-2" />
                 </div>
             </div>
 

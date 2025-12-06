@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class AppointmentsChart extends ChartWidget
 {
     protected static ?string $heading = 'Appointment 7 Hari Terakhir';
-
+    
     protected static ?int $sort = 2;
 
     protected function getData(): array
@@ -20,7 +20,7 @@ class AppointmentsChart extends ChartWidget
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i);
             $labels[] = $date->format('d M');
-
+            
             $count = Appointment::whereDate('appointment_date', $date)->count();
             $data[] = $count;
         }

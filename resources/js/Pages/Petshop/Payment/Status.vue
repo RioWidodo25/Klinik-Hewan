@@ -146,19 +146,17 @@ onMounted(() => {
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="flex flex-col sm:flex-row gap-3 justify-center mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                        <Link 
-                            :href="route('petshop.index')"
-                            class="inline-flex items-center justify-center px-6 py-3 bg-amber-600 hover:bg-amber-700 border border-transparent rounded-lg font-semibold text-sm text-white uppercase tracking-wider transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 w-full sm:w-auto"
-                        >
-                            Lanjut Belanja
+                    <div class="flex flex-col sm:flex-row gap-3 justify-center mt-8 pt-6 border-t border-gray-200">
+                        <Link :href="route('petshop.index')">
+                            <PrimaryButton class="w-full sm:w-auto">
+                                Lanjut Belanja
+                            </PrimaryButton>
                         </Link>
 
-                        <Link 
-                            :href="route('profile.transactions.index')"
-                            class="inline-flex items-center justify-center px-6 py-3 bg-white hover:bg-gray-50 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-lg font-semibold text-sm text-gray-700 dark:text-gray-300 uppercase tracking-wider transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 w-full sm:w-auto"
-                        >
-                            Lihat Pesanan Saya
+                        <Link :href="route('profile.transactions.index')">
+                            <SecondaryButton class="w-full sm:w-auto">
+                                Lihat Pesanan Saya
+                            </SecondaryButton>
                         </Link>
                     </div>
                 </div>

@@ -18,15 +18,15 @@ class PetResource extends Resource
     protected static ?string $model = Pet::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-heart';
-
+    
     protected static ?string $navigationLabel = 'Data Hewan';
-
+    
     protected static ?string $modelLabel = 'Data Hewan';
-
+    
     protected static ?string $pluralModelLabel = 'Data Hewan';
-
+    
     protected static ?string $navigationGroup = 'Manajemen Booking';
-
+    
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
@@ -55,7 +55,7 @@ class PetResource extends Resource
                             ]),
                     ])
                     ->collapsible(),
-
+                
                 Forms\Components\Section::make('Informasi Hewan')
                     ->schema([
                         Forms\Components\TextInput::make('name')
@@ -63,7 +63,7 @@ class PetResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->columnSpan(1),
-
+                        
                         Forms\Components\Select::make('species')
                             ->label('Jenis Hewan')
                             ->options([
@@ -76,12 +76,12 @@ class PetResource extends Resource
                             ])
                             ->required()
                             ->columnSpan(1),
-
+                        
                         Forms\Components\TextInput::make('breed')
                             ->label('Ras/Breed')
                             ->maxLength(255)
                             ->columnSpan(1),
-
+                        
                         Forms\Components\Select::make('gender')
                             ->label('Jenis Kelamin')
                             ->options([
@@ -89,19 +89,19 @@ class PetResource extends Resource
                                 'female' => 'Betina',
                             ])
                             ->columnSpan(1),
-
+                        
                         Forms\Components\TextInput::make('weight')
                             ->label('Berat Badan (kg)')
                             ->numeric()
                             ->step(0.1)
                             ->suffix('kg')
                             ->columnSpan(1),
-
+                        
                         Forms\Components\TextInput::make('color')
                             ->label('Warna')
                             ->maxLength(255)
                             ->columnSpan(2),
-
+                        
                         Forms\Components\FileUpload::make('photo')
                             ->label('Foto')
                             ->image()
@@ -111,14 +111,14 @@ class PetResource extends Resource
                     ])
                     ->columns(2)
                     ->collapsible(),
-
+                
                 Forms\Components\Section::make('Informasi Kesehatan')
                     ->schema([
                         Forms\Components\Textarea::make('medical_history')
                             ->label('Riwayat Kesehatan')
                             ->rows(3)
                             ->columnSpanFull(),
-
+                        
                         Forms\Components\Textarea::make('allergies')
                             ->label('Alergi')
                             ->placeholder('Tulis jika ada alergi terhadap makanan, obat, atau lainnya')
@@ -126,7 +126,7 @@ class PetResource extends Resource
                             ->columnSpanFull(),
                     ])
                     ->collapsible(),
-
+                
                 Forms\Components\Section::make('Status')
                     ->schema([
                         Forms\Components\Toggle::make('is_active')
@@ -145,19 +145,19 @@ class PetResource extends Resource
                 Tables\Columns\ImageColumn::make('photo')
                     ->label('Foto')
                     ->circular()
-                    ->defaultImageUrl(fn(Pet $record): string => 'https://ui-avatars.com/api/?name=' . urlencode($record->name)),
-
+                    ->defaultImageUrl(fn (Pet $record): string => 'https://ui-avatars.com/api/?name=' . urlencode($record->name)),
+                
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nama')
                     ->searchable()
                     ->sortable()
                     ->weight('semibold'),
-
+                
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Pemilik')
                     ->searchable()
                     ->sortable(),
-
+                
                 Tables\Columns\BadgeColumn::make('species')
                     ->label('Jenis')
                     ->colors([
@@ -168,7 +168,7 @@ class PetResource extends Resource
                         'danger' => 'hamster',
                         'secondary' => 'other',
                     ])
-                    ->formatStateUsing(fn(string $state): string => match ($state) {
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
                         'dog' => 'Anjing',
                         'cat' => 'Kucing',
                         'bird' => 'Burung',
@@ -177,32 +177,32 @@ class PetResource extends Resource
                         'other' => 'Lainnya',
                         default => $state,
                     }),
-
+                
                 Tables\Columns\TextColumn::make('breed')
                     ->label('Ras')
                     ->searchable()
                     ->toggleable(),
-
+                
                 Tables\Columns\TextColumn::make('gender')
                     ->label('Jenis Kelamin')
-                    ->formatStateUsing(fn(?string $state): string => match ($state) {
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
                         'male' => 'Jantan',
                         'female' => 'Betina',
                         default => '-',
                     })
                     ->toggleable(),
-
+                
                 Tables\Columns\TextColumn::make('weight')
                     ->label('Berat')
-                    ->formatStateUsing(fn(?float $state): string => $state ? $state . ' kg' : '-')
+                    ->formatStateUsing(fn (?float $state): string => $state ? $state . ' kg' : '-')
                     ->sortable()
                     ->toggleable(),
-
+                
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktif')
                     ->boolean()
                     ->sortable(),
-
+                
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y, H:i')
@@ -222,20 +222,20 @@ class PetResource extends Resource
                         'other' => 'Lainnya',
                     ])
                     ->multiple(),
-
+                
                 Tables\Filters\SelectFilter::make('gender')
                     ->label('Jenis Kelamin')
                     ->options([
                         'male' => 'Jantan',
                         'female' => 'Betina',
                     ]),
-
+                
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label('Status Aktif')
                     ->placeholder('Semua')
                     ->trueLabel('Aktif')
                     ->falseLabel('Tidak Aktif'),
-
+                
                 Tables\Filters\SelectFilter::make('user_id')
                     ->label('Pemilik')
                     ->relationship('user', 'name')

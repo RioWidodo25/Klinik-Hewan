@@ -21,6 +21,7 @@
         "vue": "^3.3.13"
     },
     "dependencies": {
+        "@lottiefiles/dotlottie-vue": "^0.10.8",
         "aos": "^2.3.4",
         "leaflet": "^1.9.4",
         "lottie-web": "^5.13.0",

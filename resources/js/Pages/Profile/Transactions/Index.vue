@@ -105,6 +105,57 @@ const handleBackToCart = () => {
     router.visit(route('petshop.index'));
 };
 
+// Complete order (mark as delivered)
+const completeOrder = () => {
+    if (!selectedOrder.value) return;
+    
+    router.post(route('profile.transactions.complete', selectedOrder.value.id), {}, {
+        preserveScroll: true,
+        onSuccess: () => {
+            // Refresh order detail
+            showOrderDetail({ id: selectedOrder.value.id });
+        },
+    });
+};
+
+// Review form
+const showReviewForm = ref(false);
+const reviewData = ref({});
+
+const initReviewForm = () => {
+    if (!selectedOrder.value) return;
+    
+    // Initialize review data for each product
+    reviewData.value = {};
+    selectedOrder.value.items.forEach(item => {
+        reviewData.value[item.product_id] = {
+            rating: 5,
+            review: '',
+        };
+    });
+    showReviewForm.value = true;
+};
+
+const submitReviews = () => {
+    if (!selectedOrder.value) return;
+    
+    const reviews = Object.entries(reviewData.value).map(([productId, data]) => ({
+        product_id: parseInt(productId),
+        rating: data.rating,
+        review: data.review,
+    }));
+    
+    router.post(route('profile.transactions.review', selectedOrder.value.id), {
+        reviews: reviews,
+    }, {
+        preserveScroll: true,
+        onSuccess: () => {
+            showReviewForm.value = false;
+            closeModal();
+        },
+    });
+};
+
 // Parse shipping address if it's JSON string
 const getShippingAddress = (address) => {
     if (!address) return '';
@@ -496,22 +547,135 @@ const getShippingAddress = (address) => {
                                     </div>
                                 </div>
 
+                                <!-- Review Form -->
+                                <div v-if="showReviewForm && selectedOrder.status === 'delivered'" class="mb-6 space-y-4">
+                                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                        Berikan Ulasan Produk
+                                    </h4>
+                                    
+                                    <div
+                                        v-for="item in selectedOrder.items"
+                                        :key="item.product_id"
+                                        class="rounded-lg border border-gray-200 p-4 dark:border-gray-700"
+                                    >
+                                        <div class="mb-4 flex items-center gap-3">
+                                            <img
+                                                v-if="item.image"
+                                                :src="item.image"
+                                                :alt="item.product_name"
+                                                class="size-16 rounded-lg object-cover"
+                                            />
+                                            <div class="flex-1">
+                                                <p class="font-medium text-gray-900 dark:text-white">
+                                                    {{ item.product_name }}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Rating Stars -->
+                                        <div class="mb-3">
+                                            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Rating
+                                            </label>
+                                            <div class="flex gap-2">
+                                                <button
+                                                    v-for="star in 5"
+                                                    :key="star"
+                                                    type="button"
+                                                    @click="reviewData[item.product_id].rating = star"
+                                                    class="transition hover:scale-110"
+                                                >
+                                                    <svg
+                                                        class="size-8"
+                                                        :class="reviewData[item.product_id].rating >= star ? 'text-amber-500' : 'text-gray-300 dark:text-gray-600'"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        viewBox="0 0 24 24"
+                                                        fill="currentColor"
+                                                    >
+                                                        <path d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111 5.518.403a.562.562 0 01.318.986l-4.204 3.602 1.285 5.385a.562.562 0 01-.84.61L12 16.902l-4.722 2.694a.562.562 0 01-.84-.61l1.285-5.386-4.204-3.6a.562.562 0 01.318-.986l5.518-.403 2.125-5.112z" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Review Text -->
+                                        <div>
+                                            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Ulasan (Opsional)
+                                            </label>
+                                            <textarea
+                                                v-model="reviewData[item.product_id].review"
+                                                rows="3"
+                                                placeholder="Bagikan pengalaman Anda dengan produk ini..."
+                                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                            ></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex gap-3">
+                                        <button
+                                            type="button"
+                                            @click="submitReviews"
+                                            class="flex-1 rounded-lg bg-amber-600 px-4 py-3 font-semibold text-white transition hover:bg-amber-700"
+                                        >
+                                            Kirim Ulasan
+                                        </button>
+                                        <button
+                                            type="button"
+                                            @click="showReviewForm = false"
+                                            class="flex-1 rounded-lg border-2 border-gray-300 px-4 py-3 font-semibold text-gray-700 transition hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                                        >
+                                            Batal
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <!-- Action Buttons -->
-                                <div class="flex gap-3">
+                                <div v-if="!showReviewForm" class="space-y-3">
+                                    <!-- Complete Order Button (for shipped status) -->
                                     <button
+                                        v-if="selectedOrder.status === 'shipped'"
                                         type="button"
-                                        @click="handleBuyAgain"
-                                        class="flex-1 rounded-lg bg-amber-600 px-4 py-3 font-semibold text-white transition hover:bg-amber-700 active:scale-95"
+                                        @click="completeOrder"
+                                        class="w-full rounded-lg bg-green-600 px-4 py-3 font-semibold text-white transition hover:bg-green-700 active:scale-95"
                                     >
-                                        Beli Lagi
+                                        ✓ Pesanan Diterima
                                     </button>
+
+                                    <!-- Review Button (for delivered status) -->
                                     <button
+                                        v-if="selectedOrder.status === 'delivered' && !selectedOrder.has_reviews"
                                         type="button"
-                                        @click="handleBackToCart"
-                                        class="flex-1 rounded-lg border-2 border-amber-600 px-4 py-3 font-semibold text-amber-600 transition hover:bg-amber-50 dark:border-amber-500 dark:text-amber-500 dark:hover:bg-amber-900/20 active:scale-95"
+                                        @click="initReviewForm"
+                                        class="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 active:scale-95"
                                     >
-                                        Kembali ke Petshop
+                                        ⭐ Berikan Ulasan
                                     </button>
+
+                                    <!-- Already Reviewed Badge -->
+                                    <div
+                                        v-if="selectedOrder.status === 'delivered' && selectedOrder.has_reviews"
+                                        class="w-full rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-center font-semibold text-green-700 dark:bg-green-900/20 dark:border-green-700 dark:text-green-400"
+                                    >
+                                        ✓ Anda sudah memberikan ulasan
+                                    </div>
+
+                                    <div class="flex gap-3">
+                                        <button
+                                            type="button"
+                                            @click="handleBuyAgain"
+                                            class="flex-1 rounded-lg bg-amber-600 px-4 py-3 font-semibold text-white transition hover:bg-amber-700 active:scale-95"
+                                        >
+                                            Beli Lagi
+                                        </button>
+                                        <button
+                                            type="button"
+                                            @click="handleBackToCart"
+                                            class="flex-1 rounded-lg border-2 border-amber-600 px-4 py-3 font-semibold text-amber-600 transition hover:bg-amber-50 dark:border-amber-500 dark:text-amber-500 dark:hover:bg-amber-900/20 active:scale-95"
+                                        >
+                                            Kembali ke Petshop
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

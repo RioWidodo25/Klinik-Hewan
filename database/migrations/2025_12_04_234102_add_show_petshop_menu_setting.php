@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -11,9 +12,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('settings', function (Blueprint $table) {
-            $table->dropColumn('blog_header_image');
-        });
+        DB::table('settings')->insert([
+            'key' => 'show_petshop_menu',
+            'value' => '1',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     /**
@@ -21,8 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('settings', function (Blueprint $table) {
-            $table->string('blog_header_image')->nullable();
-        });
+        DB::table('settings')->where('key', 'show_petshop_menu')->delete();
     }
 };

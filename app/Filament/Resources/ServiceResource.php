@@ -129,8 +129,8 @@ class ServiceResource extends Resource
                 Tables\Columns\TextColumn::make('icon_color')
                     ->label('Warna')
                     ->badge()
-                    ->formatStateUsing(fn(string $state): string => str_replace(['bg-', '-600'], '', $state))
-                    ->color(fn(string $state): string => str_replace(['bg-', '-600'], '', $state))
+                    ->formatStateUsing(fn (string $state): string => str_replace(['bg-', '-600'], '', $state))
+                    ->color(fn (string $state): string => str_replace(['bg-', '-600'], '', $state))
                     ->searchable(),
 
                 Tables\Columns\TextColumn::make('order')

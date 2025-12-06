@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Banner from '@/Components/Banner.vue';
@@ -20,6 +20,7 @@ const page = usePage();
 const cartSummary = computed(() => page.props.cartSummary || { total_items: 0, subtotal: 0 });
 
 const showingNavigationDropdown = ref(false);
+const isScrolled = ref(false);
 
 const switchToTeam = (team) => {
     router.put(route('current-team.update'), {
@@ -32,6 +33,19 @@ const switchToTeam = (team) => {
 const logout = () => {
     router.post(route('logout'));
 };
+
+// Handle scroll for navbar shrink
+const handleScroll = () => {
+    isScrolled.value = window.scrollY > 20;
+};
+
+onMounted(() => {
+    window.addEventListener('scroll', handleScroll);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('scroll', handleScroll);
+});
 </script>
 
 <template>
@@ -41,15 +55,24 @@ const logout = () => {
         <Banner />
 
         <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
-            <nav class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
+            <nav 
+                class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 transition-all duration-300"
+                :class="isScrolled ? 'shadow-lg' : ''"
+            >
                 <!-- Primary Navigation Menu -->
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="flex justify-between h-16">
+                    <div 
+                        class="flex justify-between transition-all duration-300"
+                        :class="isScrolled ? 'h-16' : 'h-20'"
+                    >
                         <div class="flex">
                             <!-- Logo -->
                             <div class="shrink-0 flex items-center">
                                 <Link :href="route('home')">
-                                    <ApplicationLogo class="block h-9 w-auto" />
+                                    <ApplicationLogo 
+                                        class="block w-auto transition-all duration-300"
+                                        :class="isScrolled ? 'h-24' : 'h-32'"
+                                    />
                                 </Link>
                             </div>
 
@@ -352,6 +375,12 @@ const logout = () => {
                     </div>
                 </div>
             </nav>
+
+            <!-- Spacer for fixed navbar -->
+            <div 
+                class="transition-all duration-300"
+                :class="isScrolled ? 'h-16' : 'h-20'"
+            ></div>
 
             <!-- Page Heading -->
             <header v-if="$slots.header" class="bg-white dark:bg-gray-800 shadow">

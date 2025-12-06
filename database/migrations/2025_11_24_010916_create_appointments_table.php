@@ -34,7 +34,7 @@ return new class extends Migration
             $table->string('cancelled_by')->nullable(); // user/admin
             $table->text('cancellation_reason')->nullable();
             $table->timestamps();
-
+            
             $table->index(['user_id', 'status']);
             $table->index(['doctor_id', 'appointment_date']);
             $table->index(['appointment_date', 'appointment_time']);

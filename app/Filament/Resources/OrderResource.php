@@ -32,6 +32,16 @@ class OrderResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'order_number';
 
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::whereIn('status', ['paid', 'processing'])->count() ?: null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'info';
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -141,15 +151,15 @@ class OrderResource extends Resource
                     ->schema([
                         Forms\Components\Placeholder::make('subtotal')
                             ->label('Subtotal')
-                            ->content(fn (?Order $record) => $record ? 'Rp ' . number_format($record->subtotal, 0, ',', '.') : '-'),
+                            ->content(fn (?Order $record) => $record ? 'Rp ' . number_format((float) $record->subtotal, 0, ',', '.') : '-'),
 
                         Forms\Components\Placeholder::make('shipping_cost')
                             ->label('Ongkir')
-                            ->content(fn (?Order $record) => $record ? 'Rp ' . number_format($record->shipping_cost, 0, ',', '.') : '-'),
+                            ->content(fn (?Order $record) => $record ? 'Rp ' . number_format((float) $record->shipping_cost, 0, ',', '.') : '-'),
 
                         Forms\Components\Placeholder::make('total')
                             ->label('Total')
-                            ->content(fn (?Order $record) => $record ? 'Rp ' . number_format($record->total, 0, ',', '.') : '-'),
+                            ->content(fn (?Order $record) => $record ? 'Rp ' . number_format((float) $record->total, 0, ',', '.') : '-'),
                     ])
                     ->columns(3)
                     ->hiddenOn('create'),

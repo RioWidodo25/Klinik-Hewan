@@ -47,7 +47,7 @@ class Appointment extends Model
     protected static function boot()
     {
         parent::boot();
-
+        
         // Auto-generate booking code
         static::creating(function ($appointment) {
             if (!$appointment->booking_code) {
@@ -126,7 +126,7 @@ class Appointment extends Model
     protected function statusLabel(): Attribute
     {
         return Attribute::make(
-            get: fn() => match ($this->status) {
+            get: fn () => match($this->status) {
                 'pending' => 'Menunggu Konfirmasi',
                 'confirmed' => 'Dikonfirmasi',
                 'in_progress' => 'Sedang Berlangsung',
@@ -141,7 +141,7 @@ class Appointment extends Model
     protected function statusColor(): Attribute
     {
         return Attribute::make(
-            get: fn() => match ($this->status) {
+            get: fn () => match($this->status) {
                 'pending' => 'warning',
                 'confirmed' => 'info',
                 'in_progress' => 'primary',
@@ -159,7 +159,7 @@ class Appointment extends Model
         if (!in_array($this->status, ['pending', 'confirmed'])) {
             return false;
         }
-
+        
         // Bisa reschedule max H-2
         return $this->appointment_date->greaterThan(now()->addDays(2));
     }
@@ -176,7 +176,7 @@ class Appointment extends Model
 
     public function isUpcoming(): bool
     {
-        return in_array($this->status, ['pending', 'confirmed'])
+        return in_array($this->status, ['pending', 'confirmed']) 
             && $this->appointment_date >= now()->toDateString();
     }
 

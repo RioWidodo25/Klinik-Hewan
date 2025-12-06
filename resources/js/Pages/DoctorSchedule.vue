@@ -30,13 +30,20 @@ const schedulesForDay = computed(() => {
     if (!selectedDay.value) return [];
     
     return props.doctors.map(doctor => {
-        const daySchedules = doctor.schedules.filter(s => s.day_of_week === selectedDay.value.dayKey);
+        const daySchedules = doctor.schedules.filter(s => s.date === selectedDay.value.fullDate);
         return {
             ...doctor,
-            daySchedules,
+            daySchedules: daySchedules.length > 0 ? daySchedules[0].slots : [],
         };
     }).filter(d => d.daySchedules.length > 0);
 });
+
+// Check if day has any schedules
+const dayHasSchedules = (fullDate) => {
+    return props.doctors.some(doctor => 
+        doctor.schedules.some(s => s.date === fullDate && s.slots.length > 0)
+    );
+};
 
 // Select a day
 const selectDay = (day) => {
@@ -48,9 +55,7 @@ const autoSelectDay = () => {
     const today = props.currentWeek.find(d => d.isToday);
     if (today) {
         // Check if today has any schedules
-        const todayHasSchedules = props.doctors.some(doctor => 
-            doctor.schedules.some(s => s.day_of_week === today.dayKey)
-        );
+        const todayHasSchedules = dayHasSchedules(today.fullDate);
         if (todayHasSchedules) {
             selectedDay.value = today;
             return;
@@ -59,9 +64,7 @@ const autoSelectDay = () => {
     
     // Find first day with schedules
     for (const day of props.currentWeek) {
-        const hasSchedules = props.doctors.some(doctor => 
-            doctor.schedules.some(s => s.day_of_week === day.dayKey)
-        );
+        const hasSchedules = dayHasSchedules(day.fullDate);
         if (hasSchedules) {
             selectedDay.value = day;
             return;
@@ -71,13 +74,6 @@ const autoSelectDay = () => {
 
 // Auto-select on mount
 autoSelectDay();
-
-// Check if day has any schedules
-const dayHasSchedules = (dayKey) => {
-    return props.doctors.some(doctor => 
-        doctor.schedules.some(s => s.day_of_week === dayKey)
-    );
-};
 
 // Check if we should show "Tutup" status
 const shouldShowClosedStatus = (day) => {
@@ -178,7 +174,7 @@ const getDoctorSchedulesByDay = (doctor) => {
                                     Hari ini
                                 </span>
                             </div>
-                            <div v-if="!dayHasSchedules(day.dayKey) && shouldShowClosedStatus(day)" class="mt-1">
+                            <div v-if="!dayHasSchedules(day.fullDate) && shouldShowClosedStatus(day)" class="mt-1">
                                 <span class="text-xs text-gray-400 dark:text-gray-600">Tutup</span>
                             </div>
                         </div>
@@ -249,7 +245,7 @@ const getDoctorSchedulesByDay = (doctor) => {
                                         </svg>
                                         <div>
                                             <span class="text-gray-900 dark:text-white font-medium block">
-                                                {{ schedule.start_time }} - {{ schedule.end_time }}
+                                                {{ schedule.time }}
                                             </span>
                                             <span v-if="schedule.notes" class="text-xs text-gray-600 dark:text-gray-400">
                                                 {{ schedule.notes }}

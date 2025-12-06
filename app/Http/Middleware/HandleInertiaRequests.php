@@ -78,12 +78,26 @@ class HandleInertiaRequests extends Middleware
                 ->count();
         }
 
+        // Generate logo URLs with fallback
+        $logoUrl = null;
+        $logoDarkUrl = null;
+        
+        if ($footerSettings->logo && \Storage::disk('public')->exists($footerSettings->logo)) {
+            $logoUrl = asset('storage/' . $footerSettings->logo);
+        }
+        
+        if ($footerSettings->logo_dark && \Storage::disk('public')->exists($footerSettings->logo_dark)) {
+            $logoDarkUrl = asset('storage/' . $footerSettings->logo_dark);
+        }
+
         return [
             ...parent::share($request),
-            'appLogo' => $footerSettings->logo ? asset('storage/' . $footerSettings->logo) : null,
-            'appLogoDark' => $footerSettings->logo_dark ? asset('storage/' . $footerSettings->logo_dark) : null,
+            'appLogo' => $logoUrl,
+            'appLogoDark' => $logoDarkUrl,
             'favoriteProductIds' => $favoriteProductIds,
             'unreadNotificationsCount' => $unreadNotificationsCount,
+            'showDoctorScheduleMenu' => \App\Models\Setting::get('show_doctor_schedule_menu', '1') === '1',
+            'showPetshopMenu' => \App\Models\Setting::get('show_petshop_menu', '1') === '1',
             'footerSettings' => [
                 'about_text' => $footerSettings->about_text,
                 'contact_phone' => $footerSettings->contact_phone,

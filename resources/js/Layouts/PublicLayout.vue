@@ -10,7 +10,7 @@ import Toast from '@/Components/Toast.vue';
 import NotificationDropdown from '@/Components/NotificationDropdown.vue';
 import NotificationPopup from '@/Components/NotificationPopup.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 const page = usePage();
 const footerSettings = computed(() => page.props.footerSettings || {});
@@ -24,6 +24,7 @@ const logout = () => {
 const showMobileMenu = ref(false);
 const showAboutDropdown = ref(false);
 const showAboutMobile = ref(false);
+const isScrolled = ref(false);
 
 const toggleMobileMenu = () => {
     showMobileMenu.value = !showMobileMenu.value;
@@ -31,6 +32,11 @@ const toggleMobileMenu = () => {
 
 const toggleAboutMobile = () => {
     showAboutMobile.value = !showAboutMobile.value;
+};
+
+// Handle scroll for navbar shrink
+const handleScroll = () => {
+    isScrolled.value = window.scrollY > 20;
 };
 
 // Load Midtrans Snap script
@@ -42,21 +48,39 @@ onMounted(() => {
         script.setAttribute('data-client-key', page.props.midtransClientKey || '');
         document.head.appendChild(script);
     }
+    window.addEventListener('scroll', handleScroll);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('scroll', handleScroll);
 });
 </script>
 
 <template>
     <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
         <!-- Navigation -->
-        <nav class="border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800">
+        <nav 
+            class="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 bg-white dark:border-gray-700 dark:bg-gray-800 transition-all duration-300"
+            :class="isScrolled ? 'shadow-lg' : ''"
+        >
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="flex h-16 justify-between">
+                <div 
+                    class="flex justify-between transition-all duration-300"
+                    :class="isScrolled ? 'h-16' : 'h-20'"
+                >
                     <div class="flex">
                         <!-- Logo -->
-                        <div class="flex shrink-0 items-center">
+                        <div class="flex shrink-0 items-center gap-3">
                             <Link :href="route('home')">
-                                <ApplicationLogo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
+                                <ApplicationLogo 
+                                    class="block w-auto fill-current text-gray-800 dark:text-gray-200 transition-all duration-300"
+                                    :class="isScrolled ? 'h-24' : 'h-32'"
+                                />
                             </Link>
+                            <span class="text-2xl font-bold text-gray-800 dark:text-white transition-all duration-300"
+                                  :class="isScrolled ? 'text-xl' : 'text-2xl'">
+                                A2 VET
+                            </span>
                         </div>
 
                         <!-- Navigation Links -->
@@ -79,7 +103,7 @@ onMounted(() => {
                                 <button
                                     :class="[
                                         'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none',
-                                        route().current('about-us') || route().current('doctor-schedule') 
+                                        route().current('doctor-schedule') 
                                             ? 'border-amber-400 text-gray-900 dark:text-gray-100 focus:border-amber-700'
                                             : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 focus:text-gray-700 dark:focus:text-gray-300 focus:border-gray-300 dark:focus:border-gray-700'
                                     ]"
@@ -101,12 +125,6 @@ onMounted(() => {
                                 >
                                     <div v-show="showAboutDropdown" class="absolute left-0 top-full z-50 mt-2 w-48 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-gray-700">
                                         <div class="py-1">
-                                            <Link
-                                                :href="route('about-us')"
-                                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600"
-                                            >
-                                                Profil Klinik
-                                            </Link>
                                             <Link
                                                 :href="route('doctor-schedule')"
                                                 class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-600"
@@ -284,7 +302,7 @@ onMounted(() => {
                     <div>
                         <button
                             @click="toggleAboutMobile"
-                            :class="{'border-amber-400 bg-amber-50 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300': route().current('about-us') || route().current('doctor-schedule'), 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-800 dark:hover:text-gray-200': !route().current('about-us') && !route().current('doctor-schedule')}"
+                            :class="{'border-amber-400 bg-amber-50 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300': route().current('doctor-schedule'), 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-800 dark:hover:text-gray-200': !route().current('doctor-schedule')}"
                             class="flex w-full items-center justify-between pl-3 pr-4 py-2 border-l-4 text-base font-medium transition duration-150 ease-in-out"
                         >
                             <span>About Us</span>
@@ -293,13 +311,6 @@ onMounted(() => {
                             </svg>
                         </button>
                         <div v-show="showAboutMobile" class="bg-gray-50 dark:bg-gray-700">
-                            <Link
-                                :href="route('about-us')"
-                                :class="{'border-amber-400 bg-amber-50 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300': route().current('about-us'), 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200': !route().current('about-us')}"
-                                class="block pl-6 pr-4 py-2 border-l-4 text-sm font-medium transition duration-150 ease-in-out"
-                            >
-                                Profil Klinik
-                            </Link>
                             <Link
                                 :href="route('doctor-schedule')"
                                 :class="{'border-amber-400 bg-amber-50 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300': route().current('doctor-schedule'), 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-gray-200': !route().current('doctor-schedule')}"
@@ -387,6 +398,9 @@ onMounted(() => {
                 </div>
             </div>
         </nav>
+
+        <!-- Spacer for fixed navbar -->
+        <div class="transition-all duration-300" :class="isScrolled ? 'h-16' : 'h-20'"></div>
 
         <!-- Page Content -->
         <main>

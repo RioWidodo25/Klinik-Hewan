@@ -8,8 +8,8 @@ use Filament\Widgets\ChartWidget;
 class AppointmentStatusChart extends ChartWidget
 {
     protected static ?string $heading = 'Status Appointment';
-
-    protected static ?int $sort = 3;
+    
+    protected static ?int $sort = 4;
 
     protected function getData(): array
     {

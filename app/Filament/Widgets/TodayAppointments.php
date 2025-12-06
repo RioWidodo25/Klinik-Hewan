@@ -9,8 +9,8 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class TodayAppointments extends BaseWidget
 {
-    protected static ?int $sort = 4;
-
+    protected static ?int $sort = 3;
+    
     protected int | string | array $columnSpan = 'full';
 
     public function table(Table $table): Table
@@ -28,37 +28,37 @@ class TodayAppointments extends BaseWidget
                     ->label('Kode Booking')
                     ->searchable()
                     ->copyable(),
-
+                    
                 Tables\Columns\TextColumn::make('appointment_time')
                     ->label('Waktu')
                     ->time('H:i')
                     ->sortable()
                     ->badge()
                     ->color('info'),
-
+                    
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Pasien')
                     ->searchable(),
-
+                    
                 Tables\Columns\TextColumn::make('pet.name')
                     ->label('Hewan')
                     ->badge()
                     ->color('warning'),
-
+                    
                 Tables\Columns\TextColumn::make('doctor.name')
                     ->label('Dokter')
                     ->searchable(),
-
+                    
                 Tables\Columns\TextColumn::make('services.title')
                     ->label('Layanan')
                     ->listWithLineBreaks()
                     ->limitList(2)
                     ->expandableLimitedList(),
-
+                    
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
+                    ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
                         'confirmed' => 'info',
                         'in_progress' => 'primary',
@@ -67,7 +67,7 @@ class TodayAppointments extends BaseWidget
                         'no_show' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn(string $state): string => match ($state) {
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
                         'pending' => 'Menunggu',
                         'confirmed' => 'Dikonfirmasi',
                         'in_progress' => 'Berlangsung',

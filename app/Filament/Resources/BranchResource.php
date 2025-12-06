@@ -70,25 +70,50 @@ class BranchResource extends Resource
 
                 Forms\Components\Section::make('Lokasi & Peta')
                     ->schema([
-                        Forms\Components\TextInput::make('latitude')
-                            ->label('Latitude')
-                            ->numeric()
-                            ->placeholder('-6.200000')
-                            ->helperText('Koordinat latitude untuk marker di peta'),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('latitude')
+                                    ->label('Latitude')
+                                    ->numeric()
+                                    ->placeholder('-6.200000')
+                                    ->helperText('Koordinat latitude untuk marker di peta (opsional jika sudah ada iframe)'),
 
-                        Forms\Components\TextInput::make('longitude')
-                            ->label('Longitude')
-                            ->numeric()
-                            ->placeholder('106.816666')
-                            ->helperText('Koordinat longitude untuk marker di peta'),
+                                Forms\Components\TextInput::make('longitude')
+                                    ->label('Longitude')
+                                    ->numeric()
+                                    ->placeholder('106.816666')
+                                    ->helperText('Koordinat longitude untuk marker di peta (opsional jika sudah ada iframe)'),
+                            ]),
 
                         Forms\Components\Textarea::make('google_maps_iframe')
-                            ->label('Google Maps Embed Code')
-                            ->rows(5)
-                            ->placeholder('<iframe src="https://www.google.com/maps/embed?pb=..." width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>')
-                            ->helperText('Paste kode iframe dari Google Maps'),
+                            ->label('Google Maps Embed Code (Iframe)')
+                            ->rows(6)
+                            ->placeholder('<iframe src="https://www.google.com/maps/embed?pb=..." width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>')
+                            ->helperText('Cara mendapatkan iframe: 1) Buka Google Maps → 2) Cari lokasi cabang → 3) Klik Share → 4) Klik "Embed a map" → 5) Copy HTML dan paste disini')
+                            ->columnSpanFull(),
+
+                        Forms\Components\Placeholder::make('maps_instruction')
+                            ->label('Panduan Lengkap')
+                            ->content(new \Illuminate\Support\HtmlString('
+                                <div class="text-sm space-y-2">
+                                    <p class="font-semibold text-gray-700 dark:text-gray-300">Langkah-langkah mendapatkan Google Maps Iframe:</p>
+                                    <ol class="list-decimal list-inside space-y-1 text-gray-600 dark:text-gray-400">
+                                        <li>Buka <a href="https://www.google.com/maps" target="_blank" class="text-primary-600 hover:underline">Google Maps</a></li>
+                                        <li>Cari dan pilih lokasi cabang Anda</li>
+                                        <li>Klik tombol <strong>Share</strong> atau <strong>Bagikan</strong></li>
+                                        <li>Pilih tab <strong>Embed a map</strong> atau <strong>Sematkan peta</strong></li>
+                                        <li>Pilih ukuran peta (Small, Medium, Large, atau Custom)</li>
+                                        <li>Klik <strong>COPY HTML</strong></li>
+                                        <li>Paste kode HTML tersebut ke field diatas</li>
+                                    </ol>
+                                    <p class="mt-3 text-xs text-gray-500 dark:text-gray-500">
+                                        💡 Tips: Gunakan iframe untuk tampilan peta yang lebih baik. Jika tidak ada iframe, sistem akan otomatis menggunakan koordinat latitude & longitude.
+                                    </p>
+                                </div>
+                            '))
+                            ->columnSpanFull(),
                     ])
-                    ->columns(2),
+                    ->collapsible(),
 
                 Forms\Components\Section::make('Gambar Cabang')
                     ->schema([

@@ -26,7 +26,7 @@ class CreateDoctorSchedule extends CreateRecord
                 'notes' => $firstSchedule['notes'] ?? null,
             ];
         }
-
+        
         return $data;
     }
 
@@ -34,11 +34,11 @@ class CreateDoctorSchedule extends CreateRecord
     {
         // Ambil data form
         $formData = $this->form->getState();
-
+        
         // Create additional schedules (skip first one as it's already created)
         if (isset($formData['schedules']) && count($formData['schedules']) > 1) {
             $schedules = array_slice($formData['schedules'], 1);
-
+            
             foreach ($schedules as $schedule) {
                 DoctorSchedule::create([
                     'doctor_id' => $schedule['doctor_id'],

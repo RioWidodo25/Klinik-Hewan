@@ -21,13 +21,13 @@ class StatsOverview extends BaseWidget
 
         // Total Appointments Today
         $appointmentsToday = Appointment::whereDate('appointment_date', $today)->count();
-
+        
         // Total Appointments This Week
         $appointmentsWeek = Appointment::whereBetween('appointment_date', [$startOfWeek, now()])->count();
-
+        
         // Total Active Pets
         $activePets = Pet::where('is_active', true)->count();
-
+        
         // Total Revenue This Month
         $revenueMonth = Order::where('status', 'completed')
             ->whereBetween('created_at', [$startOfMonth, now()])
@@ -39,17 +39,17 @@ class StatsOverview extends BaseWidget
                 ->descriptionIcon('heroicon-m-calendar')
                 ->color('success')
                 ->chart([7, 12, 8, 15, 10, 18, $appointmentsToday]),
-
+                
             Stat::make('Appointment Minggu Ini', $appointmentsWeek)
                 ->description('Total booking minggu ini')
                 ->descriptionIcon('heroicon-m-calendar-days')
                 ->color('info'),
-
+                
             Stat::make('Total Pasien Aktif', $activePets)
                 ->description('Hewan peliharaan terdaftar')
                 ->descriptionIcon('heroicon-m-heart')
                 ->color('warning'),
-
+                
             Stat::make('Pendapatan Bulan Ini', 'Rp ' . number_format($revenueMonth, 0, ',', '.'))
                 ->description('Dari penjualan produk')
                 ->descriptionIcon('heroicon-m-banknotes')

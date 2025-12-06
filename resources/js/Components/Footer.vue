@@ -1,6 +1,6 @@
 <script setup>
 import { usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const page = usePage();
 
@@ -11,10 +11,22 @@ const props = defineProps({
     },
 });
 
+const placeholderLogo = 'https://ui-avatars.com/api/?name=A2+VET&size=128&background=f59e0b&color=fff&bold=true&rounded=true';
+const logoError = ref(false);
+
 const isDark = computed(() => document.documentElement.classList.contains('dark'));
 const logoLight = computed(() => page.props.appLogo);
 const logoDark = computed(() => page.props.appLogoDark);
-const logoUrl = computed(() => isDark.value && logoDark.value ? logoDark.value : logoLight.value);
+const logoUrl = computed(() => {
+    if (logoError.value) {
+        return placeholderLogo;
+    }
+    return isDark.value && logoDark.value ? logoDark.value : logoLight.value;
+});
+
+const handleLogoError = () => {
+    logoError.value = true;
+};
 
 const currentYear = new Date().getFullYear();
 </script>
@@ -62,12 +74,14 @@ const currentYear = new Date().getFullYear();
                 <!-- Logo & Social Media -->
                 <div class="space-y-6">
                     <!-- Logo -->
-                    <div class="flex items-center justify-center md:justify-start">
-                        <img v-if="logoUrl" :src="logoUrl" alt="Logo" class="h-16 w-auto drop-shadow-lg" />
-                        <svg v-else class="h-16 w-auto text-orange-600 drop-shadow-lg" viewBox="0 0 317 48" xmlns="http://www.w3.org/2000/svg">
-                            <path fill="currentColor" d="M0 0h48v48H0z" />
-                            <text x="54" y="36" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="currentColor">Klinik Hewan</text>
-                        </svg>
+                    <div class="flex items-center justify-center md:justify-start gap-3">
+                        <img 
+                            :src="logoUrl || placeholderLogo" 
+                            @error="handleLogoError"
+                            alt="Logo" 
+                            class="h-16 w-auto drop-shadow-lg" 
+                        />
+                        <span class="text-3xl font-bold text-orange-600 dark:text-orange-500">A2 VET</span>
                     </div>
 
                     <!-- Social Media Icons -->

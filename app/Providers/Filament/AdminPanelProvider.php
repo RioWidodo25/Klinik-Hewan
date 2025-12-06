@@ -48,7 +48,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->authGuard('web')
-            ->brandLogo(fn() => view('filament.admin.brand'))
+            ->brandLogo(fn () => view('filament.admin.brand'))
             ->brandLogoHeight('3rem')
             ->favicon(asset('favicon.ico'))
             ->colors([

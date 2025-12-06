@@ -4,10 +4,13 @@
             <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
                 <!-- Success Icon -->
                 <div class="text-center mb-8">
-                    <div class="inline-flex items-center justify-center w-24 h-24 bg-green-100 rounded-full mb-4">
-                        <svg class="w-12 h-12 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                        </svg>
+                    <div class="inline-flex items-center justify-center mb-4">
+                        <DotLottieVue 
+                            autoplay 
+                            ref="playerRef" 
+                            src="/animations/success-check.json"
+                            style="width: 250px; height: 250px;"
+                        />
                     </div>
                     <h1 class="text-4xl font-bold text-gray-900 mb-2">Booking Berhasil!</h1>
                     <p class="text-gray-600">Terima kasih telah membuat janji temu dengan kami</p>
@@ -167,9 +170,12 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue';
+
+const playerRef = ref(null);
 
 const props = defineProps({
     appointment: Object,

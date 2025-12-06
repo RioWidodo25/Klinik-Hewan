@@ -351,7 +351,7 @@ onUnmounted(() => {
                     <div>
                         <!-- Card Frame Transparan untuk Grid Produk -->
                         <div v-if="products.data && products.data.length > 0" class="rounded-2xl bg-white/50 p-6 backdrop-blur-sm dark:bg-gray-800/50" data-aos="fade-up">
-                            <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                            <div class="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                                 <ProductCard
                                     v-for="product in products.data"
                                     :key="product.id"

@@ -30,7 +30,7 @@ class EditDoctorSchedule extends EditRecord
                 'notes' => $data['notes'],
             ]
         ];
-
+        
         return $data;
     }
 
@@ -42,7 +42,7 @@ class EditDoctorSchedule extends EditRecord
                 'schedule_date' => $data['schedule_date'],
             ]);
         }
-
+        
         return $data;
     }
 }
