@@ -97,7 +97,7 @@ Route::get('/about-us', function () {
     $clinic = [
         'name' => $footerSettings->clinic_name ?? 'A2 VET',
         'logo' => $footerSettings->logo ? asset('storage/' . $footerSettings->logo) : null,
-        'about' => $footerSettings->about_text ?? null,
+        'about' => $footerSettings->about_text ?? 'A2 VET adalah klinik hewan terpercaya yang berkomitmen memberikan pelayanan kesehatan terbaik untuk hewan peliharaan Anda. Dengan tim dokter hewan profesional dan berpengalaman, kami menyediakan berbagai layanan mulai dari pemeriksaan rutin, vaksinasi, grooming, hingga perawatan medis darurat. Kami memahami bahwa hewan peliharaan adalah bagian dari keluarga, oleh karena itu kami memberikan perhatian penuh dengan fasilitas modern dan lingkungan yang nyaman untuk setiap pasien kami.',
         'phone' => $footerSettings->contact_phone ?? null,
         'email' => $footerSettings->contact_email ?? null,
         'address' => $footerSettings->contact_address ?? null,
@@ -331,6 +331,8 @@ Route::middleware([
 
         Route::get('/transactions', [\App\Http\Controllers\Profile\TransactionController::class, 'index'])->name('transactions.index');
         Route::get('/transactions/{order}', [\App\Http\Controllers\Profile\TransactionController::class, 'show'])->name('transactions.show');
+        Route::post('/transactions/{order}/complete', [\App\Http\Controllers\Profile\TransactionController::class, 'complete'])->name('transactions.complete');
+        Route::post('/transactions/{order}/review', [\App\Http\Controllers\Profile\TransactionController::class, 'submitReview'])->name('transactions.review');
 
         Route::patch('/pets/{pet}', [\App\Http\Controllers\Profile\PetController::class, 'update'])->name('pets.update');
         Route::delete('/pets/{pet}', [\App\Http\Controllers\Profile\PetController::class, 'destroy'])->name('pets.destroy');

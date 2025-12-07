@@ -29,13 +29,21 @@ class BookingController extends Controller
 
         // Get current week range (Monday to Sunday)
         $today = \Carbon\Carbon::now('Asia/Jakarta');
-        $startOfWeek = $today->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
+        
+        // Always allow booking from today up to next Sunday
+        $startOfWeek = $today->copy()->startOfDay();
         $endOfWeek = $today->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
+        
+        // If today is near end of week (Friday, Saturday, or Sunday), extend to next week
+        if (in_array($today->dayOfWeek, [0, 5, 6])) { // Sunday=0, Friday=5, Saturday=6
+            $endOfWeek = $today->copy()->addWeek()->endOfWeek(\Carbon\Carbon::SUNDAY);
+        }
 
         $doctors = Doctor::active()->ordered()->with(['schedules' => function($query) use ($startOfWeek, $endOfWeek) {
             $query->whereBetween('schedule_date', [$startOfWeek, $endOfWeek])
                   ->where('is_active', true)
-                  ->orderBy('schedule_date');
+                  ->orderBy('schedule_date')
+                  ->orderBy('shift');
         }])->get()->map(function ($doctor) {
             return [
                 'id' => $doctor->id,
@@ -47,6 +55,7 @@ class BookingController extends Controller
                 'schedules' => $doctor->schedules->map(function ($schedule) {
                     return [
                         'schedule_date' => $schedule->schedule_date->format('Y-m-d'),
+                        'shift' => $schedule->shift,
                         'start_time' => $schedule->start_time->format('H:i'),
                         'end_time' => $schedule->end_time->format('H:i'),
                     ];
@@ -84,10 +93,17 @@ class BookingController extends Controller
      */
     public function getAvailableSlots(Request $request)
     {
-        // Get current week range
+        // Get current week range - same as index() method
         $today = \Carbon\Carbon::now('Asia/Jakarta');
-        $startOfWeek = $today->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
+        
+        // Always allow booking from today up to next Sunday
+        $startOfWeek = $today->copy()->startOfDay();
         $endOfWeek = $today->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
+        
+        // If today is near end of week (Friday, Saturday, or Sunday), extend to next week
+        if (in_array($today->dayOfWeek, [0, 5, 6])) { // Sunday=0, Friday=5, Saturday=6
+            $endOfWeek = $today->copy()->addWeek()->endOfWeek(\Carbon\Carbon::SUNDAY);
+        }
 
         $request->validate([
             'doctor_id' => 'required|exists:doctors,id',
@@ -175,10 +191,17 @@ class BookingController extends Controller
      */
     public function store(Request $request)
     {
-        // Get current week range
+        // Get current week range - same as index() method
         $today = \Carbon\Carbon::now('Asia/Jakarta');
-        $startOfWeek = $today->copy()->startOfWeek(\Carbon\Carbon::MONDAY);
+        
+        // Always allow booking from today up to next Sunday
+        $startOfWeek = $today->copy()->startOfDay();
         $endOfWeek = $today->copy()->endOfWeek(\Carbon\Carbon::SUNDAY);
+        
+        // If today is near end of week (Friday, Saturday, or Sunday), extend to next week
+        if (in_array($today->dayOfWeek, [0, 5, 6])) { // Sunday=0, Friday=5, Saturday=6
+            $endOfWeek = $today->copy()->addWeek()->endOfWeek(\Carbon\Carbon::SUNDAY);
+        }
 
         $validated = $request->validate([
             'doctor_id' => 'required|exists:doctors,id',

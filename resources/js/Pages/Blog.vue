@@ -94,7 +94,7 @@ onUnmounted(() => {
                         :key="post.id"
                         :href="route('blog.show', post.slug)"
                         class="group relative overflow-hidden rounded-lg bg-white shadow-md transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 dark:bg-gray-800"
-                        data-aos="fade-up"
+                        data-aos="zoom-in-up"
                         :data-aos-delay="(index + 1) * 100"
                     >
                         <!-- Featured Image -->

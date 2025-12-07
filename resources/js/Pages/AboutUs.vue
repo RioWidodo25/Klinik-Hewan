@@ -38,10 +38,10 @@ const closeMapModal = () => {
             
             <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
-                    <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
+                    <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl" data-aos="fade-down">
                         Tentang Kami
                     </h1>
-                    <p class="mx-auto mt-4 max-w-2xl text-lg text-white/90 sm:text-xl">
+                    <p class="mx-auto mt-4 max-w-2xl text-lg text-white/90 sm:text-xl" data-aos="fade-up" data-aos-delay="100">
                         Mengenal lebih dekat klinik hewan terpercaya Anda
                     </p>
                 </div>
@@ -53,18 +53,18 @@ const closeMapModal = () => {
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="grid gap-12 lg:grid-cols-2 lg:gap-16">
                     <!-- Logo/Image -->
-                    <div class="flex items-center justify-center">
-                        <div class="relative">
-                            <div class="absolute -inset-4 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 opacity-20 blur-2xl"></div>
-                            <div class="relative rounded-2xl bg-white p-8 shadow-2xl dark:bg-gray-800">
+                    <div class="flex items-center justify-center" data-aos="fade-right" data-aos-delay="100">
+                        <div class="relative group cursor-pointer">
+                            <div class="absolute -inset-4 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 opacity-20 blur-2xl group-hover:opacity-30 transition-opacity duration-300"></div>
+                            <div class="relative rounded-2xl bg-white p-8 shadow-2xl dark:bg-gray-800 transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:shadow-[0_20px_60px_-15px_rgba(251,146,60,0.5)] group-hover:-translate-y-2">
                                 <img
                                     v-if="clinic.logo"
                                     :src="clinic.logo"
                                     :alt="clinic.name"
-                                    class="h-64 w-64 object-contain"
+                                    class="h-64 w-64 object-contain transition-transform duration-300 group-hover:scale-105"
                                 />
-                                <div v-else class="flex h-64 w-64 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
-                                    <svg class="h-32 w-32 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div v-else class="flex h-64 w-64 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 transition-transform duration-300 group-hover:scale-105">
+                                    <svg class="h-32 w-32 text-white transition-transform duration-300 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                     </svg>
                                 </div>
@@ -73,7 +73,7 @@ const closeMapModal = () => {
                     </div>
 
                     <!-- About Text -->
-                    <div class="flex flex-col justify-center">
+                    <div class="flex flex-col justify-center" data-aos="fade-left" data-aos-delay="100">
                         <h2 class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
                             {{ clinic.name }}
                         </h2>
@@ -83,7 +83,7 @@ const closeMapModal = () => {
                         </div>
 
                         <!-- Contact Info -->
-                        <div class="mt-8 space-y-4">
+                        <div class="mt-8 space-y-4" data-aos="fade-up" data-aos-delay="200">
                             <div v-if="clinic.phone" class="flex items-center gap-3">
                                 <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
                                     <svg class="h-5 w-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,19 +130,21 @@ const closeMapModal = () => {
         <div v-if="branches.length > 0" class="bg-gray-50 py-16 dark:bg-gray-800 sm:py-24">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
-                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+                    <h2 class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl" data-aos="fade-up">
                         Cabang Kami
                     </h2>
-                    <p class="mt-4 text-lg text-gray-600 dark:text-gray-300">
+                    <p class="mt-4 text-lg text-gray-600 dark:text-gray-300" data-aos="fade-up" data-aos-delay="100">
                         Temukan lokasi klinik terdekat dengan Anda
                     </p>
                 </div>
 
                 <div class="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
                     <div
-                        v-for="branch in branches"
+                        v-for="(branch, index) in branches"
                         :key="branch.id"
                         class="group overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:shadow-2xl dark:bg-gray-900"
+                        data-aos="zoom-in"
+                        :data-aos-delay="(index % 3) * 100 + 100"
                     >
                         <!-- Branch Map Preview -->
                         <div class="relative h-48 overflow-hidden bg-gradient-to-br from-amber-400 to-orange-500">

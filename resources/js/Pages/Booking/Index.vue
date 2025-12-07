@@ -68,11 +68,63 @@
                             </div>
                         </div>
 
-                        <!-- Step 2: Select Time Slot -->
+                        <!-- Step 2: Select Doctor -->
                         <div v-show="currentStep === 1" class="space-y-6">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-4">Pilih Dokter</h2>
+                            
+                            <div v-if="loadingSlots" class="text-center py-8">
+                                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                                <p class="mt-2 text-gray-600">Memuat dokter yang tersedia...</p>
+                            </div>
+
+                            <div v-else-if="filteredDoctorsByDate.length === 0" class="text-center py-8">
+                                <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                <p class="text-gray-600">Tidak ada dokter yang praktik pada tanggal yang dipilih.</p>
+                                <p class="text-sm text-gray-500 mt-2">Silakan pilih tanggal lain.</p>
+                            </div>
+
+                            <div v-else class="grid grid-cols-1 gap-4">
+                                <div 
+                                    v-for="doctor in filteredDoctorsByDate" 
+                                    :key="doctor.id + '-' + doctor.shift"
+                                    @click="selectDoctor(doctor)"
+                                    :class="[
+                                        'p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md',
+                                        form.doctor_id === doctor.id && selectedShift === doctor.shift ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                                    ]"
+                                >
+                                    <div class="flex items-center space-x-4">
+                                        <img 
+                                            :src="doctor.photo_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(doctor.name)" 
+                                            :alt="doctor.name"
+                                            class="w-16 h-16 rounded-full object-cover"
+                                        />
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-gray-900">{{ doctor.name }}</h3>
+                                            <p class="text-sm text-gray-600">{{ doctor.title }}</p>
+                                            <p class="text-sm text-blue-600">{{ doctor.specialization }}</p>
+                                            <p class="text-xs text-amber-600 font-medium mt-1">
+                                                {{ doctor.shift === 'shift_1' ? '🌅 Shift 1 (07:30 - 15:30)' : '🌙 Shift 2 (19:30 - 03:30)' }}
+                                            </p>
+                                        </div>
+                                        <div v-if="form.doctor_id === doctor.id && selectedShift === doctor.shift" class="text-blue-500">
+                                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p v-if="form.errors.doctor_id" class="mt-1 text-sm text-red-600">{{ form.errors.doctor_id }}</p>
+                        </div>
+
+                        <!-- Step 3: Select Time Slot -->
+                        <div v-show="currentStep === 2" class="space-y-6">
                             <h2 class="text-2xl font-bold text-gray-900 mb-4">Pilih Waktu</h2>
                             
-                            <div class="text-center py-8">
+                            <div v-if="!form.doctor_id" class="text-center py-8">
                                 <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
@@ -80,7 +132,7 @@
                                 <p class="text-sm text-gray-500 mt-2">Waktu tersedia akan ditampilkan setelah Anda memilih dokter</p>
                             </div>
 
-                            <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                            <div v-else class="grid grid-cols-3 sm:grid-cols-4 gap-3">
                                 <button
                                     v-for="slot in availableTimeSlots"
                                     :key="slot.time"
@@ -101,55 +153,6 @@
                                 </button>
                             </div>
                             <p v-if="form.errors.appointment_time" class="mt-1 text-sm text-red-600">{{ form.errors.appointment_time }}</p>
-                        </div>
-
-                        <!-- Step 3: Select Doctor -->
-                        <div v-show="currentStep === 2" class="space-y-6">
-                            <h2 class="text-2xl font-bold text-gray-900 mb-4">Pilih Dokter</h2>
-                            
-                            <div v-if="loadingSlots" class="text-center py-8">
-                                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                                <p class="mt-2 text-gray-600">Memuat dokter yang tersedia...</p>
-                            </div>
-
-                            <div v-else-if="filteredDoctors.length === 0" class="text-center py-8">
-                                <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                <p class="text-gray-600">Tidak ada dokter yang praktik pada tanggal dan waktu yang dipilih.</p>
-                                <p class="text-sm text-gray-500 mt-2">Silakan pilih tanggal atau waktu lain.</p>
-                            </div>
-
-                            <div v-else class="grid grid-cols-1 gap-4">
-                                <div 
-                                    v-for="doctor in filteredDoctors" 
-                                    :key="doctor.id"
-                                    @click="selectDoctor(doctor)"
-                                    :class="[
-                                        'p-4 border-2 rounded-lg cursor-pointer transition-all hover:shadow-md',
-                                        form.doctor_id === doctor.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
-                                    ]"
-                                >
-                                    <div class="flex items-center space-x-4">
-                                        <img 
-                                            :src="doctor.photo_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(doctor.name)" 
-                                            :alt="doctor.name"
-                                            class="w-16 h-16 rounded-full object-cover"
-                                        />
-                                        <div class="flex-1">
-                                            <h3 class="font-semibold text-gray-900">{{ doctor.name }}</h3>
-                                            <p class="text-sm text-gray-600">{{ doctor.title }}</p>
-                                            <p class="text-sm text-blue-600">{{ doctor.specialization }}</p>
-                                        </div>
-                                        <div v-if="form.doctor_id === doctor.id" class="text-blue-500">
-                                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <p v-if="form.errors.doctor_id" class="mt-1 text-sm text-red-600">{{ form.errors.doctor_id }}</p>
                         </div>
 
                         <!-- Step 4: Select Services -->
@@ -443,8 +446,8 @@ const page = usePage();
 
 const steps = [
     { title: 'Pilih Tanggal' },
-    { title: 'Pilih Waktu' },
     { title: 'Pilih Dokter' },
+    { title: 'Pilih Waktu' },
     { title: 'Pilih Layanan' },
     { title: 'Data Hewan' },
 ];
@@ -453,75 +456,116 @@ const currentStep = ref(0);
 const loadingSlots = ref(false);
 const availableSlots = ref([]);
 const showNewPetForm = ref(false);
+const selectedShift = ref(null);
 
 const today = props.today;
 const minDate = props.today;
 const maxDate = props.weekEnd;
 
-// Generate available time slots based on doctors' schedules for selected date
-const availableTimeSlots = computed(() => {
+// Filter doctors by selected date and determine shift
+const filteredDoctorsByDate = computed(() => {
     if (!form.appointment_date) return [];
     
-    // Find all doctors who have schedules on this specific date
-    const doctorsSchedules = props.doctors
-        .map(doctor => {
-            const schedule = doctor.schedules.find(s => s.schedule_date === form.appointment_date);
-            return schedule ? {
-                start_time: schedule.start_time,
-                end_time: schedule.end_time
-            } : null;
-        })
-        .filter(s => s !== null);
-    
-    if (doctorsSchedules.length === 0) return [];
-    
-    // Get the earliest start time and latest end time from all doctors
-    const startTimes = doctorsSchedules.map(s => s.start_time);
-    const endTimes = doctorsSchedules.map(s => s.end_time);
-    const earliestStart = startTimes.sort()[0];
-    const latestEnd = endTimes.sort().reverse()[0];
-    
-    // Generate slots between earliest start and latest end
-    const slots = [];
-    const [startHour, startMinute] = earliestStart.split(':').map(Number);
-    const [endHour, endMinute] = latestEnd.split(':').map(Number);
-    
-    let currentHour = startHour;
-    let currentMinute = startMinute;
-    
-    // Check if selected date is today
-    const isToday = new Date(form.appointment_date).toDateString() === new Date().toDateString();
     const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const selectedDate = new Date(form.appointment_date + 'T00:00:00');
+    const isToday = selectedDate.getTime() === today.getTime();
     
-    while (currentHour < endHour || (currentHour === endHour && currentMinute < endMinute)) {
-        const timeStr = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`;
+    // Determine which shift to show based on current time (if today)
+    let activeShift = null;
+    
+    if (isToday) {
+        const currentTimeMinutes = currentHour * 60 + currentMinute;
+        const shift1End = 15 * 60 + 30; // 15:30 in minutes
         
-        // Check if at least one doctor is available at this time
-        const isAvailable = doctorsSchedules.some(schedule => {
-            return timeStr >= schedule.start_time && timeStr < schedule.end_time;
+        // If current time is after 15:30, show only shift 2
+        if (currentTimeMinutes > shift1End) {
+            activeShift = 'shift_2';
+        } else {
+            activeShift = 'shift_1';
+        }
+    }
+    
+    // Find all doctors who have schedules on this specific date
+    const doctorsWithSchedules = [];
+    
+    props.doctors.forEach(doctor => {
+        doctor.schedules.forEach(schedule => {
+            if (schedule.schedule_date === form.appointment_date) {
+                // If today, only show active shift
+                if (!isToday || !activeShift || schedule.shift === activeShift) {
+                    doctorsWithSchedules.push({
+                        ...doctor,
+                        shift: schedule.shift,
+                        start_time: schedule.start_time,
+                        end_time: schedule.end_time,
+                    });
+                }
+            }
         });
+    });
+    
+    return doctorsWithSchedules;
+});
+
+// Generate available time slots based on selected doctor and shift
+const availableTimeSlots = computed(() => {
+    if (!form.appointment_date || !form.doctor_id || !selectedShift.value) return [];
+    
+    // Find the selected doctor's schedule
+    const selectedDoctor = props.doctors.find(d => d.id === form.doctor_id);
+    if (!selectedDoctor) return [];
+    
+    const schedule = selectedDoctor.schedules.find(s => 
+        s.schedule_date === form.appointment_date && 
+        s.shift === selectedShift.value
+    );
+    
+    if (!schedule) return [];
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const selectedDate = new Date(form.appointment_date + 'T00:00:00');
+    const isToday = selectedDate.getTime() === today.getTime();
+    
+    // Generate slots based on selected doctor's schedule
+    const slots = [];
+    const [startHour, startMinute] = schedule.start_time.split(':').map(Number);
+    let [endHour, endMinute] = schedule.end_time.split(':').map(Number);
+    
+    // Handle shift 2 that crosses midnight (03:30 AM next day)
+    const isShift2 = schedule.shift === 'shift_2';
+    if (isShift2 && endHour < 12) {
+        endHour += 24; // Add 24 hours for next day calculation
+    }
+    
+    let currentSlotHour = startHour;
+    let currentSlotMinute = startMinute;
+    
+    while (currentSlotHour < endHour || (currentSlotHour === endHour && currentSlotMinute < endMinute)) {
+        const displayHour = currentSlotHour >= 24 ? currentSlotHour - 24 : currentSlotHour;
+        const timeStr = `${displayHour.toString().padStart(2, '0')}:${currentSlotMinute.toString().padStart(2, '0')}`;
         
         // Check if this time slot is in the past
         let isPast = false;
         if (isToday) {
-            const slotDateTime = new Date(selectedDate);
-            slotDateTime.setHours(currentHour, currentMinute, 0, 0);
-            isPast = slotDateTime < now;
+            const slotDateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), displayHour, currentSlotMinute);
+            isPast = slotDateTime.getTime() <= now.getTime();
         }
         
-        if (isAvailable) {
-            slots.push({
-                time: timeStr,
-                formatted: timeStr,
-                isPast: isPast
-            });
-        }
+        slots.push({
+            time: timeStr,
+            formatted: timeStr,
+            isPast: isPast
+        });
         
         // Add 30 minutes
-        currentMinute += 30;
-        if (currentMinute >= 60) {
-            currentMinute = 0;
-            currentHour++;
+        currentSlotMinute += 30;
+        if (currentSlotMinute >= 60) {
+            currentSlotMinute = 0;
+            currentSlotHour++;
         }
     }
     
@@ -529,22 +573,7 @@ const availableTimeSlots = computed(() => {
 });
 
 // Filtered doctors based on selected date and time
-const filteredDoctors = computed(() => {
-    if (!form.appointment_date || !form.appointment_time) {
-        return [];
-    }
-    
-    // Filter doctors who have schedules on that specific date and time
-    return props.doctors.filter(doctor => {
-        return doctor.schedules.some(schedule => {
-            if (schedule.schedule_date !== form.appointment_date) return false;
-            
-            // Check if selected time is within doctor's schedule
-            const selectedTime = form.appointment_time;
-            return selectedTime >= schedule.start_time && selectedTime < schedule.end_time;
-        });
-    });
-});
+// Removed old filteredDoctors computed - now using filteredDoctorsByDate which handles shift logic
 
 const form = useForm({
     appointment_date: '',
@@ -572,8 +601,8 @@ const canProceed = computed(() => {
             const min = new Date(minDate);
             const max = new Date(maxDate);
             return selectedDate >= min && selectedDate <= max;
-        case 1: return !!form.appointment_time;
-        case 2: return !!form.doctor_id;
+        case 1: return !!form.doctor_id; // Step 2: Select Doctor
+        case 2: return !!form.appointment_time; // Step 3: Select Time
         case 3: return form.service_ids.length > 0;
         case 4: 
             if (form.pet_id) return !!form.complaint && !!form.owner_name && !!form.owner_phone && !!form.owner_address;
@@ -584,6 +613,8 @@ const canProceed = computed(() => {
 
 const selectDoctor = (doctor) => {
     form.doctor_id = doctor.id;
+    selectedShift.value = doctor.shift;
+    form.appointment_time = ''; // Reset time when changing doctor
 };
 
 const toggleService = (serviceId) => {
@@ -717,14 +748,10 @@ watch(() => [form.doctor_id, form.appointment_date], () => {
     }
 });
 
-// Watch for date or time changes to reset doctor selection
-watch(() => [form.appointment_date, form.appointment_time], () => {
-    if (form.doctor_id && filteredDoctors.value.length > 0) {
-        const doctorStillAvailable = filteredDoctors.value.some(d => d.id === form.doctor_id);
-        if (!doctorStillAvailable) {
-            form.doctor_id = null;
-        }
-    }
+// Watch for time changes to check if selected time is still valid for selected doctor's shift
+watch(() => form.appointment_time, () => {
+    // Time slot validation is now handled by the availableTimeSlots computed
+    // which filters based on the selected doctor's shift schedule
 });
 
 // Watch for date changes to reset doctor selection if selected doctor doesn't practice on new date
@@ -745,10 +772,11 @@ watch(() => form.appointment_date, (newDate) => {
         }
     }
     
-    if (form.doctor_id && filteredDoctors.value.length > 0) {
-        const doctorStillAvailable = filteredDoctors.value.some(d => d.id === form.doctor_id);
+    if (form.doctor_id && filteredDoctorsByDate.value.length > 0) {
+        const doctorStillAvailable = filteredDoctorsByDate.value.some(d => d.id === form.doctor_id && d.shift === selectedShift.value);
         if (!doctorStillAvailable) {
             form.doctor_id = null;
+            selectedShift.value = null;
             form.appointment_time = '';
         }
     }

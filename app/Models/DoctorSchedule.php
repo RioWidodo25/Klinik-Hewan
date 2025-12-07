@@ -10,6 +10,7 @@ class DoctorSchedule extends Model
     protected $fillable = [
         'doctor_id',
         'schedule_date',
+        'shift',
         'start_time',
         'end_time',
         'is_active',
@@ -23,6 +24,18 @@ class DoctorSchedule extends Model
         'start_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
     ];
+    
+    /**
+     * Get shift label in Indonesian
+     */
+    public function getShiftLabelAttribute(): string
+    {
+        return match($this->shift) {
+            'shift_1' => 'Shift 1 (Pagi - Sore)',
+            'shift_2' => 'Shift 2 (Malam - Dini Hari)',
+            default => 'Tidak Ada Shift',
+        };
+    }
 
     /**
      * Get the doctor that owns the schedule.

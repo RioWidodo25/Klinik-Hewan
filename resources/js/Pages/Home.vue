@@ -146,7 +146,7 @@ onUnmounted(() => {
                     <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl min-h-[4rem]">
                         <span>{{ typedText }}</span>
                         <span v-if="typedText.length < fullText.length" class="animate-pulse">|</span>
-                        <span class="text-amber-400">Klinik Hewan</span>
+                        <span class="text-amber-400">Klinik Hewan A2 VET</span>
                         <span v-if="typedText.length === fullText.length && showCursor" class="text-amber-400">|</span>
                     </h1>
                     <p

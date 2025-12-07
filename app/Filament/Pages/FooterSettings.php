@@ -49,7 +49,6 @@ class FooterSettings extends Page
         return $form
             ->schema([
                 Section::make('Logo Website')
-                    ->description('Upload logo website')
                     ->schema([
                         FileUpload::make('logo')
                             ->label('Logo Website')
@@ -63,7 +62,6 @@ class FooterSettings extends Page
                     ]),
 
                 Section::make('About')
-                    ->description('Informasi tentang klinik hewan')
                     ->schema([
                         Textarea::make('about_text')
                             ->label('Tentang Kami')
@@ -74,13 +72,12 @@ class FooterSettings extends Page
                     ]),
 
                 Section::make('Contact Information')
-                    ->description('Informasi kontak klinik')
                     ->schema([
                         TextInput::make('contact_phone')
                             ->label('Nomor Telepon')
                             ->tel()
                             ->placeholder('+62 812-3456-7890')
-                            ->helperText('Format: +62 atau 08xx'),
+                            ->helperText(''),
 
                         TextInput::make('contact_email')
                             ->label('Email')
@@ -96,20 +93,18 @@ class FooterSettings extends Page
                             ->label('Nomor WhatsApp (Floating Button)')
                             ->tel()
                             ->placeholder('628123456789')
-                            ->helperText('Format: 628xxx (tanpa tanda + atau spasi). Contoh: 628123456789. Digunakan untuk floating button WhatsApp.')
+                            ->helperText('Format: +628...')
                             ->maxLength(15),
 
                         Textarea::make('google_maps_iframe')
                             ->label('Google Maps Embed Code')
                             ->rows(5)
                             ->placeholder('<iframe src="https://www.google.com/maps/embed?pb=..." width="300" height="250" style="border:0;" allowfullscreen="" loading="lazy"></iframe>')
-                            ->helperText('Paste kode iframe dari Google Maps. Cara: Buka Google Maps > Pilih lokasi > Klik Share > Embed a map > Copy HTML code')
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
 
                 Section::make('Social Media Links')
-                    ->description('Link ke akun social media klinik')
                     ->schema([
                         TextInput::make('instagram_url')
                             ->label('Instagram')

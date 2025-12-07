@@ -74,7 +74,6 @@ class BranchResource extends Resource
                             ->label('Google Maps Embed Code (Iframe)')
                             ->rows(6)
                             ->placeholder('<iframe src="https://www.google.com/maps/embed?pb=..." width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>')
-                            ->helperText('Cara mendapatkan iframe: 1) Buka Google Maps → 2) Cari lokasi cabang → 3) Klik Share → 4) Klik "Embed a map" → 5) Copy HTML dan paste disini')
                             ->columnSpanFull(),
 
                         Forms\Components\Placeholder::make('maps_instruction')

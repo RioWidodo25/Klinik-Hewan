@@ -63,18 +63,41 @@ class DoctorScheduleResource extends Resource
                                     ->live()
                                     ->columnSpan(2),
                                 
-                                Forms\Components\TimePicker::make('start_time')
-                                    ->label('Jam Mulai')
-                                    ->seconds(false)
+                                Forms\Components\Select::make('shift')
+                                    ->label('Shift')
+                                    ->options([
+                                        'shift_1' => 'Shift 1 (07:30 - 15:30)',
+                                        'shift_2' => 'Shift 2 (19:30 - 03:30)',
+                                    ])
+                                    ->default('shift_1')
                                     ->required()
                                     ->live()
-                                    ->columnSpan(1),
+                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                        // Auto-fill time based on shift
+                                        if ($state === 'shift_1') {
+                                            $set('start_time', '07:30');
+                                            $set('end_time', '15:30');
+                                        } elseif ($state === 'shift_2') {
+                                            $set('start_time', '19:30');
+                                            $set('end_time', '03:30');
+                                        }
+                                    })
+                                    ->columnSpan(4),
                                 
-                                Forms\Components\TimePicker::make('end_time')
-                                    ->label('Jam Selesai')
-                                    ->seconds(false)
-                                    ->required()
-                                    ->columnSpan(1),
+                                Forms\Components\Placeholder::make('shift_info')
+                                    ->label('Jam Praktik')
+                                    ->content(fn ($get) => match($get('shift')) {
+                                        'shift_1' => '07:30 - 15:30 (Pagi - Sore)',
+                                        'shift_2' => '19:30 - 03:30 (Malam - Dini Hari)',
+                                        default => 'Pilih shift terlebih dahulu'
+                                    })
+                                    ->columnSpan(2),
+                                
+                                Forms\Components\Hidden::make('start_time')
+                                    ->default('07:30'),
+                                
+                                Forms\Components\Hidden::make('end_time')
+                                    ->default('15:30'),
                                 
                                 Forms\Components\Toggle::make('is_active')
                                     ->label('Aktif')
@@ -129,6 +152,20 @@ class DoctorScheduleResource extends Resource
                     ->badge()
                     ->color('info')
                     ->sortable(),
+                
+                Tables\Columns\TextColumn::make('shift')
+                    ->label('Shift')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => match($state) {
+                        'shift_1' => 'Shift 1',
+                        'shift_2' => 'Shift 2',
+                        default => $state,
+                    })
+                    ->color(fn (string $state): string => match($state) {
+                        'shift_1' => 'success',
+                        'shift_2' => 'warning',
+                        default => 'gray',
+                    }),
                 
                 Tables\Columns\TextColumn::make('start_time')
                     ->label('Jam Mulai')
