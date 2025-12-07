@@ -70,6 +70,30 @@ const formatCurrency = (value) => {
     }).format(value);
 };
 
+const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+        return 'Hari ini';
+    } else if (diffDays === 1) {
+        return 'Kemarin';
+    } else if (diffDays < 7) {
+        return `${diffDays} hari yang lalu`;
+    } else if (diffDays < 30) {
+        const weeks = Math.floor(diffDays / 7);
+        return `${weeks} minggu yang lalu`;
+    } else if (diffDays < 365) {
+        const months = Math.floor(diffDays / 30);
+        return `${months} bulan yang lalu`;
+    } else {
+        return date.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+};
+
 const selectVariant = (variant) => {
     if (variant.stock === 0) {
         return;
@@ -518,7 +542,7 @@ const filteredReviews = computed(() => {
                                         </div>
                                         <div>
                                             <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ review.user?.name || 'Pelanggan' }}</p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ review.created_at }}</p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(review.created_at) }}</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1">

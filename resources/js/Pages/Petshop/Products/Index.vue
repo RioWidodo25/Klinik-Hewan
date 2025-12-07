@@ -356,7 +356,7 @@ onUnmounted(() => {
                                     v-for="product in products.data"
                                     :key="product.id"
                                     :product="product"
-                                    :show-add-button="!product.has_variants"
+                                    :show-add-button="true"
                                     @add-to-cart="handleAddToCart"
                                 />
                             </div>

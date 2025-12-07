@@ -98,6 +98,17 @@ class ProductController extends Controller
                     'review_count' => (int) $product->review_count,
                     'order_count' => (int) $product->order_count,
                     'has_variants' => $product->active_variants_count > 0,
+                    'variants' => $product->variants->where('is_active', true)->map(function ($variant) {
+                        return [
+                            'id' => $variant->id,
+                            'name' => $variant->name,
+                            'size' => $variant->size,
+                            'color' => $variant->color,
+                            'stock' => (int) $variant->stock,
+                            'price' => (float) $variant->price,
+                            'final_price' => (float) ($variant->discount_price ?? $variant->price),
+                        ];
+                    })->values()->toArray(),
                     'category' => $product->category ? [
                         'id' => $product->category->id,
                         'name' => $product->category->name,

@@ -20,7 +20,6 @@ const emit = defineEmits(['add-to-cart']);
 const placeholderImage = 'https://ui-avatars.com/api/?name=Petshop&background=EBF4FF&color=7F9CF5';
 
 const primaryImage = computed(() => props.product.primary_image_url || placeholderImage);
-const canAddToCart = computed(() => props.showAddButton && !props.product.has_variants);
 const isLoggedIn = computed(() => !!page.props.auth.user);
 const isFavorited = computed(() => {
     const favIds = page.props.favoriteProductIds || [];
