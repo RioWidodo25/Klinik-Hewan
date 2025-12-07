@@ -70,21 +70,6 @@ class BranchResource extends Resource
 
                 Forms\Components\Section::make('Lokasi & Peta')
                     ->schema([
-                        Forms\Components\Grid::make(2)
-                            ->schema([
-                                Forms\Components\TextInput::make('latitude')
-                                    ->label('Latitude')
-                                    ->numeric()
-                                    ->placeholder('-6.200000')
-                                    ->helperText('Koordinat latitude untuk marker di peta (opsional jika sudah ada iframe)'),
-
-                                Forms\Components\TextInput::make('longitude')
-                                    ->label('Longitude')
-                                    ->numeric()
-                                    ->placeholder('106.816666')
-                                    ->helperText('Koordinat longitude untuk marker di peta (opsional jika sudah ada iframe)'),
-                            ]),
-
                         Forms\Components\Textarea::make('google_maps_iframe')
                             ->label('Google Maps Embed Code (Iframe)')
                             ->rows(6)
@@ -114,16 +99,6 @@ class BranchResource extends Resource
                             ->columnSpanFull(),
                     ])
                     ->collapsible(),
-
-                Forms\Components\Section::make('Gambar Cabang')
-                    ->schema([
-                        Forms\Components\FileUpload::make('image_path')
-                            ->label('Foto Cabang')
-                            ->image()
-                            ->directory('branches')
-                            ->maxSize(2048)
-                            ->helperText('Upload foto cabang (max 2MB)'),
-                    ]),
 
                 Forms\Components\Section::make('Pengaturan')
                     ->schema([
@@ -160,10 +135,6 @@ class BranchResource extends Resource
                 Tables\Columns\TextColumn::make('phone')
                     ->label('Telepon')
                     ->searchable(),
-
-                Tables\Columns\ImageColumn::make('image_path')
-                    ->label('Foto')
-                    ->circular(),
 
                 Tables\Columns\TextColumn::make('order')
                     ->label('Urutan')
