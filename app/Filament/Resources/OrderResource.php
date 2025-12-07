@@ -268,8 +268,18 @@ class OrderResource extends Resource
                         'refunded' => 'Refund',
                     ])
                     ->searchable(),
+
+                Tables\Filters\Filter::make('is_pos')
+                    ->label('Transaksi POS')
+                    ->query(fn (Builder $query) => $query->where('order_number', 'like', 'POS-%')),
             ])
             ->actions([
+                Tables\Actions\Action::make('print_receipt')
+                    ->label('Cetak Struk')
+                    ->icon('heroicon-o-printer')
+                    ->url(fn (Order $record) => route('filament.admin.pages.print-receipt', ['order' => $record->id]))
+                    ->openUrlInNewTab()
+                    ->visible(fn (Order $record) => str_starts_with($record->order_number, 'POS-')),
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
