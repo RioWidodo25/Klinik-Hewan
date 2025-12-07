@@ -151,4 +151,159 @@
             </div>
         </div>
     </div>
+
+    <!-- Receipt Modal -->
+    @if($showReceipt && $currentOrder)
+        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ 
+            open: @entangle('showReceipt'),
+            printReceipt() {
+                const receiptContent = document.getElementById('receipt-content');
+                const printWindow = window.open('', '', 'width=800,height=600');
+                
+                const styles = '<style>' +
+                    'body { font-family: Arial, sans-serif; margin: 20px; color: #000; }' +
+                    'table { width: 100%; border-collapse: collapse; }' +
+                    'th, td { padding: 8px; text-align: left; }' +
+                    'th { border-bottom: 2px solid #333; }' +
+                    'tr { border-bottom: 1px solid #ddd; }' +
+                    '.text-center { text-align: center; }' +
+                    '.text-right { text-align: right; }' +
+                    '.border-dashed { border-bottom: 2px dashed #999; padding-bottom: 10px; margin-bottom: 10px; }' +
+                    '.font-bold { font-weight: bold; }' +
+                    '.text-lg { font-size: 1.125rem; }' +
+                    '.text-2xl { font-size: 1.5rem; }' +
+                    '.mb-4 { margin-bottom: 1rem; }' +
+                    '@media print { @page { margin: 0.5cm; } }' +
+                    '</style>';
+                
+                printWindow.document.write('<html><head><title>Struk Pembayaran</title>' + styles + '</head><body>');
+                printWindow.document.write(receiptContent.innerHTML);
+                printWindow.document.write('</body></html>');
+                printWindow.document.close();
+                printWindow.focus();
+                
+                setTimeout(() => {
+                    printWindow.print();
+                    printWindow.close();
+                }, 250);
+            }
+        }">
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+                <!-- Background overlay -->
+                <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="$wire.closeReceipt()"></div>
+
+                <!-- Modal panel -->
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                    <!-- Receipt Content -->
+                    <div id="receipt-content" class="bg-white p-8">
+                        <!-- Header -->
+                        <div class="text-center border-b-2 border-dashed border-gray-300 pb-4 mb-4">
+                            <h1 class="text-2xl font-bold">A2 VET</h1>
+                            <p class="text-sm text-gray-600">Klinik Hewan & Pet Shop</p>
+                            <p class="text-xs text-gray-500 mt-1">Jl. Contoh No. 123, Jakarta</p>
+                            <p class="text-xs text-gray-500">Telp: (021) 1234-5678</p>
+                        </div>
+
+                        <!-- Transaction Info -->
+                        <div class="mb-4 space-y-1">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">No. Order:</span>
+                                <span class="font-semibold">{{ $currentOrder->order_number }}</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Tanggal:</span>
+                                <span>{{ $currentOrder->created_at->format('d/m/Y H:i') }}</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Kasir:</span>
+                                <span>{{ auth()->user()->name }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Customer Info -->
+                        <div class="mb-4 pb-4 border-b border-gray-200">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Pelanggan:</span>
+                                <span class="font-semibold">{{ $currentOrder->customer_name }}</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Telepon:</span>
+                                <span>{{ $currentOrder->customer_phone }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Items Table -->
+                        <table class="w-full mb-4">
+                            <thead>
+                                <tr class="border-b-2 border-gray-300">
+                                    <th class="text-left py-2 text-sm">Item</th>
+                                    <th class="text-center py-2 text-sm">Qty</th>
+                                    <th class="text-right py-2 text-sm">Harga</th>
+                                    <th class="text-right py-2 text-sm">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($currentOrder->items as $item)
+                                    <tr class="border-b border-gray-200">
+                                        <td class="py-2 text-sm">{{ $item->product_name }}</td>
+                                        <td class="text-center py-2 text-sm">{{ $item->quantity }}</td>
+                                        <td class="text-right py-2 text-sm">{{ number_format($item->price, 0, ',', '.') }}</td>
+                                        <td class="text-right py-2 text-sm">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+
+                        <!-- Totals -->
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Subtotal:</span>
+                                <span>Rp {{ number_format($currentOrder->subtotal, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="flex justify-between text-lg font-bold border-t-2 border-gray-300 pt-2">
+                                <span>TOTAL:</span>
+                                <span>Rp {{ number_format($currentOrder->total, 0, ',', '.') }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        @if($currentOrder->notes)
+                            <div class="mb-4 pb-4 border-b border-gray-200">
+                                <p class="text-xs text-gray-600">Catatan: {{ $currentOrder->notes }}</p>
+                            </div>
+                        @endif
+
+                        <!-- Footer -->
+                        <div class="text-center border-t-2 border-dashed border-gray-300 pt-4">
+                            <p class="text-sm font-semibold mb-2">Terima Kasih Atas Kunjungan Anda!</p>
+                            <p class="text-xs text-gray-500">Barang yang sudah dibeli tidak dapat dikembalikan</p>
+                            <p class="text-xs text-gray-500 mt-1">Simpan struk ini sebagai bukti pembelian</p>
+                        </div>
+                    </div>
+
+                    <!-- Modal Actions -->
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse print:hidden">
+                        <button 
+                            type="button" 
+                            @click="printReceipt()"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm"
+                        >
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                            </svg>
+                            Cetak Struk
+                        </button>
+                        <button 
+                            type="button" 
+                            wire:click="closeReceipt"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:w-auto sm:text-sm"
+                        >
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
 </x-filament-panels::page>

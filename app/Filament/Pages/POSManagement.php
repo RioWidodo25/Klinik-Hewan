@@ -40,6 +40,8 @@ class POSManagement extends Page implements HasForms
     public $products = [];
     public $cart = [];
     public $total = 0;
+    public $showReceipt = false;
+    public $currentOrder = null;
 
     public function mount(): void
     {
@@ -279,15 +281,19 @@ class POSManagement extends Page implements HasForms
             
             // Create order
             $order = Order::create([
+                'user_id' => auth()->id(),
                 'order_number' => $orderNumber,
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
-                'customer_email' => null,
+                'customer_email' => $data['customer_phone'] . '@pos.local',
                 'shipping_address' => 'Pembelian Langsung di Toko',
+                'shipping_city' => 'Toko',
+                'shipping_province' => 'Lokal',
+                'shipping_postal_code' => '00000',
                 'subtotal' => $this->total,
                 'shipping_cost' => 0,
                 'total' => $this->total,
-                'status' => 'completed',
+                'status' => 'delivered',
                 'payment_status' => 'paid',
                 'notes' => $data['notes'] ?? null,
                 'paid_at' => now(),
@@ -331,17 +337,14 @@ class POSManagement extends Page implements HasForms
             // Reload products to update stock
             $this->loadProducts();
             
+            // Show receipt modal
+            $this->currentOrder = $order->load(['items.product', 'items.variant']);
+            $this->showReceipt = true;
+            
             Notification::make()
                 ->success()
                 ->title('Transaksi berhasil!')
                 ->body("Nomor Order: {$orderNumber}")
-                ->persistent()
-                ->actions([
-                    \Filament\Notifications\Actions\Action::make('print')
-                        ->label('Cetak Struk')
-                        ->url(route('filament.admin.pages.print-receipt', ['order' => $order->id]))
-                        ->openUrlInNewTab(),
-                ])
                 ->send();
             
         } catch (\Exception $e) {
@@ -353,5 +356,16 @@ class POSManagement extends Page implements HasForms
                 ->body($e->getMessage())
                 ->send();
         }
+    }
+
+    public function closeReceipt(): void
+    {
+        $this->showReceipt = false;
+        $this->currentOrder = null;
+    }
+
+    public function printReceipt(): void
+    {
+        // Method for triggering print from Livewire
     }
 }
