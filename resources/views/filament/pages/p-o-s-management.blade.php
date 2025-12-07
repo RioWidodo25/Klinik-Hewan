@@ -4,12 +4,11 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             <!-- Products List (Left Side) -->
-            <div class="lg:col-span-2 space-y-4">
+            <div class="lg:col-span-2 space-y-4" x-data="{ search: '' }">
                 <!-- Search Bar -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                     <input 
                         type="text" 
-                        x-data="{ search: '' }"
                         x-model="search"
                         placeholder="Cari produk..." 
                         class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:border-primary-500 focus:ring-primary-500"
@@ -22,7 +21,8 @@
                     
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[600px] overflow-y-auto">
                         @foreach($products as $product)
-                            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-lg transition cursor-pointer"
+                            <div x-show="search === '' || '{{ strtolower($product['name']) }}'.includes(search.toLowerCase()) || '{{ strtolower($product['category']) }}'.includes(search.toLowerCase()) || '{{ strtolower($product['sku'] ?? '') }}'.includes(search.toLowerCase())"
+                                 class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-lg transition cursor-pointer"
                                  wire:click="addToCart({{ $product['id'] }}, {{ $product['has_variants'] ? 'null' : 'null' }})">
                                 
                                 <!-- Product Image -->
@@ -195,28 +195,33 @@
                 <!-- Modal panel -->
                 <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
                     <!-- Receipt Content -->
-                    <div id="receipt-content" class="bg-white p-8">
+                    <div id="receipt-content" class="bg-white p-8 text-gray-900">
                         <!-- Header -->
                         <div class="text-center border-b-2 border-dashed border-gray-300 pb-4 mb-4">
-                            <h1 class="text-2xl font-bold">A2 VET</h1>
+                            <h1 class="text-2xl font-bold text-gray-900">A2 VET</h1>
                             <p class="text-sm text-gray-600">Klinik Hewan & Pet Shop</p>
-                            <p class="text-xs text-gray-500 mt-1">Jl. Contoh No. 123, Jakarta</p>
-                            <p class="text-xs text-gray-500">Telp: (021) 1234-5678</p>
+                            @if($footerSettings)
+                                <p class="text-xs text-gray-500 mt-1">{{ $footerSettings->contact_address ?? 'Jl. Contoh No. 123, Jakarta' }}</p>
+                                <p class="text-xs text-gray-500">Telp: {{ $footerSettings->contact_phone ?? '(021) 1234-5678' }}</p>
+                            @else
+                                <p class="text-xs text-gray-500 mt-1">Jl. Contoh No. 123, Jakarta</p>
+                                <p class="text-xs text-gray-500">Telp: (021) 1234-5678</p>
+                            @endif
                         </div>
 
                         <!-- Transaction Info -->
                         <div class="mb-4 space-y-1">
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-600">No. Order:</span>
-                                <span class="font-semibold">{{ $currentOrder->order_number }}</span>
+                                <span class="font-semibold text-gray-900">{{ $currentOrder->order_number }}</span>
                             </div>
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-600">Tanggal:</span>
-                                <span>{{ $currentOrder->created_at->format('d/m/Y H:i') }}</span>
+                                <span class="text-gray-900">{{ $currentOrder->created_at->format('d/m/Y H:i') }}</span>
                             </div>
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-600">Kasir:</span>
-                                <span>{{ auth()->user()->name }}</span>
+                                <span class="text-gray-900">{{ auth()->user()->name }}</span>
                             </div>
                         </div>
 
@@ -224,11 +229,7 @@
                         <div class="mb-4 pb-4 border-b border-gray-200">
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-600">Pelanggan:</span>
-                                <span class="font-semibold">{{ $currentOrder->customer_name }}</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span class="text-gray-600">Telepon:</span>
-                                <span>{{ $currentOrder->customer_phone }}</span>
+                                <span class="font-semibold text-gray-900">{{ $currentOrder->customer_name }}</span>
                             </div>
                         </div>
 
@@ -245,10 +246,10 @@
                             <tbody>
                                 @foreach($currentOrder->items as $item)
                                     <tr class="border-b border-gray-200">
-                                        <td class="py-2 text-sm">{{ $item->product_name }}</td>
-                                        <td class="text-center py-2 text-sm">{{ $item->quantity }}</td>
-                                        <td class="text-right py-2 text-sm">{{ number_format($item->price, 0, ',', '.') }}</td>
-                                        <td class="text-right py-2 text-sm">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                                        <td class="py-2 text-sm text-gray-900">{{ $item->product_name }}</td>
+                                        <td class="text-center py-2 text-sm text-gray-900">{{ $item->quantity }}</td>
+                                        <td class="text-right py-2 text-sm text-gray-900">{{ number_format($item->price, 0, ',', '.') }}</td>
+                                        <td class="text-right py-2 text-sm text-gray-900">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -258,19 +259,45 @@
                         <div class="space-y-2 mb-4">
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-600">Subtotal:</span>
-                                <span>Rp {{ number_format($currentOrder->subtotal, 0, ',', '.') }}</span>
+                                <span class="text-gray-900">Rp {{ number_format($currentOrder->subtotal, 0, ',', '.') }}</span>
                             </div>
                             <div class="flex justify-between text-lg font-bold border-t-2 border-gray-300 pt-2">
-                                <span>TOTAL:</span>
-                                <span>Rp {{ number_format($currentOrder->total, 0, ',', '.') }}</span>
+                                <span class="text-gray-900">TOTAL:</span>
+                                <span class="text-gray-900">Rp {{ number_format($currentOrder->total, 0, ',', '.') }}</span>
                             </div>
                         </div>
 
-                        <!-- Notes -->
-                        @if($currentOrder->notes)
+                        <!-- Payment Method -->
+                        @if($currentOrder->notes && str_contains($currentOrder->notes, 'Pembayaran:'))
                             <div class="mb-4 pb-4 border-b border-gray-200">
-                                <p class="text-xs text-gray-600">Catatan: {{ $currentOrder->notes }}</p>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Metode Pembayaran:</span>
+                                    <span class="font-semibold text-gray-900">
+                                        @php
+                                            preg_match('/Pembayaran: (.+?)(\n|$)/', $currentOrder->notes, $matches);
+                                            echo $matches[1] ?? 'Tunai (Cash)';
+                                        @endphp
+                                    </span>
+                                </div>
                             </div>
+                        @endif
+
+                        <!-- Notes -->
+                        @if($currentOrder->notes && !str_contains($currentOrder->notes, 'Pembayaran:'))
+                            <div class="mb-4 pb-4 border-b border-gray-200">
+                                <p class="text-xs text-gray-600">
+                                    Catatan: {{ preg_replace('/Pembayaran:.+?(\n|$)/', '', $currentOrder->notes) }}
+                                </p>
+                            </div>
+                        @elseif($currentOrder->notes)
+                            @php
+                                $cleanNotes = trim(preg_replace('/Pembayaran:.+?(\n|$)/', '', $currentOrder->notes));
+                            @endphp
+                            @if($cleanNotes)
+                                <div class="mb-4 pb-4 border-b border-gray-200">
+                                    <p class="text-xs text-gray-600">Catatan: {{ $cleanNotes }}</p>
+                                </div>
+                            @endif
                         @endif
 
                         <!-- Footer -->

@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\FooterSetting;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
@@ -42,16 +43,17 @@ class POSManagement extends Page implements HasForms
     public $total = 0;
     public $showReceipt = false;
     public $currentOrder = null;
+    public $footerSettings = null;
 
     public function mount(): void
     {
         $this->form->fill([
             'customer_name' => '',
-            'customer_phone' => '',
             'notes' => '',
             'payment_method' => 'cash',
         ]);
         
+        $this->footerSettings = FooterSetting::first();
         $this->loadProducts();
     }
 
@@ -61,17 +63,9 @@ class POSManagement extends Page implements HasForms
             ->schema([
                 Section::make('Informasi Pelanggan')
                     ->schema([
-                        Grid::make(2)
-                            ->schema([
-                                TextInput::make('customer_name')
-                                    ->label('Nama Pelanggan')
-                                    ->required(),
-                                
-                                TextInput::make('customer_phone')
-                                    ->label('No. Telepon')
-                                    ->tel()
-                                    ->required(),
-                            ]),
+                        TextInput::make('customer_name')
+                            ->label('Nama Pelanggan')
+                            ->required(),
                         
                         Textarea::make('notes')
                             ->label('Catatan')
@@ -279,13 +273,27 @@ class POSManagement extends Page implements HasForms
             // Generate order number
             $orderNumber = 'POS-' . now()->format('Ymd') . '-' . str_pad(Order::whereDate('created_at', today())->count() + 1, 4, '0', STR_PAD_LEFT);
             
-            // Create order
+            // Create order with payment method info
+            $paymentMethods = [
+                'cash' => 'Tunai (Cash)',
+                'qris' => 'QRIS',
+                'transfer' => 'Transfer Bank',
+                'debit' => 'Kartu Debit',
+            ];
+            $paymentMethod = $paymentMethods[$data['payment_method']] ?? 'Tunai (Cash)';
+            
+            $notes = $data['notes'] ?? '';
+            if ($notes) {
+                $notes .= "\n";
+            }
+            $notes .= "Pembayaran: " . $paymentMethod;
+            
             $order = Order::create([
                 'user_id' => auth()->id(),
                 'order_number' => $orderNumber,
                 'customer_name' => $data['customer_name'],
-                'customer_phone' => $data['customer_phone'],
-                'customer_email' => $data['customer_phone'] . '@pos.local',
+                'customer_phone' => '-',
+                'customer_email' => 'pos@local.store',
                 'shipping_address' => 'Pembelian Langsung di Toko',
                 'shipping_city' => 'Toko',
                 'shipping_province' => 'Lokal',
@@ -295,7 +303,7 @@ class POSManagement extends Page implements HasForms
                 'total' => $this->total,
                 'status' => 'delivered',
                 'payment_status' => 'paid',
-                'notes' => $data['notes'] ?? null,
+                'notes' => $notes,
                 'paid_at' => now(),
                 'delivered_at' => now(),
             ]);
@@ -329,7 +337,6 @@ class POSManagement extends Page implements HasForms
             $this->total = 0;
             $this->form->fill([
                 'customer_name' => '',
-                'customer_phone' => '',
                 'notes' => '',
                 'payment_method' => 'cash',
             ]);
@@ -367,5 +374,12 @@ class POSManagement extends Page implements HasForms
     public function printReceipt(): void
     {
         // Method for triggering print from Livewire
+    }
+
+    protected function getViewData(): array
+    {
+        return [
+            'footerSettings' => $this->footerSettings ?? FooterSetting::first(),
+        ];
     }
 }

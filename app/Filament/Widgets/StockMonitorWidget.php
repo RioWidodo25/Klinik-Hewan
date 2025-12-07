@@ -12,6 +12,8 @@ class StockMonitorWidget extends BaseWidget
     protected static ?int $sort = 2;
     
     protected int | string | array $columnSpan = 'full';
+    
+    protected static bool $isDiscovered = false; // Disable this widget to avoid duplicate
 
     public function table(Table $table): Table
     {
