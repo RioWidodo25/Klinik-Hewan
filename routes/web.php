@@ -282,8 +282,8 @@ Route::get('/blog/{slug}', function ($slug) {
     ]);
 })->name('blog.show');
 
-// Petshop Routes
-Route::prefix('petshop')->name('petshop.')->group(function () {
+// Petshop Routes - Protected by access check
+Route::prefix('petshop')->name('petshop.')->middleware('petshop.access')->group(function () {
     // Public routes - dapat diakses tanpa login
     Route::get('/', [PetshopProductController::class, 'index'])->name('index');
     Route::get('/products/{slug}', [PetshopProductController::class, 'show'])->name('product.show');

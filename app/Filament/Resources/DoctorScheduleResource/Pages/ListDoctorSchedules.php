@@ -31,7 +31,8 @@ class ListDoctorSchedules extends ListRecords
                     ? 'Menu "Jadwal Dokter" akan hilang dari dropdown "About Us" di navbar user. Halaman tetap bisa diakses via URL langsung.'
                     : 'Menu "Jadwal Dokter" akan muncul kembali di dropdown "About Us" di navbar user.')
                 ->modalSubmitActionLabel($menuVisible ? 'Sembunyikan Menu' : 'Tampilkan Menu')
-                ->action(function () use ($menuVisible) {
+                ->action(function () {
+                    $menuVisible = Setting::get('show_doctor_schedule_menu', '1') === '1';
                     Setting::set('show_doctor_schedule_menu', $menuVisible ? '0' : '1');
                     
                     Notification::make()
@@ -41,9 +42,6 @@ class ListDoctorSchedules extends ListRecords
                             : 'Menu "Jadwal Dokter" sekarang terlihat di navigation bar user.')
                         ->success()
                         ->send();
-                    
-                    // Refresh page to update button state
-                    redirect()->route('filament.admin.resources.doctor-schedules.index');
                 }),
             
             Actions\CreateAction::make(),

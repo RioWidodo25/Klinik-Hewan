@@ -15,6 +15,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 const page = usePage();
 const footerSettings = computed(() => page.props.footerSettings || {});
 const cartSummary = computed(() => page.props.cartSummary || { total_items: 0, subtotal: 0 });
+const showPetshopMenu = computed(() => page.props.showPetshopMenu !== false);
+const showDoctorScheduleMenu = computed(() => page.props.showDoctorScheduleMenu !== false);
 
 const logout = () => {
     router.post(route('logout'));
@@ -91,7 +93,7 @@ onUnmounted(() => {
                             <NavLink :href="route('gallery')" :active="route().current('gallery')">
                                 Gallery
                             </NavLink>
-                            <NavLink :href="route('petshop.index')" :active="route().current('petshop.*')">
+                            <NavLink v-if="showPetshopMenu" :href="route('petshop.index')" :active="route().current('petshop.*')">
                                 Petshop
                             </NavLink>
                             <NavLink :href="route('blog')" :active="route().current('blog') || route().current('blog.show')">
@@ -285,6 +287,7 @@ onUnmounted(() => {
                         Gallery
                     </Link>
                     <Link
+                        v-if="showPetshopMenu"
                         :href="route('petshop.index')"
                         :class="{'border-amber-400 bg-amber-50 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300': route().current('petshop.*'), 'border-transparent text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-800 dark:hover:text-gray-200': !route().current('petshop.*')}"
                         class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition duration-150 ease-in-out"

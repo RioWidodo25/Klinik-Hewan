@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register guest middleware alias
         $middleware->alias([
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+            'petshop.access' => \App\Http\Middleware\CheckPetshopAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
