@@ -16,4 +16,20 @@ class ListAppointments extends ListRecords
             Actions\CreateAction::make(),
         ];
     }
+    
+    // Add polling interval for real-time updates
+    public function getRefreshRate(): int
+    {
+        return 2000; // Refresh every 2 seconds (in milliseconds)
+    }
+    
+    protected function getHeaderWidgets(): array
+    {
+        return [];
+    }
+    
+    protected function getFooterWidgets(): array
+    {
+        return [];
+    }
 }

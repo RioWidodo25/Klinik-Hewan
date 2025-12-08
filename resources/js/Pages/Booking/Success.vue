@@ -7,6 +7,7 @@
                     <div class="inline-flex items-center justify-center mb-4">
                         <DotLottieVue 
                             autoplay 
+                            loop
                             ref="playerRef" 
                             src="/animations/success-check.json"
                             style="width: 250px; height: 250px;"
@@ -156,7 +157,7 @@
                     </Link>
                     <Link
                         :href="route('home')"
-                        class="inline-flex items-center justify-center px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                        class="inline-flex items-center justify-center px-6 py-3 bg-amber-500 border-2 border-amber-500 text-white rounded-lg hover:bg-amber-600 hover:border-amber-600 transition-colors font-medium"
                     >
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>

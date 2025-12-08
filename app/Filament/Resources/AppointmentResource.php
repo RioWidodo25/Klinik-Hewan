@@ -421,7 +421,8 @@ class AppointmentResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->poll('2s'); // Auto refresh every 2 seconds
     }
 
     public static function getRelations(): array

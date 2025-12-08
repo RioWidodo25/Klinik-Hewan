@@ -77,13 +77,13 @@ const checkNotifications = async () => {
                     cancelButton: 'px-6 py-2 rounded-lg'
                 },
                 didOpen: () => {
-                    // Load Lottie animation (imported directly for better performance)
-                    lottie.loadAnimation({
+                    // Load Lottie animation with loop enabled from external JSON file
+                    const animation = lottie.loadAnimation({
                         container: document.getElementById('lottie-animation'),
                         renderer: 'svg',
-                        loop: false,
+                        loop: true,
                         autoplay: true,
-                        animationData: checkAnimation
+                        path: '/animations/success-check.json'
                     });
 
                     const stars = document.querySelectorAll('.star-icon');

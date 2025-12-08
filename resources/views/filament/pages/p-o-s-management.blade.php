@@ -22,7 +22,7 @@
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[600px] overflow-y-auto">
                         @foreach($products as $product)
                             <div x-show="search === '' || '{{ strtolower($product['name']) }}'.includes(search.toLowerCase()) || '{{ strtolower($product['category']) }}'.includes(search.toLowerCase()) || '{{ strtolower($product['sku'] ?? '') }}'.includes(search.toLowerCase())"
-                                 class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-lg transition cursor-pointer"
+                                 class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:shadow-xl hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-gray-700 dark:hover:border-primary-400 transition-all duration-200 cursor-pointer"
                                  wire:click="addToCart({{ $product['id'] }}, {{ $product['has_variants'] ? 'null' : 'null' }})">
                                 
                                 <!-- Product Image -->
