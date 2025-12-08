@@ -92,6 +92,8 @@ const toggleItemSelection = (itemId) => {
 
 // Delete selected items
 const deleteSelectedItems = () => {
+    console.log('deleteSelectedItems called, selectedItems:', selectedItems.value);
+    
     if (selectedItems.value.length === 0) {
         page.props.flash = {
             warning: 'Pilih produk yang ingin dihapus terlebih dahulu'
@@ -103,12 +105,17 @@ const deleteSelectedItems = () => {
         'Hapus Produk',
         `Apakah Anda yakin ingin menghapus ${selectedItems.value.length} produk dari keranjang?`,
         () => {
+            console.log('Confirming delete for items:', selectedItems.value);
             router.post(route('petshop.cart.removeMultiple'), {
                 item_ids: selectedItems.value
             }, {
                 preserveScroll: true,
                 onSuccess: () => {
+                    console.log('Delete successful');
                     selectedItems.value = [];
+                },
+                onError: (errors) => {
+                    console.error('Delete failed:', errors);
                 }
             });
         },
@@ -605,19 +612,7 @@ const clearCart = () => {
                     </div>
 
                     <aside class="space-y-6">
-                        <!-- Free Shipping Info - Dynamic based on delivery option -->
-                        <div v-if="selectedDeliveryType === 'delivery' && ((selectedDeliveryOption === 'regular' && subtotal < 30000) || (selectedDeliveryOption === 'instant' && subtotal < 150000))" class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-900/20">
-                            <div class="flex items-start gap-3">
-                                <svg class="size-5 flex-shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-                                </svg>
-                                <div class="flex-1">
-                                    <p class="text-sm font-medium text-amber-900 dark:text-amber-200">
-                                        Dapatkan gratis ongkir untuk pembelanjaan di atas <span class="font-bold">{{ selectedDeliveryOption === 'instant' ? 'Rp 150.000' : 'Rp 30.000' }}</span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+
 
                         <!-- Tipe Pemesanan & Alamat Pengiriman (Gabungan) -->
                         <div class="rounded-3xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800 space-y-6">
@@ -649,11 +644,11 @@ const clearCart = () => {
                                         <p v-if="selectedDeliveryType === 'delivery' && !selectedDeliveryOption" class="text-xs text-red-600 dark:text-red-400 font-medium">
                                             ⚠️ Wajib pilih tipe pengiriman
                                         </p>
-                                        <p v-else-if="selectedDeliveryType === 'delivery' && selectedDeliveryOption === 'instant'" class="text-xs" :class="subtotal >= 150000 ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-amber-700 dark:text-amber-300'">
-                                            {{ subtotal >= 150000 ? 'Gratis Ongkir' : 'Rp 7.000' }} - 1 jam sampai
+                                        <p v-else-if="selectedDeliveryType === 'delivery' && selectedDeliveryOption === 'instant'" class="text-xs text-amber-700 dark:text-amber-300">
+                                            Rp 7.000 - 1 jam sampai
                                         </p>
-                                        <p v-else-if="selectedDeliveryType === 'delivery' && selectedDeliveryOption === 'regular' && selectedDeliveryTime" class="text-xs" :class="subtotal >= 30000 ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-amber-700 dark:text-amber-300'">
-                                            {{ subtotal >= 30000 ? 'Gratis Ongkir' : 'Rp 5.000' }}
+                                        <p v-else-if="selectedDeliveryType === 'delivery' && selectedDeliveryOption === 'regular' && selectedDeliveryTime" class="text-xs text-amber-700 dark:text-amber-300">
+                                            Rp 5.000
                                         </p>
                                         <p v-else-if="selectedDeliveryType === 'delivery' && selectedDeliveryOption === 'regular'" class="text-xs text-amber-600 dark:text-amber-400">
                                             Pilih Waktu Pengiriman
@@ -767,11 +762,8 @@ const clearCart = () => {
                     <!-- Middle: Ongkir Info -->
                     <div class="hidden lg:flex items-center gap-2 text-sm">
                         <span class="text-gray-600 dark:text-gray-400">Ongkir:</span>
-                        <span class="font-semibold" :class="shippingFee === 0 && shippingFee !== null ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'">
-                            {{ shippingFee === null ? '-' : (shippingFee === 0 ? 'Gratis' : formatCurrency(shippingFee)) }}
-                        </span>
-                        <span v-if="shippingFee === 0 && selectedDeliveryType === 'delivery' && selectedDeliveryOption" class="text-xs text-green-600 dark:text-green-400">
-                            🎉
+                        <span class="font-semibold text-gray-900 dark:text-white">
+                            {{ shippingFee === null ? '-' : formatCurrency(shippingFee) }}
                         </span>
                     </div>
 
@@ -904,13 +896,11 @@ const clearCart = () => {
                                                         </h4>
                                                         <span :class="[
                                                             'text-sm font-medium',
-                                                            subtotal >= 150000 
-                                                                ? 'text-green-600 dark:text-green-400'
-                                                                : selectedDeliveryOption === 'instant'
+                                                            selectedDeliveryOption === 'instant'
                                                                 ? 'text-amber-700 dark:text-amber-300'
                                                                 : 'text-gray-600 dark:text-gray-400'
                                                         ]">
-                                                            {{ subtotal >= 150000 ? 'Gratis' : 'Rp 7.000' }}
+                                                            Rp 7.000
                                                         </span>
                                                     </div>
                                                     <p :class="[
@@ -957,13 +947,11 @@ const clearCart = () => {
                                                         </h4>
                                                         <span :class="[
                                                             'text-sm font-medium',
-                                                            subtotal >= 30000 
-                                                                ? 'text-green-600 dark:text-green-400'
-                                                                : selectedDeliveryOption === 'regular'
+                                                            selectedDeliveryOption === 'regular'
                                                                 ? 'text-amber-600 dark:text-amber-400'
                                                                 : 'text-gray-600 dark:text-gray-400'
                                                         ]">
-                                                            {{ subtotal >= 30000 ? 'Gratis' : 'Rp 5.000' }}
+                                                            Rp 5.000
                                                         </span>
                                                     </div>
                                                     <p :class="[
@@ -1164,6 +1152,109 @@ const clearCart = () => {
                                         ]"
                                     >
                                         Konfirmasi
+                                    </button>
+                                </div>
+                            </div>
+                        </Transition>
+                    </div>
+                </div>
+            </Transition>
+        </Teleport>
+
+        <!-- Confirmation Dialog Modal -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transition duration-200 ease-out"
+                enter-from-class="opacity-0"
+                enter-to-class="opacity-100"
+                leave-active-class="transition duration-150 ease-in"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+            >
+                <div
+                    v-if="confirmDialog.show"
+                    class="fixed inset-0 z-50 overflow-y-auto"
+                    aria-labelledby="modal-title"
+                    role="dialog"
+                    aria-modal="true"
+                >
+                    <div class="flex min-h-screen items-center justify-center p-4 text-center sm:p-0">
+                        <!-- Background overlay -->
+                        <div
+                            class="fixed inset-0 bg-gray-900/75 transition-opacity"
+                            @click="handleCancelDialog"
+                        ></div>
+
+                        <!-- Modal panel -->
+                        <Transition
+                            enter-active-class="transition duration-200 ease-out"
+                            enter-from-class="translate-y-4 opacity-0 sm:translate-y-0 sm:scale-95"
+                            enter-to-class="translate-y-0 opacity-100 sm:scale-100"
+                            leave-active-class="transition duration-150 ease-in"
+                            leave-from-class="translate-y-0 opacity-100 sm:scale-100"
+                            leave-to-class="translate-y-4 opacity-0 sm:translate-y-0 sm:scale-95"
+                        >
+                            <div
+                                v-if="confirmDialog.show"
+                                class="relative transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg"
+                            >
+                                <div class="bg-white dark:bg-gray-800 px-6 py-5">
+                                    <div class="sm:flex sm:items-start">
+                                        <div
+                                            :class="[
+                                                'mx-auto flex size-12 flex-shrink-0 items-center justify-center rounded-full sm:mx-0 sm:size-10',
+                                                confirmDialog.type === 'danger' ? 'bg-red-100 dark:bg-red-900/20' : 'bg-amber-100 dark:bg-amber-900/20'
+                                            ]"
+                                        >
+                                            <svg
+                                                class="size-6"
+                                                :class="confirmDialog.type === 'danger' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke-width="2"
+                                                stroke="currentColor"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                                                />
+                                            </svg>
+                                        </div>
+                                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left flex-1">
+                                            <h3
+                                                class="text-lg font-semibold leading-6 text-gray-900 dark:text-white"
+                                                id="modal-title"
+                                            >
+                                                {{ confirmDialog.title }}
+                                            </h3>
+                                            <div class="mt-2">
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                    {{ confirmDialog.message }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-900/50 px-6 py-4 sm:flex sm:flex-row-reverse gap-3">
+                                    <button
+                                        type="button"
+                                        @click="handleConfirm"
+                                        :class="[
+                                            'inline-flex w-full justify-center rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-sm sm:w-auto transition',
+                                            confirmDialog.type === 'danger'
+                                                ? 'bg-red-600 hover:bg-red-700'
+                                                : 'bg-amber-600 hover:bg-amber-700'
+                                        ]"
+                                    >
+                                        Hapus
+                                    </button>
+                                    <button
+                                        type="button"
+                                        @click="handleCancelDialog"
+                                        class="mt-3 inline-flex w-full justify-center rounded-lg bg-white dark:bg-gray-700 px-4 py-2.5 text-sm font-semibold text-gray-900 dark:text-gray-200 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 sm:mt-0 sm:w-auto transition"
+                                    >
+                                        Batal
                                     </button>
                                 </div>
                             </div>
