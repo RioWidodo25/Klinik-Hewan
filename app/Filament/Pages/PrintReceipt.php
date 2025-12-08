@@ -17,8 +17,14 @@ class PrintReceipt extends Page
     
     public Order $order;
     
-    public function mount($order): void
+    public function mount(): void
     {
-        $this->order = Order::with(['items.product', 'items.variant'])->findOrFail($order);
+        $orderId = request()->query('order');
+        
+        if (!$orderId) {
+            abort(404, 'Order ID tidak ditemukan');
+        }
+        
+        $this->order = Order::with(['items.product', 'items.variant'])->findOrFail($orderId);
     }
 }

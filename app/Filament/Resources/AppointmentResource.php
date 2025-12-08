@@ -28,6 +28,16 @@ class AppointmentResource extends Resource
     protected static ?string $navigationGroup = 'Manajemen Booking';
     
     protected static ?int $navigationSort = 1;
+    
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::where('status', 'pending')->count() ?: null;
+    }
+    
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
+    }
 
     public static function form(Form $form): Form
     {
