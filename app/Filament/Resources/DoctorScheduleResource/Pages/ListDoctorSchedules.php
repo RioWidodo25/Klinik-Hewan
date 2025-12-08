@@ -14,30 +14,39 @@ class ListDoctorSchedules extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        $menuVisible = Setting::get('show_doctor_schedule_menu', '1') === '1';
-
         return [
             Actions\Action::make('toggle_menu_visibility')
-                ->label($menuVisible ? 'Sembunyikan Menu dari User' : 'Tampilkan Menu ke User')
-                ->icon($menuVisible ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
-                ->color($menuVisible ? 'warning' : 'success')
+                ->label(fn () => Setting::get('show_doctor_schedule_menu', '1') === '1' 
+                    ? 'Sembunyikan Menu dari User' 
+                    : 'Tampilkan Menu ke User')
+                ->icon(fn () => Setting::get('show_doctor_schedule_menu', '1') === '1' 
+                    ? 'heroicon-o-eye-slash' 
+                    : 'heroicon-o-eye')
+                ->color(fn () => Setting::get('show_doctor_schedule_menu', '1') === '1' 
+                    ? 'warning' 
+                    : 'success')
                 ->outlined()
-                ->tooltip($menuVisible 
+                ->tooltip(fn () => Setting::get('show_doctor_schedule_menu', '1') === '1'
                     ? 'Klik untuk menyembunyikan menu "Jadwal Dokter" dari navigation bar user'
                     : 'Klik untuk menampilkan menu "Jadwal Dokter" di navigation bar user')
                 ->requiresConfirmation()
-                ->modalHeading($menuVisible ? 'Sembunyikan Menu Jadwal Dokter?' : 'Tampilkan Menu Jadwal Dokter?')
-                ->modalDescription($menuVisible 
+                ->modalHeading(fn () => Setting::get('show_doctor_schedule_menu', '1') === '1' 
+                    ? 'Sembunyikan Menu Jadwal Dokter?' 
+                    : 'Tampilkan Menu Jadwal Dokter?')
+                ->modalDescription(fn () => Setting::get('show_doctor_schedule_menu', '1') === '1'
                     ? 'Menu "Jadwal Dokter" akan hilang dari dropdown "About Us" di navbar user. Halaman tetap bisa diakses via URL langsung.'
                     : 'Menu "Jadwal Dokter" akan muncul kembali di dropdown "About Us" di navbar user.')
-                ->modalSubmitActionLabel($menuVisible ? 'Sembunyikan Menu' : 'Tampilkan Menu')
+                ->modalSubmitActionLabel(fn () => Setting::get('show_doctor_schedule_menu', '1') === '1' 
+                    ? 'Sembunyikan Menu' 
+                    : 'Tampilkan Menu')
                 ->action(function () {
-                    $menuVisible = Setting::get('show_doctor_schedule_menu', '1') === '1';
-                    Setting::set('show_doctor_schedule_menu', $menuVisible ? '0' : '1');
+                    $currentValue = Setting::get('show_doctor_schedule_menu', '1');
+                    $newValue = $currentValue === '1' ? '0' : '1';
+                    Setting::set('show_doctor_schedule_menu', $newValue);
                     
                     Notification::make()
-                        ->title($menuVisible ? 'Menu Disembunyikan' : 'Menu Ditampilkan')
-                        ->body($menuVisible 
+                        ->title($newValue === '0' ? 'Menu Disembunyikan' : 'Menu Ditampilkan')
+                        ->body($newValue === '0'
                             ? 'Menu "Jadwal Dokter" sekarang disembunyikan dari navigation bar user.'
                             : 'Menu "Jadwal Dokter" sekarang terlihat di navigation bar user.')
                         ->success()
