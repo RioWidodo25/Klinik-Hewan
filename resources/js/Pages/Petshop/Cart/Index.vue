@@ -502,7 +502,7 @@ const clearCart = () => {
     <Head title="Keranjang Belanja" />
 
     <PublicLayout>
-        <section class="min-h-screen bg-white py-12 pb-24 dark:bg-gray-900">
+        <section class="min-h-screen py-12 pb-24 dark:bg-gray-900" style="background-color: rgb(249, 250, 251);">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
