@@ -54,7 +54,7 @@ const currentYear = new Date().getFullYear();
         <!-- Curved Top Border (Cembung) -->
         <div class="absolute top-0 left-0 right-0 z-10" style="margin-top: -1px;">
             <svg viewBox="0 0 1440 100" class="w-full" preserveAspectRatio="none" style="height: 80px; display: block;">
-                <path d="M0,100 C480,0 960,0 1440,100 L1440,0 L0,0 Z" fill="rgb(249, 250, 251)" class="dark:fill-gray-900"></path>
+                <path d="M0,100 C480,0 960,0 1440,100 L1440,0 L0,0 Z" fill="rgb(249, 250, 251)" class="dark:fill-gray-800"></path>
             </svg>
         </div>
 
