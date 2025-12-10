@@ -2,9 +2,12 @@
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import SecondaryButton from '@/Components/SecondaryButton.vue';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed, onMounted } from 'vue';
 import Swal from 'sweetalert2';
+
+const page = usePage();
+const footerSettings = computed(() => page.props.footerSettings || {});
 
 const props = defineProps({
     order: {
@@ -165,8 +168,8 @@ onMounted(() => {
                 <div class="mt-8 text-center">
                     <p class="text-sm text-gray-600 dark:text-gray-400">
                         Butuh bantuan? Hubungi kami di 
-                        <a href="mailto:support@klinkhewan.com" class="text-amber-600 hover:text-amber-700 font-semibold">
-                            support@klinkhewan.com
+                        <a :href="'mailto:' + (footerSettings.contact_email || 'support@klinkhewan.com')" class="text-amber-600 hover:text-amber-700 font-semibold">
+                            {{ footerSettings.contact_email || 'support@klinkhewan.com' }}
                         </a>
                     </p>
                 </div>

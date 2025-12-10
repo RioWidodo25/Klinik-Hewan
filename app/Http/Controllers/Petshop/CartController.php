@@ -434,11 +434,11 @@ class CartController extends Controller
 
             // Update order status based on Midtrans response
             if ($status->transaction_status == 'settlement' || $status->transaction_status == 'capture') {
-                $order->update([
-                    'payment_status' => 'paid',
-                    'status' => 'processing',
-                    'paid_at' => now(),
-                ]);
+                // Check if order is not already paid to prevent duplicate stock reduction
+                if ($order->payment_status !== 'paid') {
+                    // Use markAsPaid to properly reduce stock
+                    $order->markAsPaid();
+                }
             } elseif ($status->transaction_status == 'pending') {
                 $order->update([
                     'payment_status' => 'pending',

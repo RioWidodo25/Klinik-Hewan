@@ -96,6 +96,10 @@ const maxQuantity = computed(() => {
     return Math.max(stock || 0, 0);
 });
 
+const isOutOfStock = computed(() => {
+    return props.product.stock === 0 || props.product.stock === null;
+});
+
 const addToCart = () => {
     if (props.product.has_variants && !selectedVariantId.value) {
         return;
@@ -128,6 +132,13 @@ const addToCart = () => {
                 :alt="product.name"
                 class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
             >
+
+            <!-- Out of Stock Overlay -->
+            <div v-if="isOutOfStock" class="absolute inset-0 flex items-center justify-center bg-black/50">
+                <div class="rounded-lg bg-white/95 px-4 py-2 text-center shadow-lg dark:bg-gray-800/95">
+                    <p class="text-lg font-bold text-red-600 dark:text-red-400">Habis</p>
+                </div>
+            </div>
 
             <!-- Favorite Button -->
             <button
@@ -205,7 +216,8 @@ const addToCart = () => {
                 <button
                     type="button"
                     @click.prevent="openAddToCartModal"
-                    class="inline-flex items-center justify-center rounded-lg bg-amber-500 px-2 py-1 text-[10px] font-semibold text-white shadow transition hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                    :disabled="isOutOfStock"
+                    class="inline-flex items-center justify-center rounded-lg bg-amber-500 px-2 py-1 text-[10px] font-semibold text-white shadow transition hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-amber-500"
                 >
                     <svg class="me-1 size-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437m0 0 1.35 5.068m1.65 6.187h9.75m-9.75 0a2.25 2.25 0 11-4.5 0m4.5 0a2.25 2.25 0 01-4.5 0m14.25 0a2.25 2.25 0 11-4.5 0m4.5 0a2.25 2.25 0 01-4.5 0m0 0H7.125m12.75-7.875-1.064 4.256a1.125 1.125 0 01-1.09.844H8.978a1.125 1.125 0 01-1.09-.876l-1.148-4.599M7.5 6.75h13.125" />

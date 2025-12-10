@@ -51,6 +51,32 @@ class MidtransController extends Controller
     {
         $orderId = $request->get('order_id');
 
+        // Check transaction status from Midtrans
+        if ($orderId) {
+            $statusResult = $this->midtransService->checkTransactionStatus($orderId);
+            
+            if ($statusResult['success']) {
+                $status = $statusResult['data'];
+                $transactionStatus = $status->transaction_status ?? '';
+                
+                // If payment is already settled, process it immediately
+                if ($transactionStatus === 'settlement' || ($transactionStatus === 'capture' && ($status->fraud_status ?? '') === 'accept')) {
+                    $payment = \App\Models\Payment::where('midtrans_order_id', $orderId)->first();
+                    
+                    if ($payment && $payment->status !== 'paid') {
+                        $payment->update([
+                            'midtrans_transaction_id' => $status->transaction_id ?? null,
+                            'midtrans_payment_type' => $status->payment_type ?? null,
+                            'transaction_status' => $transactionStatus,
+                            'fraud_status' => $status->fraud_status ?? null,
+                        ]);
+                        
+                        $payment->markAsPaid();
+                    }
+                }
+            }
+        }
+
         return redirect()
             ->route('petshop.payment.status', ['order_id' => $orderId])
             ->with('success', 'Pembayaran Anda sedang diproses. Silakan tunggu konfirmasi.');

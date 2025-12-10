@@ -145,6 +145,15 @@ class Order extends Model
         if ($this->status === 'pending') {
             $this->update(['status' => 'processing']);
         }
+
+        // Reduce product stock after successful payment
+        foreach ($this->items as $item) {
+            if ($item->variant_id) {
+                $item->variant->decrement('stock', $item->quantity);
+            } else {
+                $item->product->decrement('stock', $item->quantity);
+            }
+        }
     }
 
     public function markAsShipped($trackingNumber = null)
