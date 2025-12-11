@@ -605,8 +605,17 @@ const canProceed = computed(() => {
         case 2: return !!form.appointment_time; // Step 3: Select Time
         case 3: return form.service_ids.length > 0;
         case 4: 
-            if (form.pet_id) return !!form.complaint && !!form.owner_name && !!form.owner_phone && !!form.owner_address;
-            return !!form.pet_name && !!form.pet_species && !!form.complaint && !!form.owner_name && !!form.owner_phone && !!form.owner_address;
+            // If selecting existing pet (pet_id is set and not showing new pet form)
+            if (form.pet_id && !showNewPetForm.value) {
+                return !!form.complaint;
+            }
+            // If adding new pet (showing new pet form)
+            if (showNewPetForm.value || userPets.length === 0) {
+                return !!form.pet_name && !!form.pet_species && !!form.complaint && 
+                       !!form.owner_name && !!form.owner_phone && !!form.owner_address;
+            }
+            // Default: if no pet selected and not showing form
+            return false;
         default: return false;
     }
 });

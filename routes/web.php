@@ -238,11 +238,11 @@ Route::middleware(['auth:sanctum', config('jetstream.auth_session')])->prefix('b
         return app(\App\Http\Controllers\BookingController::class)->index();
     })->name('index');
     
-    Route::post('/', function () {
+    Route::post('/', function (\Illuminate\Http\Request $request) {
         if (\App\Models\Setting::get('show_appointment_menu', '1') !== '1') {
             abort(404);
         }
-        return app(\App\Http\Controllers\BookingController::class)->store();
+        return app(\App\Http\Controllers\BookingController::class)->store($request);
     })->name('store');
     
     Route::get('/slots', [\App\Http\Controllers\BookingController::class, 'getAvailableSlots'])->name('slots');
