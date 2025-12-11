@@ -305,6 +305,7 @@ class CartController extends Controller
             'shipping_cost' => $shippingCost,
             'total' => $totalAmount,
             'status' => 'pending',
+            'payment_status' => 'unpaid',
             'shipping_address' => $shippingAddress,
             'shipping_city' => $shippingCity,
             'shipping_province' => $shippingProvince,
