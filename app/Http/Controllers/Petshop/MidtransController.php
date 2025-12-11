@@ -61,6 +61,7 @@ class MidtransController extends Controller
                 
                 // If payment is already settled, process it immediately
                 if ($transactionStatus === 'settlement' || ($transactionStatus === 'capture' && ($status->fraud_status ?? '') === 'accept')) {
+                    // Try to find payment record first
                     $payment = \App\Models\Payment::where('midtrans_order_id', $orderId)->first();
                     
                     if ($payment && $payment->status !== 'paid') {
@@ -72,6 +73,14 @@ class MidtransController extends Controller
                         ]);
                         
                         $payment->markAsPaid();
+                    } 
+                    // Fallback: try to find order by order_number (for orders created via CartController)
+                    else {
+                        $order = \App\Models\Order::where('order_number', $orderId)->first();
+                        
+                        if ($order && $order->payment_status !== 'paid') {
+                            $order->markAsPaid();
+                        }
                     }
                 }
             }

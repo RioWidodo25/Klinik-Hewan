@@ -179,10 +179,33 @@ class MidtransService
             $payment = Payment::where('midtrans_order_id', $orderId)->first();
 
             if (!$payment) {
-                Log::warning('Payment not found for order: ' . $orderId);
+                // Fallback: try to find order directly by order_number (for orders created via CartController)
+                $order = \App\Models\Order::where('order_number', $orderId)->first();
+                
+                if (!$order) {
+                    Log::warning('Payment and Order not found for: ' . $orderId);
+                    return [
+                        'success' => false,
+                        'message' => 'Payment and Order not found',
+                    ];
+                }
+                
+                // Handle order without Payment record
+                if ($transactionStatus == 'settlement' || ($transactionStatus == 'capture' && $fraudStatus == 'accept')) {
+                    if ($order->payment_status !== 'paid') {
+                        Log::info("Marking order {$orderId} as paid via notification webhook");
+                        $order->markAsPaid();
+                    }
+                } elseif (in_array($transactionStatus, ['cancel', 'deny', 'expire'])) {
+                    $order->update([
+                        'payment_status' => 'failed',
+                        'status' => 'cancelled',
+                    ]);
+                }
+                
                 return [
-                    'success' => false,
-                    'message' => 'Payment not found',
+                    'success' => true,
+                    'message' => 'Order notification processed successfully',
                 ];
             }
 

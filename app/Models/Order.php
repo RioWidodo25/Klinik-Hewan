@@ -182,18 +182,34 @@ class Order extends Model
     private function removeFromCart()
     {
         $cart = $this->user->cart;
-        if (!$cart) return;
+        if (!$cart) {
+            \Log::info("Order {$this->order_number}: User has no cart");
+            return;
+        }
+
+        \Log::info("Order {$this->order_number}: Removing {$this->items->count()} items from cart");
 
         foreach ($this->items as $orderItem) {
-            $cartItem = $cart->items()
-                ->where('product_id', $orderItem->product_id)
-                ->where('variant_id', $orderItem->variant_id)
-                ->first();
+            $query = $cart->items()->where('product_id', $orderItem->product_id);
+            
+            // Handle variant_id which can be null
+            if ($orderItem->variant_id) {
+                $query->where('variant_id', $orderItem->variant_id);
+            } else {
+                $query->whereNull('variant_id');
+            }
+            
+            $cartItem = $query->first();
             
             if ($cartItem) {
+                \Log::info("Deleting cart item: product_id={$orderItem->product_id}, variant_id={$orderItem->variant_id}");
                 $cartItem->delete();
+            } else {
+                \Log::warning("Cart item not found: product_id={$orderItem->product_id}, variant_id={$orderItem->variant_id}");
             }
         }
+        
+        \Log::info("Cart cleanup completed for order {$this->order_number}");
     }
 
     public function markAsShipped($trackingNumber = null)
