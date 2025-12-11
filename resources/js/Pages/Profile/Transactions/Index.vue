@@ -1,22 +1,9 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-
-const page = usePage();
-
-// Load Midtrans Snap script
-onMounted(() => {
-    if (!document.getElementById('midtrans-snap')) {
-        const script = document.createElement('script');
-        script.id = 'midtrans-snap';
-        script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
-        script.setAttribute('data-client-key', page.props.midtransClientKey || '');
-        document.head.appendChild(script);
-    }
-});
 
 const props = defineProps({
     orders: Object,
@@ -78,7 +65,6 @@ const showOrderDetail = async (order) => {
     try {
         const response = await axios.get(route('profile.transactions.show', order.id));
         selectedOrder.value = response.data.order;
-        console.log('Order detail:', response.data.order);
     } catch (error) {
         console.error('Error fetching order detail:', error);
         showDetailModal.value = false;
@@ -130,84 +116,6 @@ const completeOrder = () => {
             showOrderDetail({ id: selectedOrder.value.id });
         },
     });
-};
-
-// Continue payment (for unpaid orders)
-const continuePayment = async () => {
-    if (!selectedOrder.value) return;
-    
-    try {
-        // Show loading
-        Swal.fire({
-            title: 'Memuat...',
-            text: 'Membuat token pembayaran baru',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        // Generate new snap token
-        const response = await axios.post(
-            route('profile.transactions.generate-snap-token', selectedOrder.value.id)
-        );
-
-        if (!response.data.success) {
-            throw new Error(response.data.message || 'Gagal membuat token pembayaran');
-        }
-
-        const snapToken = response.data.snap_token;
-        
-        // Close loading
-        Swal.close();
-
-        // Open Midtrans payment with new token
-        window.snap.pay(snapToken, {
-            onSuccess: function(result) {
-                closeModal();
-                Swal.fire({
-                    title: 'Berhasil!',
-                    text: 'Pembayaran berhasil! Menunggu konfirmasi admin.',
-                    icon: 'success',
-                    confirmButtonColor: '#f59e0b',
-                    timer: 2000
-                }).then(() => {
-                    router.reload();
-                });
-            },
-            onPending: function(result) {
-                closeModal();
-                Swal.fire({
-                    title: 'Pembayaran Tertunda',
-                    text: 'Pembayaran Anda sedang diproses.',
-                    icon: 'info',
-                    confirmButtonColor: '#f59e0b'
-                }).then(() => {
-                    router.reload();
-                });
-            },
-            onError: function(result) {
-                Swal.fire({
-                    title: 'Gagal!',
-                    text: 'Pembayaran gagal. Silakan coba lagi.',
-                    icon: 'error',
-                    confirmButtonColor: '#f59e0b'
-                });
-            },
-            onClose: function() {
-                // User closed payment popup
-            }
-        });
-
-    } catch (error) {
-        console.error('Error generating snap token:', error);
-        Swal.fire({
-            title: 'Error!',
-            text: error.response?.data?.message || error.message || 'Gagal membuat token pembayaran',
-            icon: 'error',
-            confirmButtonColor: '#f59e0b'
-        });
-    }
 };
 
 // Cancel order (before admin confirms)
@@ -548,18 +456,6 @@ const getShippingAddress = (address) => {
                                             {{ selectedOrder.status_label }}
                                         </span>
                                     </div>
-                                    
-                                    <!-- Debug Info -->
-                                    <div class="rounded border-2 border-red-500 bg-red-50 p-3">
-                                        <div class="text-xs font-bold text-red-700 mb-2">DEBUG INFO:</div>
-                                        <div class="text-xs space-y-1">
-                                            <div><strong>status:</strong> {{ selectedOrder.status }}</div>
-                                            <div><strong>payment_status:</strong> {{ selectedOrder.payment_status }}</div>
-                                            <div><strong>snap_token:</strong> {{ selectedOrder.snap_token ? 'Ada' : 'Tidak Ada' }}</div>
-                                            <div><strong>Tombol Payment muncul:</strong> {{ selectedOrder.payment_status === 'unpaid' ? 'Ya' : 'Tidak' }}</div>
-                                            <div><strong>Tombol Cancel muncul:</strong> {{ selectedOrder.status === 'pending' ? 'Ya' : 'Tidak' }}</div>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 <!-- Store Info -->
@@ -777,16 +673,6 @@ const getShippingAddress = (address) => {
 
                                 <!-- Action Buttons -->
                                 <div v-if="!showReviewForm" class="space-y-3">
-                                    <!-- Continue Payment Button (for unpaid orders) -->
-                                    <button
-                                        v-if="selectedOrder.payment_status === 'unpaid'"
-                                        type="button"
-                                        @click="continuePayment"
-                                        class="w-full rounded-lg bg-amber-600 px-4 py-3 font-semibold text-white transition hover:bg-amber-700 active:scale-95"
-                                    >
-                                        💳 Lanjutkan Pembayaran
-                                    </button>
-
                                     <!-- Cancel Order Button (for pending status - before admin confirms) -->
                                     <button
                                         v-if="selectedOrder.status === 'pending'"

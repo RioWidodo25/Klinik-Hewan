@@ -156,6 +156,44 @@ class Order extends Model
                 $item->product->decrement('stock', $item->quantity);
             }
         }
+
+        // Remove items from user's cart after successful payment
+        $this->removeFromCart();
+
+        // Send notification to user
+        $this->user->notifications()->create([
+            'type' => 'order_placed',
+            'title' => 'Pembayaran Berhasil',
+            'message' => "Pembayaran untuk pesanan {$this->order_number} berhasil. Menunggu konfirmasi admin.",
+            'data' => [
+                'order_id' => $this->id,
+                'order_number' => $this->order_number,
+                'total' => $this->total,
+                'items_count' => $this->items->count(),
+                'product_image' => $this->items->first()->product->images->first()?->image_path
+                    ? asset('storage/' . $this->items->first()->product->images->first()->image_path)
+                    : null,
+                'product_name' => $this->items->first()->product->name ?? '',
+            ],
+        ]);
+    }
+
+    // Remove order items from user's cart
+    private function removeFromCart()
+    {
+        $cart = $this->user->cart;
+        if (!$cart) return;
+
+        foreach ($this->items as $orderItem) {
+            $cartItem = $cart->items()
+                ->where('product_id', $orderItem->product_id)
+                ->where('variant_id', $orderItem->variant_id)
+                ->first();
+            
+            if ($cartItem) {
+                $cartItem->delete();
+            }
+        }
     }
 
     public function markAsShipped($trackingNumber = null)

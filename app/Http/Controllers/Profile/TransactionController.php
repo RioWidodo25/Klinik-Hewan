@@ -19,7 +19,8 @@ class TransactionController extends Controller
         $user = Auth::user();
         $query = $user->orders()
             ->with(['items.product.images'])
-            ->where('order_number', 'NOT LIKE', 'POS-%'); // Exclude POS transactions
+            ->where('order_number', 'NOT LIKE', 'POS-%') // Exclude POS transactions
+            ->where('payment_status', 'paid'); // Only show paid orders in transaction history
 
         // Search filter
         if ($request->filled('search')) {

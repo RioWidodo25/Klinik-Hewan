@@ -372,27 +372,8 @@ class CartController extends Controller
             // Save snap token to order
             $order->update(['snap_token' => $snapToken]);
 
-            // Remove only selected items from cart
-            foreach ($selectedItems as $item) {
-                $item->delete();
-            }
-
-            // Create notification for user
-            auth()->user()->notifications()->create([
-                'type' => 'order_placed',
-                'title' => 'Pesanan Berhasil Dibuat',
-                'message' => "Pesanan {$order->order_number} berhasil dibuat. Silakan selesaikan pembayaran Anda.",
-                'data' => [
-                    'order_id' => $order->id,
-                    'order_number' => $order->order_number,
-                    'total' => $order->total,
-                    'items_count' => $order->items->count(),
-                    'product_image' => $order->items->first()->product->images->first()?->image_path
-                        ? asset('storage/' . $order->items->first()->product->images->first()->image_path)
-                        : null,
-                    'product_name' => $order->items->first()->product->name ?? '',
-                ],
-            ]);
+            // DON'T remove cart items yet - keep them until payment is confirmed
+            // DON'T send notification yet - wait until payment is successful
 
             return back()->with([
                 'snap_token' => $snapToken,
@@ -449,9 +430,8 @@ class CartController extends Controller
                     $order->markAsPaid();
                 }
             } elseif ($status->transaction_status == 'pending') {
-                $order->update([
-                    'payment_status' => 'pending',
-                ]);
+                // Keep payment_status as unpaid for pending transactions
+                // Don't update to 'pending' to avoid confusion
             } elseif (in_array($status->transaction_status, ['deny', 'expire', 'cancel'])) {
                 $order->update([
                     'payment_status' => 'failed',
@@ -460,6 +440,7 @@ class CartController extends Controller
             }
         } catch (\Exception $e) {
             // If error checking status, just show current order status
+            // This is normal for new orders that haven't been processed by Midtrans yet
         }
 
         return Inertia::render('Petshop/Payment/Status', [
