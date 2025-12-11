@@ -66,11 +66,18 @@
             <!-- Receiver -->
             <div class="mb-3 pb-2 border-b border-gray-800 text-xs">
                 <p class="font-bold mb-1">PENERIMA:</p>
-                <p class="font-bold">{{ $order->customer_name }}</p>
-                <p>{{ $order->customer_phone }}</p>
-                <p>{{ $order->shipping_address }}</p>
-                <p>{{ $order->shipping_city }}, {{ $order->shipping_province }}</p>
-                <p>{{ $order->shipping_postal_code }}</p>
+                @if(is_array($order->shipping_address))
+                    <p class="font-bold">{{ $order->shipping_address['recipient_name'] ?? $order->customer_name }}</p>
+                    <p>{{ $order->shipping_address['phone_number'] ?? $order->customer_phone }}</p>
+                    <p>{{ $order->shipping_address['full_address'] ?? '' }}</p>
+                    <p>{{ $order->shipping_address['city'] ?? $order->shipping_city }}, {{ $order->shipping_address['province'] ?? $order->shipping_province }}</p>
+                    <p>{{ $order->shipping_address['postal_code'] ?? $order->shipping_postal_code }}</p>
+                @else
+                    <p class="font-bold">{{ $order->customer_name }}</p>
+                    <p>{{ $order->customer_phone }}</p>
+                    <p>{{ $order->shipping_city }}, {{ $order->shipping_province }}</p>
+                    <p>{{ $order->shipping_postal_code }}</p>
+                @endif
             </div>
 
             <!-- Items -->

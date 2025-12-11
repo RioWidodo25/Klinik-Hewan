@@ -21,6 +21,8 @@ const showDetailModal = ref(false);
 const showEditModal = ref(false);
 const showEditMapModal = ref(false);
 const searchQuery = ref('');
+const searchResults = ref([]);
+const isSearching = ref(false);
 const currentLocation = ref(null);
 const editLocation = ref(null);
 const selectedAddress = ref({
@@ -142,12 +144,53 @@ const updateAddressFromLocation = async (coords = currentLocation.value) => {
     await updateSelectedAddressFromCoords(coords);
 };
 
-const searchLocation = () => {
-    if (searchQuery.value.trim()) {
-        console.log('Searching for:', searchQuery.value);
-        // TODO: Implement location search functionality
+let searchTimeout = null;
+const searchLocation = async () => {
+    const query = searchQuery.value.trim();
+    if (!query || query.length < 3) {
+        searchResults.value = [];
+        return;
+    }
+    
+    isSearching.value = true;
+    
+    try {
+        // Add Indonesia bias to search
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=id&limit=5&addressdetails=1`
+        );
+        const data = await response.json();
+        searchResults.value = data;
+    } catch (error) {
+        console.error('Error searching location:', error);
+        searchResults.value = [];
+    } finally {
+        isSearching.value = false;
     }
 };
+
+const selectSearchResult = async (result) => {
+    const coords = {
+        lat: parseFloat(result.lat),
+        lng: parseFloat(result.lon),
+    };
+    
+    currentLocation.value = coords;
+    await updateSelectedAddressFromCoords(coords);
+    
+    searchQuery.value = '';
+    searchResults.value = [];
+    showAddressModal.value = false;
+    showMapModal.value = true;
+};
+
+// Watch searchQuery for auto-search
+watch(searchQuery, () => {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        searchLocation();
+    }, 500); // Debounce 500ms
+});
 
 watch(showMapModal, async (value) => {
     if (value) {
@@ -575,20 +618,28 @@ const useCurrentLocationForEdit = () => {
                             <div
                                 v-for="address in addresses"
                                 :key="address.id"
-                                class="relative rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-900"
+                                @click="!address.is_default && setDefaultAddress(address.id)"
+                                :class="[
+                                    'relative rounded-2xl border bg-white p-5 dark:bg-gray-900 transition-all duration-200',
+                                    address.is_default 
+                                        ? 'border-green-400 dark:border-green-500' 
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-500 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer hover:shadow-lg'
+                                ]"
                             >
+                                <!-- Checkmark Icon for Selected Address -->
+                                <div 
+                                    v-if="address.is_default"
+                                    class="absolute top-3 right-3 bg-green-500 rounded-full p-1.5"
+                                >
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+
                                 <!-- Label Badge -->
                                 <div class="mb-3 flex items-center justify-between">
                                     <span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
                                         {{ address.label }}
-                                    </span>
-                                    <span
-                                        v-if="address.is_default"
-                                        class="inline-flex items-center text-amber-600 dark:text-amber-400"
-                                    >
-                                        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
                                     </span>
                                 </div>
 
@@ -608,20 +659,13 @@ const useCurrentLocationForEdit = () => {
                                 <!-- Action Buttons -->
                                 <div class="mt-4 flex gap-3">
                                     <button
-                                        @click="editAddress(address)"
+                                        @click.stop="editAddress(address)"
                                         class="text-sm font-medium text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
                                     >
                                         Ubah
                                     </button>
                                     <button
-                                        v-if="!address.is_default"
-                                        @click="setDefaultAddress(address.id)"
-                                        class="text-sm font-medium text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
-                                    >
-                                        Pilih Alamat
-                                    </button>
-                                    <button
-                                        @click="deleteAddress(address.id)"
+                                        @click.stop="deleteAddress(address.id)"
                                         class="text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                                     >
                                         Hapus
@@ -690,14 +734,48 @@ const useCurrentLocationForEdit = () => {
                                             type="text"
                                             placeholder="Cari lokasi/gedung/nama jalan"
                                             class="block w-full rounded-lg border border-gray-300 bg-white py-3 pl-4 pr-12 text-sm text-gray-900 placeholder:text-gray-500 focus:border-amber-500 focus:ring-2 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-amber-500 dark:focus:ring-amber-500"
-                                            @keyup.enter="searchLocation"
                                         >
                                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                                            <svg class="size-5 text-amber-500 dark:text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <svg v-if="!isSearching" class="size-5 text-amber-500 dark:text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                                             </svg>
+                                            <svg v-else class="size-5 animate-spin text-amber-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
                                         </div>
+                                    </div>
+                                    
+                                    <!-- Search Results -->
+                                    <div v-if="searchResults.length > 0" class="mt-2 max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+                                        <button
+                                            v-for="(result, index) in searchResults"
+                                            :key="index"
+                                            type="button"
+                                            @click="selectSearchResult(result)"
+                                            class="flex w-full items-start gap-3 border-b border-gray-100 px-4 py-3 text-left hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700 last:border-b-0"
+                                        >
+                                            <svg class="size-5 flex-shrink-0 text-amber-500 dark:text-amber-400 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                            </svg>
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                    {{ result.name || result.display_name.split(',')[0] }}
+                                                </p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                                                    {{ result.display_name }}
+                                                </p>
+                                            </div>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- No Results -->
+                                    <div v-else-if="searchQuery.length >= 3 && !isSearching && searchResults.length === 0" class="mt-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-center dark:border-gray-700 dark:bg-gray-900">
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                                            Tidak ada hasil untuk "{{ searchQuery }}"
+                                        </p>
                                     </div>
                                 </div>
 
