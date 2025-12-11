@@ -247,6 +247,7 @@ class CartController extends Controller
             'shipping_address.district' => ['nullable', 'string'],
             'shipping_address.province' => ['required_if:delivery_type,delivery', 'string'],
             'shipping_address.postal_code' => ['required_if:delivery_type,delivery', 'string'],
+            'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
         $cart = $this->cartService->getCart(createIfMissing: false);
@@ -306,6 +307,7 @@ class CartController extends Controller
             'delivery_option' => $validated['delivery_option'],
             'delivery_date' => $validated['delivery_date'],
             'delivery_time' => $validated['delivery_time'],
+            'notes' => $validated['notes'] ?? null,
         ]);
 
         // Create order items from selected items only

@@ -161,19 +161,21 @@
                 const printWindow = window.open('', '', 'width=800,height=600');
                 
                 const styles = '<style>' +
-                    'body { font-family: Arial, sans-serif; margin: 20px; color: #000; }' +
+                    '@page { size: 80mm auto; margin: 0; }' +
+                    'body { font-family: "Courier New", monospace; margin: 0; padding: 5mm; color: #000; font-size: 10pt; width: 80mm; }' +
                     'table { width: 100%; border-collapse: collapse; }' +
-                    'th, td { padding: 8px; text-align: left; }' +
+                    'th, td { padding: 4px 2px; text-align: left; font-size: 9pt; }' +
                     'th { border-bottom: 2px solid #333; }' +
                     'tr { border-bottom: 1px solid #ddd; }' +
                     '.text-center { text-align: center; }' +
                     '.text-right { text-align: right; }' +
                     '.border-dashed { border-bottom: 2px dashed #999; padding-bottom: 10px; margin-bottom: 10px; }' +
                     '.font-bold { font-weight: bold; }' +
-                    '.text-lg { font-size: 1.125rem; }' +
-                    '.text-2xl { font-size: 1.5rem; }' +
+                    '.text-lg { font-size: 11pt; }' +
+                    '.text-2xl { font-size: 14pt; }' +
+                    '.text-sm { font-size: 9pt; }' +
+                    '.text-xs { font-size: 8pt; }' +
                     '.mb-4 { margin-bottom: 1rem; }' +
-                    '@media print { @page { margin: 0.5cm; } }' +
                     '</style>';
                 
                 printWindow.document.write('<html><head><title>Struk Pembayaran</title>' + styles + '</head><body>');
@@ -200,12 +202,13 @@
                         <div class="text-center border-b-2 border-dashed border-gray-300 pb-4 mb-4">
                             <h1 class="text-2xl font-bold text-gray-900">A2 VET</h1>
                             <p class="text-sm text-gray-600">Klinik Hewan & Pet Shop</p>
+                            <p class="text-base font-bold text-gray-900 mt-2">STRUK PEMBELIAN</p>
                             @if($footerSettings)
-                                <p class="text-xs text-gray-500 mt-1">{{ $footerSettings->contact_address ?? 'Jl. Contoh No. 123, Jakarta' }}</p>
-                                <p class="text-xs text-gray-500">Telp: {{ $footerSettings->contact_phone ?? '(021) 1234-5678' }}</p>
+                                <p class="text-xs text-gray-500 mt-1">{{ $footerSettings->contact_address ?? 'Alamat tidak tersedia' }}</p>
+                                <p class="text-xs text-gray-500">Telp: {{ $footerSettings->contact_phone ?? '-' }}</p>
                             @else
-                                <p class="text-xs text-gray-500 mt-1">Jl. Contoh No. 123, Jakarta</p>
-                                <p class="text-xs text-gray-500">Telp: (021) 1234-5678</p>
+                                <p class="text-xs text-gray-500 mt-1">Alamat tidak tersedia</p>
+                                <p class="text-xs text-gray-500">Telp: -</p>
                             @endif
                         </div>
 
@@ -302,9 +305,10 @@
 
                         <!-- Footer -->
                         <div class="text-center border-t-2 border-dashed border-gray-300 pt-4">
-                            <p class="text-sm font-semibold mb-2">Terima Kasih Atas Kunjungan Anda!</p>
-                            <p class="text-xs text-gray-500">Barang yang sudah dibeli tidak dapat dikembalikan</p>
+                            <p class="text-sm font-semibold mb-2 text-gray-900">Terima Kasih Atas Kunjungan Anda!</p>
+                            <p class="text-xs text-gray-500">Transaksi Kasir - Barang sudah dibeli</p>
                             <p class="text-xs text-gray-500 mt-1">Simpan struk ini sebagai bukti pembelian</p>
+                            <p class="text-xs text-gray-600 mt-2">{{ now()->format('d/m/Y H:i:s') }}</p>
                         </div>
                     </div>
 

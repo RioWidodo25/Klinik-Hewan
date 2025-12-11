@@ -23,110 +23,200 @@
         </div>
 
         <!-- Receipt -->
-        <div class="bg-white p-8 rounded-lg shadow-lg print:shadow-none" id="receipt">
+        <div class="bg-white p-4 rounded-lg shadow-lg print:shadow-none print:p-0" id="receipt">
             <!-- Header -->
-            <div class="text-center border-b-2 border-dashed border-gray-300 pb-4 mb-4">
-                <h1 class="text-2xl font-bold">A2 VET</h1>
-                <p class="text-sm text-gray-600">Klinik Hewan & Pet Shop</p>
-                <p class="text-xs text-gray-500 mt-1">Jl. Contoh No. 123, Jakarta</p>
-                <p class="text-xs text-gray-500">Telp: (021) 1234-5678</p>
+            <div class="text-center border-b-2 border-dashed border-gray-800 pb-2 mb-2">
+                <h1 class="text-lg font-bold">A2 VET</h1>
+                <p class="text-xs">Klinik Hewan & Pet Shop</p>
+                <p class="text-sm font-bold mt-1">STRUK PEMBELIAN</p>
+                @if($footerSettings)
+                    <p class="text-xs mt-1">{{ $footerSettings->contact_address ?? 'Alamat tidak tersedia' }}</p>
+                    <p class="text-xs">Telp: {{ $footerSettings->contact_phone ?? '-' }}</p>
+                @else
+                    <p class="text-xs mt-1">Alamat tidak tersedia</p>
+                    <p class="text-xs">Telp: -</p>
+                @endif
             </div>
 
             <!-- Transaction Info -->
-            <div class="mb-4 space-y-1">
-                <div class="flex justify-between text-sm">
-                    <span class="text-gray-600">No. Order:</span>
-                    <span class="font-semibold">{{ $order->order_number }}</span>
+            <div class="mb-2 space-y-0.5 text-xs">
+                <div class="flex justify-between">
+                    <span>No. Order:</span>
+                    <strong>{{ $order->order_number }}</strong>
                 </div>
-                <div class="flex justify-between text-sm">
-                    <span class="text-gray-600">Tanggal:</span>
+                <div class="flex justify-between">
+                    <span>Tanggal:</span>
                     <span>{{ $order->created_at->format('d/m/Y H:i') }}</span>
                 </div>
-                <div class="flex justify-between text-sm">
-                    <span class="text-gray-600">Kasir:</span>
+                <div class="flex justify-between">
+                    <span>Kasir:</span>
                     <span>{{ auth()->user()->name }}</span>
                 </div>
             </div>
 
             <!-- Customer Info -->
-            <div class="mb-4 pb-4 border-b border-gray-200">
-                <div class="flex justify-between text-sm">
-                    <span class="text-gray-600">Pelanggan:</span>
-                    <span class="font-semibold">{{ $order->customer_name }}</span>
+            <div class="mb-2 pb-2 border-b border-gray-800 text-xs">
+                <div class="flex justify-between">
+                    <span>Pelanggan:</span>
+                    <strong>{{ $order->customer_name }}</strong>
                 </div>
-                <div class="flex justify-between text-sm">
-                    <span class="text-gray-600">Telepon:</span>
+                @if($order->customer_phone && $order->customer_phone !== '-')
+                <div class="flex justify-between">
+                    <span>Telepon:</span>
                     <span>{{ $order->customer_phone }}</span>
                 </div>
+                @endif
             </div>
 
             <!-- Items Table -->
-            <table class="w-full mb-4">
+            <table class="w-full mb-2 text-xs">
                 <thead>
-                    <tr class="border-b-2 border-gray-300">
-                        <th class="text-left py-2 text-sm">Item</th>
-                        <th class="text-center py-2 text-sm">Qty</th>
-                        <th class="text-right py-2 text-sm">Harga</th>
-                        <th class="text-right py-2 text-sm">Subtotal</th>
+                    <tr class="border-b-2 border-gray-800">
+                        <th class="text-left py-1">Item</th>
+                        <th class="text-center py-1 w-12">Qty</th>
+                        <th class="text-right py-1 w-16">Harga</th>
+                        <th class="text-right py-1 w-20">Subtotal</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($order->items as $item)
-                        <tr class="border-b border-gray-200">
-                            <td class="py-2 text-sm">{{ $item->product_name }}</td>
-                            <td class="text-center py-2 text-sm">{{ $item->quantity }}</td>
-                            <td class="text-right py-2 text-sm">{{ number_format($item->price, 0, ',', '.') }}</td>
-                            <td class="text-right py-2 text-sm">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                        <tr class="border-b border-gray-300">
+                            <td class="py-1 align-top">{{ $item->product_name }}</td>
+                            <td class="text-center py-1 align-top">{{ $item->quantity }}</td>
+                            <td class="text-right py-1 align-top">{{ number_format($item->price, 0, ',', '.') }}</td>
+                            <td class="text-right py-1 align-top">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
 
             <!-- Totals -->
-            <div class="space-y-2 mb-4">
-                <div class="flex justify-between text-sm">
-                    <span class="text-gray-600">Subtotal:</span>
+            <div class="space-y-1 mb-2 text-xs">
+                <div class="flex justify-between">
+                    <span>Subtotal:</span>
                     <span>Rp {{ number_format($order->subtotal, 0, ',', '.') }}</span>
                 </div>
-                <div class="flex justify-between text-lg font-bold border-t-2 border-gray-300 pt-2">
+                <div class="flex justify-between font-bold text-sm border-t-2 border-gray-800 pt-1">
                     <span>TOTAL:</span>
                     <span>Rp {{ number_format($order->total, 0, ',', '.') }}</span>
                 </div>
             </div>
 
-            <!-- Notes -->
-            @if($order->notes)
-                <div class="mb-4 pb-4 border-b border-gray-200">
-                    <p class="text-xs text-gray-600">Catatan: {{ $order->notes }}</p>
+            <!-- Payment Method -->
+            @if($order->notes && str_contains($order->notes, 'Pembayaran:'))
+                <div class="mb-2 pb-2 border-b border-gray-800 text-xs">
+                    <div class="flex justify-between">
+                        <span>Pembayaran:</span>
+                        <strong>
+                            @php
+                                preg_match('/Pembayaran: (.+?)(\n|$)/', $order->notes, $matches);
+                                echo $matches[1] ?? 'Tunai';
+                            @endphp
+                        </strong>
+                    </div>
                 </div>
             @endif
 
+            <!-- Notes -->
+            @if($order->notes && !str_contains($order->notes, 'Pembayaran:'))
+                <div class="mb-2 pb-2 border-b border-gray-800 text-xs">
+                    <p><strong>Catatan:</strong></p>
+                    <p class="mt-1">{{ preg_replace('/Pembayaran:.+?(\n|$)/', '', $order->notes) }}</p>
+                </div>
+            @elseif($order->notes)
+                @php
+                    $cleanNotes = trim(preg_replace('/Pembayaran:.+?(\n|$)/', '', $order->notes));
+                @endphp
+                @if($cleanNotes)
+                    <div class="mb-2 pb-2 border-b border-gray-800 text-xs">
+                        <p><strong>Catatan:</strong></p>
+                        <p class="mt-1">{{ $cleanNotes }}</p>
+                    </div>
+                @endif
+            @endif
+
             <!-- Footer -->
-            <div class="text-center border-t-2 border-dashed border-gray-300 pt-4">
-                <p class="text-sm font-semibold mb-2">Terima Kasih Atas Kunjungan Anda!</p>
-                <p class="text-xs text-gray-500">Barang yang sudah dibeli tidak dapat dikembalikan</p>
-                <p class="text-xs text-gray-500 mt-1">Simpan struk ini sebagai bukti pembelian</p>
+            <div class="text-center border-t-2 border-dashed border-gray-800 pt-2 text-xs">
+                <p class="font-semibold mb-1">Terima Kasih!</p>
+                <p class="text-xs">Transaksi Kasir - Barang sudah dibeli</p>
+                <p class="text-xs mt-0.5">Simpan struk sebagai bukti pembelian</p>
+                <p class="text-xs mt-1">{{ now()->format('d/m/Y H:i:s') }}</p>
             </div>
         </div>
     </div>
 
     <style>
         @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            
+            @page {
+                size: 80mm auto;
+                margin: 0;
+            }
+            
             body * {
                 visibility: hidden;
             }
+            
             #receipt, #receipt * {
                 visibility: visible;
             }
+            
             #receipt {
                 position: absolute;
                 left: 0;
                 top: 0;
-                width: 100%;
+                width: 80mm;
+                margin: 0;
+                padding: 3mm 5mm;
                 box-shadow: none;
+                font-family: 'Courier New', monospace;
+                font-size: 9pt;
+                line-height: 1.3;
             }
+            
+            #receipt h1 {
+                font-size: 14pt;
+                margin: 0;
+            }
+            
+            #receipt .text-lg {
+                font-size: 12pt;
+            }
+            
+            #receipt .text-sm {
+                font-size: 9pt;
+            }
+            
+            #receipt .text-xs {
+                font-size: 8pt;
+            }
+            
+            #receipt table {
+                font-size: 8pt;
+            }
+            
+            #receipt .mb-2 {
+                margin-bottom: 0.3rem;
+            }
+            
+            #receipt .pb-2 {
+                padding-bottom: 0.3rem;
+            }
+            
+            #receipt .pt-2 {
+                padding-top: 0.3rem;
+            }
+            
             .print\:hidden {
                 display: none !important;
+            }
+            
+            .print\:p-0 {
+                padding: 0 !important;
             }
         }
     </style>

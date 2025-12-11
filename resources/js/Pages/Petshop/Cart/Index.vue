@@ -131,6 +131,7 @@ const selectedDeliveryOption = ref(null); // 'instant' or 'regular' - null by de
 const selectedDeliveryTime = ref(null); // Selected time slot
 const selectedDeliveryDate = ref('today'); // 'today' or 'tomorrow'
 const isProcessingCheckout = ref(false);
+const customerNotes = ref(''); // Customer notes for order
 
 // Calculate shipping fee based on delivery type
 const shippingFee = computed(() => {
@@ -395,6 +396,7 @@ const processCheckout = () => {
         delivery_time: selectedDeliveryTime.value,
         shipping_fee: shippingFee.value,
         shipping_address: selectedDeliveryType.value === 'delivery' ? props.defaultAddress : null,
+        notes: customerNotes.value, // Send customer notes
     }, {
         preserveScroll: true,
         onSuccess: (page) => {
@@ -730,6 +732,28 @@ const clearCart = () => {
                                         Login
                                     </Link>
                                 </div>
+                            </div>
+
+                            <!-- Divider -->
+                            <div class="border-t border-gray-200 dark:border-gray-700"></div>
+
+                            <!-- Catatan Pelanggan -->
+                            <div>
+                                <label for="customerNotes" class="block text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                                    Catatan untuk Penjual (Opsional)
+                                </label>
+                                <textarea
+                                    id="customerNotes"
+                                    v-model="customerNotes"
+                                    rows="3"
+                                    class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 placeholder-gray-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 dark:placeholder-gray-500"
+                                ></textarea>
+                                <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                                    <svg class="inline size-3.5 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                                    </svg>
+                                    Tulis catatan khusus untuk pesanan Anda
+                                </p>
                             </div>
                         </div>
 

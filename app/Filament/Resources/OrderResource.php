@@ -68,8 +68,6 @@ class OrderResource extends Resource
                         Forms\Components\Select::make('status')
                             ->label('Status Order')
                             ->options([
-                                'pending' => 'Pending',
-                                'paid' => 'Sudah Dibayar',
                                 'processing' => 'Diproses',
                                 'shipped' => 'Dikirim',
                                 'delivered' => 'Selesai',
@@ -79,16 +77,15 @@ class OrderResource extends Resource
                             ->required()
                             ->native(false),
 
-                        Forms\Components\Select::make('payment_status')
+                        Forms\Components\Placeholder::make('payment_status')
                             ->label('Status Pembayaran')
-                            ->options([
+                            ->content(fn (?Order $record) => match($record?->payment_status) {
                                 'unpaid' => 'Belum Dibayar',
                                 'paid' => 'Sudah Dibayar',
                                 'failed' => 'Gagal',
                                 'refunded' => 'Refund',
-                            ])
-                            ->required()
-                            ->native(false),
+                                default => '-'
+                            }),
 
                         Forms\Components\TextInput::make('tracking_number')
                             ->label('Nomor Resi')
@@ -149,17 +146,30 @@ class OrderResource extends Resource
 
                 Forms\Components\Section::make('Ringkasan Pembayaran')
                     ->schema([
-                        Forms\Components\Placeholder::make('subtotal')
-                            ->label('Subtotal')
-                            ->content(fn (?Order $record) => $record ? 'Rp ' . number_format((float) $record->subtotal, 0, ',', '.') : '-'),
+                        Forms\Components\Placeholder::make('items_total')
+                            ->label('Total Produk')
+                            ->content(function (?Order $record) {
+                                if (!$record) return '-';
+                                $itemsTotal = $record->items->sum(function ($item) {
+                                    return $item->price * $item->quantity;
+                                });
+                                return 'Rp ' . number_format($itemsTotal, 0, ',', '.');
+                            }),
 
                         Forms\Components\Placeholder::make('shipping_cost')
-                            ->label('Ongkir')
+                            ->label('Ongkos Kirim')
                             ->content(fn (?Order $record) => $record ? 'Rp ' . number_format((float) $record->shipping_cost, 0, ',', '.') : '-'),
 
                         Forms\Components\Placeholder::make('total')
-                            ->label('Total')
-                            ->content(fn (?Order $record) => $record ? 'Rp ' . number_format((float) $record->total, 0, ',', '.') : '-'),
+                            ->label('Total Pembayaran')
+                            ->content(function (?Order $record) {
+                                if (!$record) return '-';
+                                $itemsTotal = $record->items->sum(function ($item) {
+                                    return $item->price * $item->quantity;
+                                });
+                                $total = $itemsTotal + $record->shipping_cost;
+                                return 'Rp ' . number_format($total, 0, ',', '.');
+                            }),
                     ])
                     ->columns(3)
                     ->hiddenOn('create'),
@@ -274,9 +284,17 @@ class OrderResource extends Resource
                     ->query(fn (Builder $query) => $query->where('order_number', 'like', 'POS-%')),
             ])
             ->actions([
+                Tables\Actions\Action::make('print_shipping_label')
+                    ->label('Cetak Resi')
+                    ->icon('heroicon-o-document-text')
+                    ->color('info')
+                    ->url(fn (Order $record) => route('filament.admin.pages.print-shipping-label', ['order' => $record->id]))
+                    ->openUrlInNewTab()
+                    ->visible(fn (Order $record) => !str_starts_with($record->order_number, 'POS-') && in_array($record->status, ['processing', 'shipped', 'delivered'])),
                 Tables\Actions\Action::make('print_receipt')
                     ->label('Cetak Struk')
                     ->icon('heroicon-o-printer')
+                    ->color('warning')
                     ->url(fn (Order $record) => route('filament.admin.pages.print-receipt', ['order' => $record->id]))
                     ->openUrlInNewTab()
                     ->visible(fn (Order $record) => str_starts_with($record->order_number, 'POS-')),
