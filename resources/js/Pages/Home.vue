@@ -16,6 +16,7 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    showAppointmentMenu: Boolean,
 });
 
 // Fallback placeholder gradients jika tidak ada gambar dari database
@@ -171,7 +172,7 @@ onUnmounted(() => {
                 </div>
 
                 <!-- CTA Button Buat Janji Temu -->
-                <div class="mt-10 flex justify-center" data-aos="zoom-in" data-aos-delay="200">
+                <div v-if="showAppointmentMenu" class="mt-10 flex justify-center" data-aos="zoom-in" data-aos-delay="200">
                     <Link
                         :href="route('booking.index')"
                         class="group relative inline-flex items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-amber-500 to-amber-600 px-8 py-4 text-lg font-semibold text-white shadow-2xl transition-all duration-300 hover:scale-105 hover:shadow-amber-500/50"

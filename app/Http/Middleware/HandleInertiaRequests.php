@@ -98,6 +98,7 @@ class HandleInertiaRequests extends Middleware
             'unreadNotificationsCount' => $unreadNotificationsCount,
             'showDoctorScheduleMenu' => \App\Models\Setting::get('show_doctor_schedule_menu', '1') === '1',
             'showPetshopMenu' => \App\Models\Setting::get('show_petshop_menu', '1') === '1',
+            'showAppointmentMenu' => \App\Models\Setting::get('show_appointment_menu', '1') === '1',
             'footerSettings' => [
                 'about_text' => $footerSettings->about_text,
                 'contact_phone' => $footerSettings->contact_phone,

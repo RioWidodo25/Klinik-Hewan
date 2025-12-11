@@ -231,12 +231,38 @@ Route::get('/doctor-schedule', function () {
 
 // Booking Routes
 Route::middleware(['auth:sanctum', config('jetstream.auth_session')])->prefix('booking')->name('booking.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\BookingController::class, 'index'])->name('index');
-    Route::post('/', [\App\Http\Controllers\BookingController::class, 'store'])->name('store');
+    Route::get('/', function () {
+        if (\App\Models\Setting::get('show_appointment_menu', '1') !== '1') {
+            abort(404);
+        }
+        return app(\App\Http\Controllers\BookingController::class)->index();
+    })->name('index');
+    
+    Route::post('/', function () {
+        if (\App\Models\Setting::get('show_appointment_menu', '1') !== '1') {
+            abort(404);
+        }
+        return app(\App\Http\Controllers\BookingController::class)->store();
+    })->name('store');
+    
     Route::get('/slots', [\App\Http\Controllers\BookingController::class, 'getAvailableSlots'])->name('slots');
+    
     Route::get('/success/{bookingCode}', [\App\Http\Controllers\BookingController::class, 'success'])->name('success');
-    Route::get('/history', [\App\Http\Controllers\BookingController::class, 'history'])->name('history');
-    Route::get('/detail/{bookingCode}', [\App\Http\Controllers\BookingController::class, 'detail'])->name('detail');
+    
+    Route::get('/history', function () {
+        if (\App\Models\Setting::get('show_appointment_menu', '1') !== '1') {
+            abort(404);
+        }
+        return app(\App\Http\Controllers\BookingController::class)->history();
+    })->name('history');
+    
+    Route::get('/detail/{bookingCode}', function ($bookingCode) {
+        if (\App\Models\Setting::get('show_appointment_menu', '1') !== '1') {
+            abort(404);
+        }
+        return app(\App\Http\Controllers\BookingController::class)->detail($bookingCode);
+    })->name('detail');
+    
     Route::post('/{appointment}/cancel', [\App\Http\Controllers\BookingController::class, 'cancel'])->name('cancel');
     Route::post('/{appointment}/review', [\App\Http\Controllers\BookingController::class, 'review'])->name('review');
 });

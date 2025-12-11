@@ -17,6 +17,7 @@ const footerSettings = computed(() => page.props.footerSettings || {});
 const cartSummary = computed(() => page.props.cartSummary || { total_items: 0, subtotal: 0 });
 const showPetshopMenu = computed(() => page.props.showPetshopMenu !== false);
 const showDoctorScheduleMenu = computed(() => page.props.showDoctorScheduleMenu !== false);
+const showAppointmentMenu = computed(() => page.props.showAppointmentMenu !== false);
 
 const logout = () => {
     router.post(route('logout'));
@@ -210,7 +211,7 @@ onUnmounted(() => {
                                                 Produk Favorit
                                             </DropdownLink>
 
-                                            <DropdownLink :href="route('booking.history')">
+                                            <DropdownLink v-if="showAppointmentMenu" :href="route('booking.history')">
                                                 Riwayat Booking
                                             </DropdownLink>
 

@@ -17,6 +17,7 @@ class Appointment extends Model
         'appointment_time',
         'end_time',
         'status',
+        'is_active',
         'complaint',
         'owner_name',
         'owner_phone',
@@ -38,6 +39,7 @@ class Appointment extends Model
         'appointment_date' => 'date',
         'appointment_time' => 'datetime:H:i',
         'end_time' => 'datetime:H:i',
+        'is_active' => 'boolean',
         'total_cost' => 'decimal:2',
         'checked_in_at' => 'datetime',
         'completed_at' => 'datetime',
@@ -183,5 +185,11 @@ class Appointment extends Model
     public function isPast(): bool
     {
         return $this->appointment_date < now()->toDateString();
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
     }
 }

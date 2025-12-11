@@ -18,6 +18,7 @@ defineProps({
 
 const page = usePage();
 const cartSummary = computed(() => page.props.cartSummary || { total_items: 0, subtotal: 0 });
+const showAppointmentMenu = computed(() => page.props.showAppointmentMenu !== false);
 
 const showingNavigationDropdown = ref(false);
 const isScrolled = ref(false);
@@ -224,7 +225,7 @@ onUnmounted(() => {
                                             Produk Favorit
                                         </DropdownLink>
 
-                                        <DropdownLink :href="route('booking.history')">
+                                        <DropdownLink v-if="showAppointmentMenu" :href="route('booking.history')">
                                             Riwayat Booking
                                         </DropdownLink>
 

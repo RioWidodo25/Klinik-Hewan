@@ -134,6 +134,12 @@ class AppointmentResource extends Resource
                             ])
                             ->required()
                             ->default('pending'),
+                        
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Tampilkan di Website')
+                            ->helperText('Matikan untuk menyembunyikan menu janji temu dari website user')
+                            ->default(true)
+                            ->inline(false),
                     ])
                     ->columns(2),
                 
@@ -254,6 +260,12 @@ class AppointmentResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Aktif')
+                    ->boolean()
+                    ->sortable()
+                    ->toggleable(),
+                
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y, H:i')
@@ -287,6 +299,12 @@ class AppointmentResource extends Resource
                 Tables\Filters\Filter::make('upcoming')
                     ->label('Yang Akan Datang')
                     ->query(fn (Builder $query): Builder => $query->upcoming()),
+                
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Tampil di Website')
+                    ->placeholder('Semua')
+                    ->trueLabel('Aktif')
+                    ->falseLabel('Tidak Aktif'),
                 
                 Tables\Filters\Filter::make('appointment_date')
                     ->form([
