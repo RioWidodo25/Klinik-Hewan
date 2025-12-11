@@ -1,7 +1,8 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
 import PublicLayout from '@/Layouts/PublicLayout.vue';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import lottie from 'lottie-web';
 
 defineProps({
     clinic: {
@@ -15,6 +16,7 @@ defineProps({
 });
 
 const selectedBranch = ref(null);
+const lottieContainer = ref(null);
 
 const openMapModal = (branch) => {
     selectedBranch.value = branch;
@@ -23,27 +25,39 @@ const openMapModal = (branch) => {
 const closeMapModal = () => {
     selectedBranch.value = null;
 };
+
+onMounted(() => {
+    if (lottieContainer.value) {
+        lottie.loadAnimation({
+            container: lottieContainer.value,
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: '/animations/Chameleon changing colour.json'
+        });
+    }
+});
 </script>
 
 <template>
     <Head title="Tentang Kami" />
 
     <PublicLayout>
-        <!-- Hero Section -->
-        <div class="relative overflow-hidden bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 py-16 sm:py-24">
-            <div class="absolute inset-0">
-                <div class="absolute inset-0 bg-black opacity-10"></div>
-                <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-            </div>
+        <!-- Hero Section with Lottie Animation -->
+        <div class="relative overflow-hidden py-16 sm:py-24">
+            <!-- Lottie Background Animation -->
+            <div ref="lottieContainer" class="absolute inset-0 z-0"></div>
             
-            <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
-                    <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl" data-aos="fade-down">
-                        Tentang Kami
-                    </h1>
-                    <p class="mx-auto mt-4 max-w-2xl text-lg text-white/90 sm:text-xl" data-aos="fade-up" data-aos-delay="100">
-                        Mengenal lebih dekat klinik hewan terpercaya Anda
-                    </p>
+                    <div class="inline-block bg-gradient-to-b from-white/60 via-white/40 to-white/20 backdrop-blur-sm rounded-3xl px-8 py-6 shadow-2xl">
+                        <h1 class="text-4xl font-bold tracking-tight text-amber-500 sm:text-5xl md:text-6xl" data-aos="fade-down">
+                            Tentang Kami
+                        </h1>
+                        <p class="mx-auto mt-4 max-w-2xl text-lg text-amber-600 sm:text-xl" data-aos="fade-up" data-aos-delay="100">
+                            Mengenal lebih dekat klinik hewan terpercaya Anda
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
