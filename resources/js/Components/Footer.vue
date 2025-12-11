@@ -11,18 +11,8 @@ const props = defineProps({
     },
 });
 
-const placeholderLogo = 'https://ui-avatars.com/api/?name=A2+VET&size=128&background=f59e0b&color=fff&bold=true&rounded=true';
+const logoUrl = '/images/logo.png';
 const logoError = ref(false);
-
-const isDark = computed(() => document.documentElement.classList.contains('dark'));
-const logoLight = computed(() => page.props.appLogo);
-const logoDark = computed(() => page.props.appLogoDark);
-const logoUrl = computed(() => {
-    if (logoError.value) {
-        return placeholderLogo;
-    }
-    return isDark.value && logoDark.value ? logoDark.value : logoLight.value;
-});
 
 // Check if current page is About Us
 const isAboutUsPage = computed(() => page.url.includes('/about'));
@@ -79,7 +69,7 @@ const currentYear = new Date().getFullYear();
                     <!-- Logo -->
                     <div class="flex items-center justify-center md:justify-start gap-3">
                         <img 
-                            :src="logoUrl || placeholderLogo" 
+                            :src="logoUrl" 
                             @error="handleLogoError"
                             alt="Logo" 
                             class="h-16 w-auto drop-shadow-lg" 
