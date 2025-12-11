@@ -1,7 +1,8 @@
 <script setup>
 import PublicLayout from '@/Layouts/PublicLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import lottie from 'lottie-web';
 
 const props = defineProps({
     doctors: {
@@ -75,6 +76,21 @@ const autoSelectDay = () => {
 // Auto-select on mount
 autoSelectDay();
 
+// Lottie animation
+const lottieContainer = ref(null);
+
+onMounted(() => {
+    if (lottieContainer.value) {
+        lottie.loadAnimation({
+            container: lottieContainer.value,
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: '/animations/prueba - doctores-freepik.json'
+        });
+    }
+});
+
 // Check if we should show "Tutup" status
 const shouldShowClosedStatus = (day) => {
     // Don't show "Tutup" for past days (dates before today)
@@ -114,9 +130,16 @@ const getDoctorSchedulesByDay = (doctor) => {
     <Head title="Jadwal Dokter" />
 
     <PublicLayout>
-        <!-- Header Section -->
-        <div class="bg-gradient-to-br from-amber-500 to-orange-600 py-16">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <!-- Header Section with Lottie Animation -->
+        <div class="relative overflow-hidden py-16">
+            <!-- Lottie Background Animation -->
+            <div ref="lottieContainer" class="absolute inset-0 z-0 opacity-30"></div>
+            
+            <!-- Orange Gradient Overlay -->
+            <div class="absolute inset-0 z-10 bg-gradient-to-br from-amber-500/80 to-orange-600/80"></div>
+            
+            <!-- Content -->
+            <div class="relative z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
                     <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl" data-aos="fade-up">
                         Jadwal Dokter

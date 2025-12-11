@@ -106,20 +106,20 @@ class ProductResource extends Resource
                             ->numeric()
                             ->minValue(0)
                             ->prefix('Rp')
-                            ->helperText('Opsional. Tampilkan harga sebelum diskon'),
+,
 
                         Forms\Components\TextInput::make('stock')
                             ->label('Stok')
                             ->numeric()
                             ->minValue(0)
-                            ->helperText('Total stok produk atau gabungan varian'),
+,
 
                         Forms\Components\TextInput::make('weight')
                             ->label('Berat (gram)')
                             ->numeric()
                             ->minValue(0)
                             ->step(0.01)
-                            ->helperText('Digunakan untuk perhitungan ongkir'),
+
                     ])
                     ->columns(2),
 
