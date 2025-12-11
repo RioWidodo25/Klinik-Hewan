@@ -1,6 +1,7 @@
 <script setup>
 import { usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
+import lottie from 'lottie-web';
 
 const page = usePage();
 
@@ -13,6 +14,7 @@ const props = defineProps({
 
 const logoUrl = '/images/logo.png';
 const logoError = ref(false);
+const lottieContainer = ref(null);
 
 // Check if current page is About Us
 const isAboutUsPage = computed(() => page.url.includes('/about'));
@@ -20,6 +22,18 @@ const isAboutUsPage = computed(() => page.url.includes('/about'));
 const handleLogoError = () => {
     logoError.value = true;
 };
+
+onMounted(() => {
+    if (lottieContainer.value) {
+        lottie.loadAnimation({
+            container: lottieContainer.value,
+            renderer: 'svg',
+            loop: true,
+            autoplay: true,
+            path: '/animations/Dog   translator.json'
+        });
+    }
+});
 
 const currentYear = new Date().getFullYear();
 </script>
@@ -134,6 +148,11 @@ const currentYear = new Date().getFullYear();
                                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                             </svg>
                         </a>
+                    </div>
+                    
+                    <!-- Lottie Animation Dog Translator -->
+                    <div class="mt-6 flex justify-center md:justify-start">
+                        <div ref="lottieContainer" class="w-24 h-24"></div>
                     </div>
                 </div>
 
