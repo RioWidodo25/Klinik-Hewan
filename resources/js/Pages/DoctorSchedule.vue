@@ -139,12 +139,12 @@ const getDoctorSchedulesByDay = (doctor) => {
                         <div 
                             v-for="day in currentWeek" 
                             :key="day.dayKey"
-                            @click="dayHasSchedules(day.dayKey) ? selectDay(day) : null"
+                            @click="dayHasSchedules(day.fullDate) ? selectDay(day) : null"
                             :class="[
                                 'p-4 text-center transition-all duration-200 border-r border-b border-gray-200 dark:border-gray-700 last:border-r-0',
                                 selectedDay?.dayKey === day.dayKey 
                                     ? 'bg-amber-500 text-white shadow-lg' 
-                                    : dayHasSchedules(day.dayKey)
+                                    : dayHasSchedules(day.fullDate)
                                         ? 'cursor-pointer hover:bg-amber-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800'
                                         : 'bg-gray-100 dark:bg-gray-900 opacity-50 cursor-not-allowed',
                                 day.isToday && selectedDay?.dayKey !== day.dayKey
