@@ -426,7 +426,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { useForm, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios';
@@ -610,7 +610,7 @@ const canProceed = computed(() => {
                 return !!form.complaint;
             }
             // If adding new pet (showing new pet form)
-            if (showNewPetForm.value || userPets.length === 0) {
+            if (showNewPetForm.value || props.userPets.length === 0) {
                 return !!form.pet_name && !!form.pet_species && !!form.complaint && 
                        !!form.owner_name && !!form.owner_phone && !!form.owner_address;
             }
@@ -629,9 +629,11 @@ const selectDoctor = (doctor) => {
 const toggleService = (serviceId) => {
     const index = form.service_ids.indexOf(serviceId);
     if (index > -1) {
-        form.service_ids.splice(index, 1);
+        // Remove service - create new array
+        form.service_ids = form.service_ids.filter(id => id !== serviceId);
     } else {
-        form.service_ids.push(serviceId);
+        // Add service - create new array  
+        form.service_ids = [...form.service_ids, serviceId];
     }
 };
 
