@@ -300,25 +300,8 @@ class OrderResource extends Resource
                             ->send();
                     })
                     ->visible(fn (Order $record) => !str_starts_with($record->order_number, 'POS-') 
-                        && in_array($record->status, ['pending', 'paid'])
+                        && $record->status === 'pending'
                         && $record->payment_status === 'paid'),
-                
-                Tables\Actions\Action::make('process_order')
-                    ->label('Diproses')
-                    ->icon('heroicon-o-cog')
-                    ->color('info')
-                    ->requiresConfirmation()
-                    ->modalHeading('Proses Pesanan')
-                    ->modalDescription('Apakah Anda yakin pesanan ini sudah siap untuk diproses?')
-                    ->action(function (Order $record) {
-                        $record->update(['status' => 'processing']);
-                        \Filament\Notifications\Notification::make()
-                            ->title('Pesanan Diproses')
-                            ->success()
-                            ->send();
-                    })
-                    ->visible(fn (Order $record) => !str_starts_with($record->order_number, 'POS-') 
-                        && $record->status === 'paid'),
                 
                 Tables\Actions\Action::make('ship_order')
                     ->label('Dikirim')
@@ -346,26 +329,6 @@ class OrderResource extends Resource
                     })
                     ->visible(fn (Order $record) => !str_starts_with($record->order_number, 'POS-') 
                         && $record->status === 'processing'),
-                
-                Tables\Actions\Action::make('complete_order')
-                    ->label('Selesai')
-                    ->icon('heroicon-o-check-badge')
-                    ->color('success')
-                    ->requiresConfirmation()
-                    ->modalHeading('Selesaikan Pesanan')
-                    ->modalDescription('Apakah Anda yakin pesanan ini sudah selesai dan diterima oleh pelanggan?')
-                    ->action(function (Order $record) {
-                        $record->update([
-                            'status' => 'delivered',
-                            'delivered_at' => now(),
-                        ]);
-                        \Filament\Notifications\Notification::make()
-                            ->title('Pesanan Selesai')
-                            ->success()
-                            ->send();
-                    })
-                    ->visible(fn (Order $record) => !str_starts_with($record->order_number, 'POS-') 
-                        && $record->status === 'shipped'),
 
                 // Print Actions
                 Tables\Actions\Action::make('print_shipping_label')

@@ -89,7 +89,9 @@ class TransactionController extends Controller
                 'id' => $order->id,
                 'order_number' => $order->order_number,
                 'status' => $order->status,
-                'status_label' => $this->getStatusLabel($order->status),
+                'status_label' => $this->getStatusLabel($order->status, $order->payment_status),
+                'payment_status' => $order->payment_status,
+                'snap_token' => $order->snap_token,
                 'total' => $order->total,
                 'subtotal' => $order->subtotal,
                 'shipping_cost' => $order->shipping_cost,
@@ -214,17 +216,61 @@ class TransactionController extends Controller
     }
 
     /**
+     * Cancel order (only before admin confirms)
+     */
+    public function cancelOrder(Order $order)
+    {
+        // Check ownership and prevent POS transactions access
+        if ($order->user_id !== Auth::id() || str_starts_with($order->order_number, 'POS-')) {
+            abort(403);
+        }
+
+        // Only allow cancellation for pending or paid status (before admin confirms)
+        if (!in_array($order->status, ['pending', 'paid'])) {
+            return back()->with('error', 'Pesanan tidak dapat dibatalkan karena sudah diproses');
+        }
+
+        // Return stock for each item before cancelling
+        foreach ($order->items as $item) {
+            if ($item->variant_id) {
+                // Return stock to variant
+                $variant = \App\Models\ProductVariant::find($item->variant_id);
+                if ($variant) {
+                    $variant->increment('stock', $item->quantity);
+                }
+            } else {
+                // Return stock to product
+                $product = \App\Models\Product::find($item->product_id);
+                if ($product) {
+                    $product->increment('stock', $item->quantity);
+                }
+            }
+        }
+
+        // Update order status to cancelled
+        $order->update([
+            'status' => 'cancelled',
+            'cancelled_at' => now(),
+        ]);
+
+        return back()->with('success', 'Pesanan berhasil dibatalkan');
+    }
+
+    /**
      * Get status label in Indonesian
      */
-    private function getStatusLabel($status)
+    private function getStatusLabel($status, $paymentStatus = null)
     {
+        if ($status === 'pending') {
+            return $paymentStatus === 'unpaid' ? 'Menunggu Pembayaran' : 'Menunggu Konfirmasi';
+        }
+
         return match ($status) {
-            'pending' => 'Menunggu Pembayaran',
             'paid' => 'Dibayar',
             'processing' => 'Diproses',
             'shipped' => 'Dikirim',
             'delivered' => 'Selesai',
-            'cancelled' => 'Pesanan Dibatalkan',
+            'cancelled' => 'Dibatalkan',
             default => $status,
         };
     }

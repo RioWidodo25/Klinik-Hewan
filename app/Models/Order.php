@@ -145,11 +145,8 @@ class Order extends Model
         $this->update([
             'payment_status' => 'paid',
             'paid_at' => now(),
+            // Status tetap 'pending' sampai admin konfirmasi
         ]);
-
-        if ($this->status === 'pending') {
-            $this->update(['status' => 'processing']);
-        }
 
         // Reduce product stock after successful payment
         foreach ($this->items as $item) {

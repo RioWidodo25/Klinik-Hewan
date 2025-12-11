@@ -1,8 +1,22 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { ref, computed, onMounted } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import axios from 'axios';
+import Swal from 'sweetalert2';
+
+const page = usePage();
+
+// Load Midtrans Snap script
+onMounted(() => {
+    if (!document.getElementById('midtrans-snap')) {
+        const script = document.createElement('script');
+        script.id = 'midtrans-snap';
+        script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+        script.setAttribute('data-client-key', page.props.midtransClientKey || '');
+        document.head.appendChild(script);
+    }
+});
 
 const props = defineProps({
     orders: Object,
@@ -20,8 +34,7 @@ const dateFilter = ref(props.filters.date || '');
 
 const statusOptions = [
     { value: '', label: 'Semua Status' },
-    { value: 'pending', label: 'Menunggu Pembayaran' },
-    { value: 'paid', label: 'Dibayar' },
+    { value: 'pending', label: 'Menunggu Konfirmasi' },
     { value: 'processing', label: 'Diproses' },
     { value: 'shipped', label: 'Dikirim' },
     { value: 'delivered', label: 'Selesai' },
@@ -115,6 +128,96 @@ const completeOrder = () => {
             // Refresh order detail
             showOrderDetail({ id: selectedOrder.value.id });
         },
+    });
+};
+
+// Continue payment (for unpaid orders)
+const continuePayment = () => {
+    if (!selectedOrder.value || !selectedOrder.value.snap_token) {
+        Swal.fire({
+            title: 'Error!',
+            text: 'Token pembayaran tidak tersedia.',
+            icon: 'error',
+            confirmButtonColor: '#f59e0b'
+        });
+        return;
+    }
+    
+    // Open Midtrans payment
+    window.snap.pay(selectedOrder.value.snap_token, {
+        onSuccess: function(result) {
+            closeModal();
+            Swal.fire({
+                title: 'Berhasil!',
+                text: 'Pembayaran berhasil! Menunggu konfirmasi admin.',
+                icon: 'success',
+                confirmButtonColor: '#f59e0b',
+                timer: 2000
+            }).then(() => {
+                router.reload();
+            });
+        },
+        onPending: function(result) {
+            closeModal();
+            Swal.fire({
+                title: 'Pembayaran Tertunda',
+                text: 'Pembayaran Anda sedang diproses.',
+                icon: 'info',
+                confirmButtonColor: '#f59e0b'
+            });
+        },
+        onError: function(result) {
+            Swal.fire({
+                title: 'Gagal!',
+                text: 'Pembayaran gagal. Silakan coba lagi.',
+                icon: 'error',
+                confirmButtonColor: '#f59e0b'
+            });
+        },
+        onClose: function() {
+            // User closed payment popup
+        }
+    });
+};
+
+// Cancel order (before admin confirms)
+const cancelOrder = () => {
+    if (!selectedOrder.value) return;
+    
+    Swal.fire({
+        title: 'Batalkan Pesanan?',
+        text: 'Apakah Anda yakin ingin membatalkan pesanan ini? Tindakan ini tidak dapat dibatalkan.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ya, Batalkan',
+        cancelButtonText: 'Tidak',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            router.post(route('profile.transactions.cancel', selectedOrder.value.id), {}, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    closeModal();
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: 'Pesanan berhasil dibatalkan.',
+                        icon: 'success',
+                        confirmButtonColor: '#f59e0b',
+                        timer: 2000
+                    });
+                },
+                onError: () => {
+                    Swal.fire({
+                        title: 'Gagal!',
+                        text: 'Pesanan tidak dapat dibatalkan.',
+                        icon: 'error',
+                        confirmButtonColor: '#f59e0b'
+                    });
+                }
+            });
+        }
     });
 };
 
@@ -632,6 +735,26 @@ const getShippingAddress = (address) => {
 
                                 <!-- Action Buttons -->
                                 <div v-if="!showReviewForm" class="space-y-3">
+                                    <!-- Continue Payment Button (for unpaid orders) -->
+                                    <button
+                                        v-if="selectedOrder.payment_status === 'unpaid'"
+                                        type="button"
+                                        @click="continuePayment"
+                                        class="w-full rounded-lg bg-amber-600 px-4 py-3 font-semibold text-white transition hover:bg-amber-700 active:scale-95"
+                                    >
+                                        💳 Lanjutkan Pembayaran
+                                    </button>
+
+                                    <!-- Cancel Order Button (for pending status - before admin confirms) -->
+                                    <button
+                                        v-if="selectedOrder.status === 'pending'"
+                                        type="button"
+                                        @click="cancelOrder"
+                                        class="w-full rounded-lg bg-red-600 px-4 py-3 font-semibold text-white transition hover:bg-red-700 active:scale-95"
+                                    >
+                                        ✕ Batalkan Pesanan
+                                    </button>
+
                                     <!-- Complete Order Button (for shipped status) -->
                                     <button
                                         v-if="selectedOrder.status === 'shipped'"

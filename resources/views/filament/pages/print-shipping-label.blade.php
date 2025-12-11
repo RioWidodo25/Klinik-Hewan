@@ -84,17 +84,29 @@
             <div class="mb-3 pb-2 border-b border-gray-800">
                 <p class="font-bold text-xs mb-2">DAFTAR PRODUK:</p>
                 <table class="w-full text-xs">
-                    @foreach($order->items as $item)
-                        <tr>
-                            <td class="py-1 align-top">
-                                {{ $item->product_name }}
-                                @if($item->variant_name)
-                                    <br><span class="text-gray-600">({{ $item->variant_name }})</span>
-                                @endif
-                            </td>
-                            <td class="text-center py-1 align-top">x{{ $item->quantity }}</td>
+                    <thead>
+                        <tr class="border-b border-gray-300">
+                            <th class="text-left py-1">Produk</th>
+                            <th class="text-center py-1">Harga</th>
+                            <th class="text-center py-1">Qty</th>
+                            <th class="text-right py-1">Subtotal</th>
                         </tr>
-                    @endforeach
+                    </thead>
+                    <tbody>
+                        @foreach($order->items as $item)
+                            <tr>
+                                <td class="py-1 align-top">
+                                    {{ $item->product_name }}
+                                    @if($item->variant_name)
+                                        <br><span class="text-gray-600 text-[7pt]">({{ $item->variant_name }})</span>
+                                    @endif
+                                </td>
+                                <td class="text-center py-1 align-top">{{ number_format($item->price, 0, ',', '.') }}</td>
+                                <td class="text-center py-1 align-top">x{{ $item->quantity }}</td>
+                                <td class="text-right py-1 align-top">{{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
                 </table>
             </div>
 

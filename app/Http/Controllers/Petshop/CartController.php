@@ -289,6 +289,12 @@ class CartController extends Controller
             $customerPhone = $shippingAddressData['phone_number'];
         }
 
+        // Process delivery date - convert "today" to actual date
+        $deliveryDate = $validated['delivery_date'];
+        if ($deliveryDate === 'today') {
+            $deliveryDate = now()->format('Y-m-d');
+        }
+
         // Create order
         $order = auth()->user()->orders()->create([
             'order_number' => 'ORD-' . strtoupper(uniqid()),
@@ -305,7 +311,7 @@ class CartController extends Controller
             'shipping_postal_code' => $shippingPostalCode,
             'delivery_type' => $validated['delivery_type'],
             'delivery_option' => $validated['delivery_option'],
-            'delivery_date' => $validated['delivery_date'],
+            'delivery_date' => $deliveryDate,
             'delivery_time' => $validated['delivery_time'],
             'notes' => $validated['notes'] ?? null,
         ]);

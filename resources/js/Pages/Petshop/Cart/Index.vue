@@ -145,19 +145,11 @@ const shippingFee = computed(() => {
     }
     
     if (selectedDeliveryOption.value === 'instant') {
-        // Free shipping for instant delivery above Rp 150.000
-        if (subtotal.value >= 150000) {
-            return 0;
-        }
-        return 7000; // Instant delivery Rp 7.000
+        return 7000; // Instant delivery always Rp 7.000
     }
     
-    // Regular delivery
-    // Free shipping for regular delivery above Rp 30.000
-    if (subtotal.value >= 30000) {
-        return 0;
-    }
-    return 5000; // Regular delivery Rp 5.000
+    // Regular delivery - always Rp 5.000
+    return 5000;
 });
 
 // Calculate total
