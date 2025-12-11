@@ -71,17 +71,6 @@ class DoctorScheduleResource extends Resource
                                     ])
                                     ->default('shift_1')
                                     ->required()
-                                    ->live()
-                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                        // Auto-fill time based on shift
-                                        if ($state === 'shift_1') {
-                                            $set('start_time', '07:30');
-                                            $set('end_time', '15:30');
-                                        } elseif ($state === 'shift_2') {
-                                            $set('start_time', '19:30');
-                                            $set('end_time', '03:30');
-                                        }
-                                    })
                                     ->columnSpan(4),
                                 
                                 Forms\Components\Placeholder::make('shift_info')
@@ -94,10 +83,18 @@ class DoctorScheduleResource extends Resource
                                     ->columnSpan(2),
                                 
                                 Forms\Components\Hidden::make('start_time')
-                                    ->default('07:30'),
+                                    ->dehydrateStateUsing(fn ($get) => match($get('shift')) {
+                                        'shift_1' => '07:30',
+                                        'shift_2' => '19:30',
+                                        default => '07:30'
+                                    }),
                                 
                                 Forms\Components\Hidden::make('end_time')
-                                    ->default('15:30'),
+                                    ->dehydrateStateUsing(fn ($get) => match($get('shift')) {
+                                        'shift_1' => '15:30',
+                                        'shift_2' => '03:30',
+                                        default => '15:30'
+                                    }),
                                 
                                 Forms\Components\Toggle::make('is_active')
                                     ->label('Aktif')
