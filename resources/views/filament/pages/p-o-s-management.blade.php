@@ -154,42 +154,7 @@
 
     <!-- Receipt Modal -->
     @if($showReceipt && $currentOrder)
-        <div class="fixed inset-0 z-50 overflow-y-auto" x-data="{ 
-            open: @entangle('showReceipt'),
-            printReceipt() {
-                const receiptContent = document.getElementById('receipt-content');
-                const printWindow = window.open('', '', 'width=800,height=600');
-                
-                const styles = '<style>' +
-                    '@page { size: 80mm auto; margin: 0; }' +
-                    'body { font-family: "Courier New", monospace; margin: 0; padding: 5mm; color: #000; font-size: 10pt; width: 80mm; }' +
-                    'table { width: 100%; border-collapse: collapse; }' +
-                    'th, td { padding: 4px 2px; text-align: left; font-size: 9pt; }' +
-                    'th { border-bottom: 2px solid #333; }' +
-                    'tr { border-bottom: 1px solid #ddd; }' +
-                    '.text-center { text-align: center; }' +
-                    '.text-right { text-align: right; }' +
-                    '.border-dashed { border-bottom: 2px dashed #999; padding-bottom: 10px; margin-bottom: 10px; }' +
-                    '.font-bold { font-weight: bold; }' +
-                    '.text-lg { font-size: 11pt; }' +
-                    '.text-2xl { font-size: 14pt; }' +
-                    '.text-sm { font-size: 9pt; }' +
-                    '.text-xs { font-size: 8pt; }' +
-                    '.mb-4 { margin-bottom: 1rem; }' +
-                    '</style>';
-                
-                printWindow.document.write('<html><head><title>Struk Pembayaran</title>' + styles + '</head><body>');
-                printWindow.document.write(receiptContent.innerHTML);
-                printWindow.document.write('</body></html>');
-                printWindow.document.close();
-                printWindow.focus();
-                
-                setTimeout(() => {
-                    printWindow.print();
-                    printWindow.close();
-                }, 250);
-            }
-        }">
+        <div class="fixed inset-0 z-50 overflow-y-auto">
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                 <!-- Background overlay -->
                 <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="$wire.closeReceipt()"></div>
@@ -314,16 +279,16 @@
 
                     <!-- Modal Actions -->
                     <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse print:hidden">
-                        <button 
-                            type="button" 
-                            @click="printReceipt()"
+                        <a 
+                            href="{{ route('filament.admin.pages.print-receipt', ['order' => $currentOrder->id]) }}"
+                            target="_blank"
                             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm"
                         >
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                             </svg>
                             Cetak Struk
-                        </button>
+                        </a>
                         <button 
                             type="button" 
                             wire:click="closeReceipt"

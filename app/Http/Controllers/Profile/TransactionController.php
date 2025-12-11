@@ -17,7 +17,9 @@ class TransactionController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $query = $user->orders()->with(['items.product.images']);
+        $query = $user->orders()
+            ->with(['items.product.images'])
+            ->where('order_number', 'NOT LIKE', 'POS-%'); // Exclude POS transactions
 
         // Search filter
         if ($request->filled('search')) {
@@ -75,8 +77,8 @@ class TransactionController extends Controller
      */
     public function show(Order $order)
     {
-        // Check ownership
-        if ($order->user_id !== Auth::id()) {
+        // Check ownership and prevent POS transactions access
+        if ($order->user_id !== Auth::id() || str_starts_with($order->order_number, 'POS-')) {
             abort(403);
         }
 
@@ -138,8 +140,8 @@ class TransactionController extends Controller
      */
     public function complete(Order $order)
     {
-        // Check ownership
-        if ($order->user_id !== Auth::id()) {
+        // Check ownership and prevent POS transactions access
+        if ($order->user_id !== Auth::id() || str_starts_with($order->order_number, 'POS-')) {
             abort(403);
         }
 
@@ -158,8 +160,8 @@ class TransactionController extends Controller
      */
     public function submitReview(Request $request, Order $order)
     {
-        // Check ownership
-        if ($order->user_id !== Auth::id()) {
+        // Check ownership and prevent POS transactions access
+        if ($order->user_id !== Auth::id() || str_starts_with($order->order_number, 'POS-')) {
             abort(403);
         }
 

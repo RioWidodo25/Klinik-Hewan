@@ -284,10 +284,94 @@ class OrderResource extends Resource
                     ->query(fn (Builder $query) => $query->where('order_number', 'like', 'POS-%')),
             ])
             ->actions([
+                // Status Change Actions for Petshop Orders
+                Tables\Actions\Action::make('confirm_order')
+                    ->label('Konfirmasi')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Konfirmasi Pesanan')
+                    ->modalDescription('Apakah Anda yakin ingin mengonfirmasi pesanan ini? Status akan berubah menjadi "Diproses".')
+                    ->action(function (Order $record) {
+                        $record->update(['status' => 'processing']);
+                        \Filament\Notifications\Notification::make()
+                            ->title('Pesanan Dikonfirmasi')
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn (Order $record) => !str_starts_with($record->order_number, 'POS-') 
+                        && in_array($record->status, ['pending', 'paid'])
+                        && $record->payment_status === 'paid'),
+                
+                Tables\Actions\Action::make('process_order')
+                    ->label('Diproses')
+                    ->icon('heroicon-o-cog')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->modalHeading('Proses Pesanan')
+                    ->modalDescription('Apakah Anda yakin pesanan ini sudah siap untuk diproses?')
+                    ->action(function (Order $record) {
+                        $record->update(['status' => 'processing']);
+                        \Filament\Notifications\Notification::make()
+                            ->title('Pesanan Diproses')
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn (Order $record) => !str_starts_with($record->order_number, 'POS-') 
+                        && $record->status === 'paid'),
+                
+                Tables\Actions\Action::make('ship_order')
+                    ->label('Dikirim')
+                    ->icon('heroicon-o-truck')
+                    ->color('primary')
+                    ->form([
+                        Forms\Components\TextInput::make('tracking_number')
+                            ->label('Nomor Resi')
+                            ->required()
+                            ->placeholder('Masukkan nomor resi pengiriman'),
+                    ])
+                    ->requiresConfirmation()
+                    ->modalHeading('Kirim Pesanan')
+                    ->modalDescription('Masukkan nomor resi dan konfirmasi bahwa pesanan sudah dikirim.')
+                    ->action(function (Order $record, array $data) {
+                        $record->update([
+                            'status' => 'shipped',
+                            'tracking_number' => $data['tracking_number'],
+                            'shipped_at' => now(),
+                        ]);
+                        \Filament\Notifications\Notification::make()
+                            ->title('Pesanan Dikirim')
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn (Order $record) => !str_starts_with($record->order_number, 'POS-') 
+                        && $record->status === 'processing'),
+                
+                Tables\Actions\Action::make('complete_order')
+                    ->label('Selesai')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Selesaikan Pesanan')
+                    ->modalDescription('Apakah Anda yakin pesanan ini sudah selesai dan diterima oleh pelanggan?')
+                    ->action(function (Order $record) {
+                        $record->update([
+                            'status' => 'delivered',
+                            'delivered_at' => now(),
+                        ]);
+                        \Filament\Notifications\Notification::make()
+                            ->title('Pesanan Selesai')
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn (Order $record) => !str_starts_with($record->order_number, 'POS-') 
+                        && $record->status === 'shipped'),
+
+                // Print Actions
                 Tables\Actions\Action::make('print_shipping_label')
                     ->label('Cetak Resi')
                     ->icon('heroicon-o-document-text')
-                    ->color('info')
+                    ->color('warning')
                     ->url(fn (Order $record) => route('filament.admin.pages.print-shipping-label', ['order' => $record->id]))
                     ->openUrlInNewTab()
                     ->visible(fn (Order $record) => !str_starts_with($record->order_number, 'POS-') && in_array($record->status, ['processing', 'shipped', 'delivered'])),
@@ -298,8 +382,6 @@ class OrderResource extends Resource
                     ->url(fn (Order $record) => route('filament.admin.pages.print-receipt', ['order' => $record->id]))
                     ->openUrlInNewTab()
                     ->visible(fn (Order $record) => str_starts_with($record->order_number, 'POS-')),
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([])
             ->defaultSort('created_at', 'desc');
@@ -317,8 +399,6 @@ class OrderResource extends Resource
     {
         return [
             'index' => Pages\ListOrders::route('/'),
-            'view' => Pages\ViewOrder::route('/{record}'),
-            'edit' => Pages\EditOrder::route('/{record}/edit'),
         ];
     }
 }
