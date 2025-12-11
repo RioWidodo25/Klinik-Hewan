@@ -1,11 +1,7 @@
 <script setup>
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import InputError from '@/Components/InputError.vue';
-import { ref, computed } from 'vue';
-
-const page = usePage();
-const logoLight = computed(() => page.props.appLogo);
-const logoDark = computed(() => page.props.appLogoDark);
+import { ref } from 'vue';
 
 defineProps({
     canResetPassword: Boolean,
@@ -41,14 +37,10 @@ const submit = () => {
             <div class="relative z-10 flex flex-col justify-center items-center w-full px-12 text-white">
                 <div class="mb-8 bg-white/20 backdrop-blur-sm rounded-3xl p-8">
                     <img 
-                        v-if="logoLight" 
-                        :src="logoLight" 
+                        src="/images/logo.png" 
                         alt="A2 VET Logo" 
                         class="w-32 h-32 object-contain drop-shadow-2xl"
                     />
-                    <div v-else class="w-32 h-32 flex items-center justify-center">
-                        <span class="text-6xl font-bold">A2</span>
-                    </div>
                 </div>
                 <h1 class="text-5xl font-bold mb-4 text-center drop-shadow-lg">A2 VET</h1>
                 <p class="text-xl text-center text-white/90 max-w-md">Klinik Hewan Terpercaya untuk Sahabat Kesayangan Anda</p>
@@ -88,14 +80,10 @@ const submit = () => {
                 <div class="lg:hidden text-center mb-8">
                     <Link :href="route('home')" class="inline-flex items-center gap-3">
                         <img 
-                            v-if="logoLight" 
-                            :src="logoLight" 
+                            src="/images/logo.png" 
                             alt="A2 VET Logo" 
                             class="w-12 h-12 object-contain"
                         />
-                        <div v-else class="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center">
-                            <span class="text-xl font-bold text-white">A2</span>
-                        </div>
                         <span class="text-2xl font-bold text-gray-900 dark:text-white">A2 VET</span>
                     </Link>
                 </div>
