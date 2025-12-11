@@ -40,7 +40,6 @@ class FooterSettings extends Page
             'tiktok_url' => $settings->tiktok_url,
             'youtube_url' => $settings->youtube_url,
             'whatsapp_number' => $settings->whatsapp_number,
-            'logo' => $settings->logo,
         ]);
     }
 
@@ -48,19 +47,6 @@ class FooterSettings extends Page
     {
         return $form
             ->schema([
-                Section::make('Logo Website')
-                    ->schema([
-                        FileUpload::make('logo')
-                            ->label('Logo Website')
-                            ->disk('public')
-                            ->directory('logos')
-                            ->image()
-                            ->imageEditor()
-                            ->maxSize(1024)
-                            ->helperText('Logo yang akan ditampilkan di website. Gunakan logo dengan background transparan (PNG) untuk hasil terbaik. Format: PNG, JPG, SVG. Max: 1MB')
-                            ->columnSpanFull(),
-                    ]),
-
                 Section::make('About')
                     ->schema([
                         Textarea::make('about_text')
