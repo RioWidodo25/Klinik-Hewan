@@ -131,25 +131,24 @@ const getDoctorSchedulesByDay = (doctor) => {
 
     <PublicLayout>
         <!-- Header Section with Lottie Animation -->
-        <div class="relative overflow-hidden py-16">
+        <div class="relative overflow-hidden py-32">
             <!-- Lottie Background Animation -->
-            <div ref="lottieContainer" class="absolute inset-0 z-0 opacity-30"></div>
-            
-            <!-- Orange Gradient Overlay -->
-            <div class="absolute inset-0 z-10 bg-gradient-to-br from-amber-500/80 to-orange-600/80"></div>
+            <div ref="lottieContainer" class="absolute inset-0 z-0"></div>
             
             <!-- Content -->
-            <div class="relative z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="relative z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-16">
                 <div class="text-center">
-                    <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl" data-aos="fade-up">
-                        Jadwal Dokter
-                    </h1>
-                    <p class="mx-auto mt-3 max-w-md text-base text-white/90 sm:text-lg md:mt-5 md:max-w-3xl md:text-xl" data-aos="fade-up" data-aos-delay="100">
-                        Jadwal praktik dokter hewan kami untuk melayani hewan kesayangan Anda
-                    </p>
-                    <p class="mt-4 text-white/90 font-semibold">
-                        Minggu: {{ weekRange }}
-                    </p>
+                    <div class="inline-block bg-gradient-to-b from-white/60 via-white/40 to-white/20 backdrop-blur-sm rounded-3xl px-8 py-6 shadow-2xl">
+                        <h1 class="text-4xl font-bold tracking-tight text-amber-500 sm:text-5xl md:text-6xl" data-aos="fade-up">
+                            Jadwal Dokter
+                        </h1>
+                        <p class="mx-auto mt-3 max-w-md text-base text-amber-600 sm:text-lg md:mt-5 md:max-w-3xl md:text-xl" data-aos="fade-up" data-aos-delay="100">
+                            Jadwal praktik dokter hewan kami untuk melayani hewan kesayangan Anda
+                        </p>
+                        <p class="mt-4 text-amber-600 font-semibold">
+                            Minggu: {{ weekRange }}
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
