@@ -289,10 +289,12 @@ class CartController extends Controller
             $customerPhone = $shippingAddressData['phone_number'];
         }
 
-        // Process delivery date - convert "today" to actual date
+        // Process delivery date - convert "today" or "tomorrow" to actual date
         $deliveryDate = $validated['delivery_date'];
         if ($deliveryDate === 'today') {
             $deliveryDate = now()->format('Y-m-d');
+        } elseif ($deliveryDate === 'tomorrow') {
+            $deliveryDate = now()->addDay()->format('Y-m-d');
         }
 
         // Create order
