@@ -257,6 +257,81 @@ class TransactionController extends Controller
     }
 
     /**
+     * Generate new snap token for unpaid order
+     */
+    public function generateSnapToken(Order $order)
+    {
+        // Check ownership and prevent POS transactions access
+        if ($order->user_id !== Auth::id() || str_starts_with($order->order_number, 'POS-')) {
+            abort(403);
+        }
+
+        // Only allow for unpaid orders
+        if ($order->payment_status !== 'unpaid') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pesanan sudah dibayar atau tidak valid'
+            ], 400);
+        }
+
+        try {
+            // Set Midtrans configuration
+            \Midtrans\Config::$serverKey = config('services.midtrans.server_key');
+            \Midtrans\Config::$isProduction = config('services.midtrans.is_production');
+            \Midtrans\Config::$isSanitized = true;
+            \Midtrans\Config::$is3ds = true;
+
+            // Prepare transaction details
+            $params = [
+                'transaction_details' => [
+                    'order_id' => $order->order_number,
+                    'gross_amount' => (int) $order->total,
+                ],
+                'customer_details' => [
+                    'first_name' => $order->customer_name,
+                    'email' => $order->customer_email,
+                    'phone' => $order->customer_phone,
+                ],
+                'item_details' => $order->items->map(function ($item) {
+                    return [
+                        'id' => $item->product_id,
+                        'price' => (int) $item->price,
+                        'quantity' => $item->quantity,
+                        'name' => $item->product_name,
+                    ];
+                })->toArray(),
+            ];
+
+            // Add shipping cost as separate item if exists
+            if ($order->shipping_cost > 0) {
+                $params['item_details'][] = [
+                    'id' => 'shipping',
+                    'price' => (int) $order->shipping_cost,
+                    'quantity' => 1,
+                    'name' => 'Biaya Pengiriman',
+                ];
+            }
+
+            // Generate new snap token
+            $snapToken = \Midtrans\Snap::getSnapToken($params);
+
+            // Update order with new snap token
+            $order->update(['snap_token' => $snapToken]);
+
+            return response()->json([
+                'success' => true,
+                'snap_token' => $snapToken
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal membuat token pembayaran: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get status label in Indonesian
      */
     private function getStatusLabel($status, $paymentStatus = null)

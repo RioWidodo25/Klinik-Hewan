@@ -333,6 +333,7 @@ Route::middleware([
         Route::get('/transactions/{order}', [\App\Http\Controllers\Profile\TransactionController::class, 'show'])->name('transactions.show');
         Route::post('/transactions/{order}/complete', [\App\Http\Controllers\Profile\TransactionController::class, 'complete'])->name('transactions.complete');
         Route::post('/transactions/{order}/cancel', [\App\Http\Controllers\Profile\TransactionController::class, 'cancelOrder'])->name('transactions.cancel');
+        Route::post('/transactions/{order}/generate-snap-token', [\App\Http\Controllers\Profile\TransactionController::class, 'generateSnapToken'])->name('transactions.generate-snap-token');
         Route::post('/transactions/{order}/review', [\App\Http\Controllers\Profile\TransactionController::class, 'submitReview'])->name('transactions.review');
 
         Route::patch('/pets/{pet}', [\App\Http\Controllers\Profile\PetController::class, 'update'])->name('pets.update');

@@ -132,52 +132,81 @@ const completeOrder = () => {
 };
 
 // Continue payment (for unpaid orders)
-const continuePayment = () => {
-    if (!selectedOrder.value || !selectedOrder.value.snap_token) {
+const continuePayment = async () => {
+    if (!selectedOrder.value) return;
+    
+    try {
+        // Show loading
+        Swal.fire({
+            title: 'Memuat...',
+            text: 'Membuat token pembayaran baru',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Generate new snap token
+        const response = await axios.post(
+            route('profile.transactions.generate-snap-token', selectedOrder.value.id)
+        );
+
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Gagal membuat token pembayaran');
+        }
+
+        const snapToken = response.data.snap_token;
+        
+        // Close loading
+        Swal.close();
+
+        // Open Midtrans payment with new token
+        window.snap.pay(snapToken, {
+            onSuccess: function(result) {
+                closeModal();
+                Swal.fire({
+                    title: 'Berhasil!',
+                    text: 'Pembayaran berhasil! Menunggu konfirmasi admin.',
+                    icon: 'success',
+                    confirmButtonColor: '#f59e0b',
+                    timer: 2000
+                }).then(() => {
+                    router.reload();
+                });
+            },
+            onPending: function(result) {
+                closeModal();
+                Swal.fire({
+                    title: 'Pembayaran Tertunda',
+                    text: 'Pembayaran Anda sedang diproses.',
+                    icon: 'info',
+                    confirmButtonColor: '#f59e0b'
+                }).then(() => {
+                    router.reload();
+                });
+            },
+            onError: function(result) {
+                Swal.fire({
+                    title: 'Gagal!',
+                    text: 'Pembayaran gagal. Silakan coba lagi.',
+                    icon: 'error',
+                    confirmButtonColor: '#f59e0b'
+                });
+            },
+            onClose: function() {
+                // User closed payment popup
+            }
+        });
+
+    } catch (error) {
+        console.error('Error generating snap token:', error);
         Swal.fire({
             title: 'Error!',
-            text: 'Token pembayaran tidak tersedia.',
+            text: error.response?.data?.message || error.message || 'Gagal membuat token pembayaran',
             icon: 'error',
             confirmButtonColor: '#f59e0b'
         });
-        return;
     }
-    
-    // Open Midtrans payment
-    window.snap.pay(selectedOrder.value.snap_token, {
-        onSuccess: function(result) {
-            closeModal();
-            Swal.fire({
-                title: 'Berhasil!',
-                text: 'Pembayaran berhasil! Menunggu konfirmasi admin.',
-                icon: 'success',
-                confirmButtonColor: '#f59e0b',
-                timer: 2000
-            }).then(() => {
-                router.reload();
-            });
-        },
-        onPending: function(result) {
-            closeModal();
-            Swal.fire({
-                title: 'Pembayaran Tertunda',
-                text: 'Pembayaran Anda sedang diproses.',
-                icon: 'info',
-                confirmButtonColor: '#f59e0b'
-            });
-        },
-        onError: function(result) {
-            Swal.fire({
-                title: 'Gagal!',
-                text: 'Pembayaran gagal. Silakan coba lagi.',
-                icon: 'error',
-                confirmButtonColor: '#f59e0b'
-            });
-        },
-        onClose: function() {
-            // User closed payment popup
-        }
-    });
 };
 
 // Cancel order (before admin confirms)
