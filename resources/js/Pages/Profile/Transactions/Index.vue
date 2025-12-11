@@ -78,6 +78,7 @@ const showOrderDetail = async (order) => {
     try {
         const response = await axios.get(route('profile.transactions.show', order.id));
         selectedOrder.value = response.data.order;
+        console.log('Order detail:', response.data.order);
     } catch (error) {
         console.error('Error fetching order detail:', error);
         showDetailModal.value = false;
@@ -546,6 +547,18 @@ const getShippingAddress = (address) => {
                                         >
                                             {{ selectedOrder.status_label }}
                                         </span>
+                                    </div>
+                                    
+                                    <!-- Debug Info -->
+                                    <div class="rounded border-2 border-red-500 bg-red-50 p-3">
+                                        <div class="text-xs font-bold text-red-700 mb-2">DEBUG INFO:</div>
+                                        <div class="text-xs space-y-1">
+                                            <div><strong>status:</strong> {{ selectedOrder.status }}</div>
+                                            <div><strong>payment_status:</strong> {{ selectedOrder.payment_status }}</div>
+                                            <div><strong>snap_token:</strong> {{ selectedOrder.snap_token ? 'Ada' : 'Tidak Ada' }}</div>
+                                            <div><strong>Tombol Payment muncul:</strong> {{ selectedOrder.payment_status === 'unpaid' ? 'Ya' : 'Tidak' }}</div>
+                                            <div><strong>Tombol Cancel muncul:</strong> {{ selectedOrder.status === 'pending' ? 'Ya' : 'Tidak' }}</div>
+                                        </div>
                                     </div>
                                 </div>
 
