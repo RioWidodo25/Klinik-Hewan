@@ -42,7 +42,7 @@ RUN mkdir -p storage/framework/cache/data \
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Install Node dependencies and build assets
-RUN npm ci && npm run build
+RUN npm ci --legacy-peer-deps && npm run build
 
 # Generate application key if not exists
 RUN php artisan key:generate --ansi || true
