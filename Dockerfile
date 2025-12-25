@@ -63,4 +63,4 @@ CMD php artisan package:discover --ansi && \
     php artisan route:cache && \
     php artisan view:cache && \
     php artisan migrate --force && \
-    php artisan serve --host=0.0.0.0 --port=8000
+    php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
