@@ -39,13 +39,6 @@ const currentYear = new Date().getFullYear();
 </script>
 
 <style scoped>
-/* Override ukuran iframe Google Maps */
-.maps-container :deep(iframe) {
-    width: 100% !important;
-    height: 200px !important;
-    max-width: 100%;
-    border: 0;
-}
 </style>
 
 <style>
@@ -77,7 +70,7 @@ const currentYear = new Date().getFullYear();
 
         <!-- Content -->
         <div class="relative z-10 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 pt-20">
-            <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                 <!-- Logo & Social Media -->
                 <div class="space-y-6">
                     <!-- Logo -->
@@ -191,12 +184,6 @@ const currentYear = new Date().getFullYear();
                             <span>{{ footerSettings.contact_address }}</span>
                         </li>
                     </ul>
-                </div>
-
-                <!-- Google Maps / Lokasi Kami -->
-                <div v-if="footerSettings.google_maps_iframe">
-                    <h3 class="mb-4 text-lg font-semibold text-orange-700 drop-shadow-sm">Lokasi Kami</h3>
-                    <div class="maps-container overflow-hidden rounded-lg shadow-xl" v-html="footerSettings.google_maps_iframe"></div>
                 </div>
             </div>
 

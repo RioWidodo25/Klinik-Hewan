@@ -107,13 +107,13 @@ onUnmounted(() => {
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div class="text-center">
                         <h1
-                            class="text-4xl font-bold tracking-tight text-white drop-shadow-lg sm:text-5xl md:text-6xl"
+                            class="text-4xl font-bold tracking-tight text-amber-400 drop-shadow-lg sm:text-5xl md:text-6xl"
                             data-aos="zoom-in-up"
                         >
                             Galeri Klinik Hewan
                         </h1>
                         <p
-                            class="mx-auto mt-4 max-w-2xl text-lg text-white drop-shadow-md"
+                            class="mx-auto mt-4 max-w-2xl text-lg text-amber-100 drop-shadow-md"
                             data-aos="zoom-in-up"
                             data-aos-delay="100"
                         >

@@ -41,10 +41,26 @@ Route::get('/', function () {
         ];
     });
 
+    $branches = \App\Models\Branch::all()->map(function ($branch) {
+        return [
+            'id' => $branch->id,
+            'name' => $branch->name,
+            'address' => $branch->address,
+            'phone' => $branch->phone,
+            'email' => $branch->email,
+            'google_maps_iframe' => $branch->google_maps_iframe,
+            'latitude' => $branch->latitude,
+            'longitude' => $branch->longitude,
+            'operational_hours' => $branch->operational_hours,
+            'image_url' => $branch->image_path ? asset('storage/' . $branch->image_path) : null,
+        ];
+    });
+
     return Inertia::render('Home', [
         'sliders' => $sliders,
         'doctors' => $doctors,
         'services' => $services,
+        'branches' => $branches,
     ]);
 })->name('home');
 
@@ -100,27 +116,10 @@ Route::get('/about-us', function () {
         'about' => $footerSettings->about_text ?? 'A2 VET adalah klinik hewan terpercaya yang berkomitmen memberikan pelayanan kesehatan terbaik untuk hewan peliharaan Anda. Dengan tim dokter hewan profesional dan berpengalaman, kami menyediakan berbagai layanan mulai dari pemeriksaan rutin, vaksinasi, grooming, hingga perawatan medis darurat. Kami memahami bahwa hewan peliharaan adalah bagian dari keluarga, oleh karena itu kami memberikan perhatian penuh dengan fasilitas modern dan lingkungan yang nyaman untuk setiap pasien kami.',
         'phone' => $footerSettings->contact_phone ?? null,
         'email' => $footerSettings->contact_email ?? null,
-        'address' => $footerSettings->contact_address ?? null,
     ];
-
-    $branches = \App\Models\Branch::active()->ordered()->get()->map(function ($branch) {
-        return [
-            'id' => $branch->id,
-            'name' => $branch->name,
-            'address' => $branch->address,
-            'phone' => $branch->phone,
-            'email' => $branch->email,
-            'google_maps_iframe' => $branch->google_maps_iframe,
-            'latitude' => $branch->latitude,
-            'longitude' => $branch->longitude,
-            'operational_hours' => $branch->operational_hours,
-            'image_url' => $branch->image_path ? asset('storage/' . $branch->image_path) : null,
-        ];
-    });
 
     return Inertia::render('AboutUs', [
         'clinic' => $clinic,
-        'branches' => $branches,
     ]);
 })->name('about-us');
 

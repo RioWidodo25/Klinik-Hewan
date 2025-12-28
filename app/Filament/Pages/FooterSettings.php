@@ -34,7 +34,6 @@ class FooterSettings extends Page
             'contact_phone' => $settings->contact_phone,
             'contact_email' => $settings->contact_email,
             'contact_address' => $settings->contact_address,
-            'google_maps_iframe' => $settings->google_maps_iframe,
             'instagram_url' => $settings->instagram_url,
             'facebook_url' => $settings->facebook_url,
             'tiktok_url' => $settings->tiktok_url,
@@ -53,7 +52,6 @@ class FooterSettings extends Page
                             ->label('Tentang Kami')
                             ->rows(4)
                             ->maxLength(500)
-                            ->placeholder('Masukkan deskripsi singkat tentang klinik hewan...')
                             ->helperText('Teks yang akan ditampilkan di bagian About di footer'),
                     ]),
 
@@ -62,31 +60,22 @@ class FooterSettings extends Page
                         TextInput::make('contact_phone')
                             ->label('Nomor Telepon')
                             ->tel()
-                            ->placeholder('+62 812-3456-7890')
                             ->helperText(''),
 
                         TextInput::make('contact_email')
                             ->label('Email')
-                            ->email()
-                            ->placeholder('info@klinikhewan.com'),
+                            ->email(),
 
                         Textarea::make('contact_address')
                             ->label('Alamat')
-                            ->rows(3)
-                            ->placeholder('Jl. Contoh No. 123, Kota, Provinsi 12345'),
+                            ->rows(3),
 
                         TextInput::make('whatsapp_number')
                             ->label('Nomor WhatsApp (Floating Button)')
                             ->tel()
-                            ->placeholder('628123456789')
-                            ->helperText('Format: +628...')
+                            ->default('+62')
+                            ->helperText('Format: (858xxx) tanpa spasi')
                             ->maxLength(15),
-
-                        Textarea::make('google_maps_iframe')
-                            ->label('Google Maps Embed Code')
-                            ->rows(5)
-                            ->placeholder('<iframe src="https://www.google.com/maps/embed?pb=..." width="300" height="250" style="border:0;" allowfullscreen="" loading="lazy"></iframe>')
-                            ->columnSpanFull(),
                     ])
                     ->columns(2),
 
@@ -94,27 +83,19 @@ class FooterSettings extends Page
                     ->schema([
                         TextInput::make('instagram_url')
                             ->label('Instagram')
-                            ->url()
-                            ->placeholder('https://instagram.com/username')
-                            ->helperText('Link lengkap ke profil Instagram'),
+                            ->url(),
 
                         TextInput::make('facebook_url')
                             ->label('Facebook')
-                            ->url()
-                            ->placeholder('https://facebook.com/pagename')
-                            ->helperText('Link lengkap ke halaman Facebook'),
+                            ->url(),
 
                         TextInput::make('tiktok_url')
                             ->label('TikTok')
-                            ->url()
-                            ->placeholder('https://tiktok.com/@username')
-                            ->helperText('Link lengkap ke profil TikTok'),
+                            ->url(),
 
                         TextInput::make('youtube_url')
                             ->label('YouTube')
-                            ->url()
-                            ->placeholder('https://youtube.com/@channelname')
-                            ->helperText('Link lengkap ke channel YouTube'),
+                            ->url(),
                     ])
                     ->columns(2),
             ])
